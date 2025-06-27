@@ -1,0 +1,54 @@
+/* 固定左侧显示的 TOC 样式 */
+.toc {
+  position: fixed;
+  top: 100px;
+  left: 40px;
+  width: 220px;
+  font-size: 14px;
+  line-height: 1.8;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding-right: 10px;
+  color: #555;
+}
+
+/* TOC 层级结构支持 ul/li */
+.toc ul {
+  list-style: none;
+  padding-left: 16px;
+  margin: 0;
+}
+
+.toc li {
+  margin: 4px 0;
+}
+
+/* TOC 链接样式 */
+.toc a {
+  color: #888;
+  text-decoration: none;
+  display: inline-block;
+  transition: color 0.2s;
+}
+
+.toc a:hover,
+.toc a:focus-visible {
+  color: #d3d3d3;
+  text-decoration: none;
+}
+
+/* 防止目录遮挡正文内容 */
+.post .content {
+  margin-left: 280px;
+}
+
+/* 移动端隐藏 TOC */
+@media (max-width: 768px) {
+  .toc {
+    display: none;
+  }
+
+  .post .content {
+    margin-left: 0;
+  }
+}
