@@ -155,4 +155,21 @@
             toc.after(divider)
         }
     }
+    window.addEventListener("scroll", () => {
+    const tocLinks = document.querySelectorAll(".toc a");
+    let currentId = "";
+    for (let i = 0; i < tocLinks.length; i++) {
+        const href = tocLinks[i].getAttribute("href").slice(1);
+        const section = document.getElementById(href);
+        if (section && section.getBoundingClientRect().top < 120) {
+            currentId = href;
+        }
+    }
+    tocLinks.forEach(link => {
+        link.classList.remove("active");
+        if (link.getAttribute("href").slice(1) === currentId) {
+            link.classList.add("active");
+        }
+    });
+    });
 })()
