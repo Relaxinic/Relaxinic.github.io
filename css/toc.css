@@ -9,7 +9,9 @@
   max-height: 80vh;
   overflow-y: auto;
   padding-right: 10px;
+  padding-bottom: 40px;
   color: #555;
+  z-index: 1;
 }
 
 /* TOC 层级结构支持 ul/li */
@@ -38,7 +40,7 @@
 }
 
 /* 防止目录遮挡正文内容 */
-.post .content {
+.post {
   margin-left: 280px;
 }
 
@@ -48,7 +50,7 @@
     display: none;
   }
 
-  .post .content {
+  .post {
     margin-left: 0;
   }
 }

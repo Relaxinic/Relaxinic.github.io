@@ -349,3 +349,10 @@ body[data-color-scheme="dark"] .tags .icon {
   margin-bottom: 4px;
   color: var(--grey);
 }
+
+.giscus {
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 16px;
+}
