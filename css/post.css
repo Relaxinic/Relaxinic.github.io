@@ -80,7 +80,7 @@ body {
 .post > .content {
   margin-top: 64px;
   font-size: 19px;
-  line-height: 1.4211;
+  line-height: 1.7;
   font-weight: 400;
 }
 .post > .content > p {
@@ -91,6 +91,8 @@ body {
   hyphens: auto;
   -webkit-hyphens: auto;
   overflow-wrap: break-word;
+  margin-top: 0;
+  margin-bottom: 1.25em;
 }
 .post {
   /* only `& > .content > pre`, do not include <pre /> in <figure /> */
