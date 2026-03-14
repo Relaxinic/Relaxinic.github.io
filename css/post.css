@@ -83,6 +83,15 @@ body {
   line-height: 1.4211;
   font-weight: 400;
 }
+.post > .content > p {
+  text-align: justify;
+  -moz-text-align-last: left;
+       text-align-last: left;
+  text-justify: inter-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  overflow-wrap: break-word;
+}
 .post {
   /* only `& > .content > pre`, do not include <pre /> in <figure /> */
 }
