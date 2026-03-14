@@ -79,8 +79,8 @@ body {
 }
 .post > .content {
   margin-top: 64px;
-  font-size: 19px;
-  line-height: 1.7;
+  font-size: 16px;
+  line-height: 2;
   font-weight: 400;
 }
 .post > .content > p {
@@ -513,4 +513,66 @@ body {
 }
 .post .post-prev-next .next .text {
   align-items: flex-start;
+}
+
+.album-review {
+  max-width: 800px;
+  margin: 60px auto;
+  padding: 0 40px;
+  display: flex;
+  gap: 40px;
+  align-items: center;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.album-review__content {
+  flex: 1;
+}
+
+.album-review__label {
+  font-weight: 600;
+}
+
+.album-review__section-title {
+  margin: 0 0 0.8em 0;
+  font-weight: 600;
+}
+
+.album-review__tracklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  margin: 0.8em 0 1.4em 0;
+}
+
+.album-review__track {
+  padding: 6px 12px;
+  border: 1px solid rgba(120, 120, 120, 0.22);
+  border-radius: 999px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.album-review__cover {
+  width: 320px;
+  flex-shrink: 0;
+}
+
+.album-review__cover img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media screen and (max-width: 768px) {
+  .album-review {
+    flex-direction: column;
+    gap: 24px;
+    padding: 0 20px;
+  }
+  .album-review__cover {
+    width: 100%;
+    max-width: 320px;
+  }
 }

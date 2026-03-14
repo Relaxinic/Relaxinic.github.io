@@ -3,8 +3,8 @@
   flex-direction: column;
   justify-content: center;
   gap: 6px;
-  padding-top: 160px;
-  padding-bottom: 160px;
+  padding-top: 245px;
+  padding-bottom: 245px;
   white-space: pre-wrap;
 }
 @supports (animation-timeline: scroll()) {
@@ -48,14 +48,14 @@
   }
 }
 .hero .title {
-  font-size: 22px;
+  font-size: 30px;
   color: var(--color-text-secondary);
-  font-weight: 200;
+  font-weight: 400;
   margin: 0;
   transition: font-size 0.5s;
 }
 .hero .description {
-  font-size: 100px;
+  font-size: 110px;
   font-weight: 700;
   margin: 0;
   transition: font-size 0.5s;
