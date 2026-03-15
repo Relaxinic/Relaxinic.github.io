@@ -576,3 +576,16 @@ body {
     max-width: 320px;
   }
 }
+.album-title {
+  display: block;
+  font-weight: 700;
+  font-size: 1.2em;
+}
+
+.artist-name {
+  display: block;
+  font-size: 0.7em;
+  font-weight: 400;
+  opacity: 0.72;
+  margin-top: 0.2em;
+}
