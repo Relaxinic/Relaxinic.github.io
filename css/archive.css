@@ -1,13 +1,15 @@
 /* in archive page, use a more compact list view */
 @font-face {
   font-family: "Frutiger";
-  src: url("/fonts/Frutiger.ttf") format("truetype");
+  src: url("/font/Frutiger.ttf") format("truetype");
+  font-display: swap;
   font-weight: normal;
   font-style: normal;
 }
 @font-face {
   font-family: "Frutiger";
-  src: url("/fonts/Frutiger_bold.ttf") format("truetype");
+  src: url("/font/Frutiger_bold.ttf") format("truetype");
+  font-display: swap;
   font-weight: bold;
   font-style: normal;
 }
