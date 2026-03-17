@@ -458,7 +458,8 @@ body {
 .post > .content h4,
 .post > .content h5,
 .post > .content h6 {
-  font-weight: 500;
+  font-weight: 600;
+  color: #0462C2;
 }
 .post > .content > h1 {
   font-size: 30px;
