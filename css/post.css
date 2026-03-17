@@ -409,6 +409,17 @@ body {
 .post .about > .extra {
   font-size: 15px;
 }
+.post > .content h1::before,
+.post > .content h2::before,
+.post > .content h3::before,
+.post > .content h4::before,
+.post > .content h5::before,
+.post > .content h6::before {
+  content: "| ";
+  color: #245e97;
+  display: inline-block;
+  margin-right: 10px;
+}
 .post > .content h1 > .headerlink,
 .post > .content h2 > .headerlink,
 .post > .content h3 > .headerlink,
@@ -431,6 +442,7 @@ body {
 .post > .content h5 > .headerlink::before,
 .post > .content h6 > .headerlink::before {
   content: "#";
+  color: transparent;
 }
 .post > .content h1:hover > .headerlink,
 .post > .content h1 .headerlink:hover,
@@ -458,8 +470,8 @@ body {
 .post > .content h4,
 .post > .content h5,
 .post > .content h6 {
-  font-weight: 600;
-  color: #0462C2;
+  font-weight: 700;
+  color: #245e97;
 }
 .post > .content > h1 {
   font-size: 30px;
