@@ -12,3 +12,10 @@
   font-weight: bold;
   font-style: normal;
 }
+@font-face {
+  font-family: "sanxelda";
+  src: url("/font/sanxelda.ttf") format("truetype");
+  font-display: swap;
+  font-weight: normal;
+  font-style: normal;
+}

@@ -13,16 +13,16 @@
   <link rel='manifest' href='/manifest.json'>
   
 
-  <meta name="description" content="Warning   These notes are written primarily for my own study needs. They may not be comprehensive or suitable for everyone, so feel free to browse selectively.         Acknowledgments   Part of">
+  <meta name="description" content="Warning   These notes are written primarily for my own study needs. They may not be comprehensive or suitable for everyone, so feel free to browse selectively.        Acknowledgments   Part of t">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Computer Architecture">
 <meta property="og:url" content="http://example.com/2026/03/02/Computer_Architecture/index.html">
 <meta property="og:site_name" content="Relaxinic">
-<meta property="og:description" content="Warning   These notes are written primarily for my own study needs. They may not be comprehensive or suitable for everyone, so feel free to browse selectively.         Acknowledgments   Part of">
+<meta property="og:description" content="Warning   These notes are written primarily for my own study needs. They may not be comprehensive or suitable for everyone, so feel free to browse selectively.        Acknowledgments   Part of t">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Computer_Architecture.jpg">
 <meta property="article:published_time" content="2026-03-01T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-03-17T07:48:19.836Z">
+<meta property="article:modified_time" content="2026-03-19T06:40:11.452Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Computer_Architecture.jpg">
@@ -249,19 +249,24 @@
   </div>
 
   <div class="content">
+
+    
+
+    
+
     <htc-callout type="warning">
   <span slot="icon"><i class="bi bi-exclamation-triangle-fill"></i></span>
   <span slot="title">Warning</span>
   These notes are written primarily for my own study needs. They may not be comprehensive or suitable for everyone, so feel free to browse selectively.
 </htc-callout>
-
 <htc-callout type="accent">
   <span slot="icon"><i class="bi bi-palette-fill"></i></span>
   <span slot="title">Acknowledgments</span>
   Part of these notes draws inspiration from the excellent Computer Architecture notes written by <a href="https://note.noughtq.top/sys/ca/" target="_blank">NoughtQ</a>. I am also grateful to Professor Kai Bu for his teaching and guidance in the course, which helped shape the understanding reflected in these notes.
 </htc-callout>
-
-<h1 id="Chap-1-Fundamentals-of-Quantitative-Design-and-Analysis"><a href="#Chap-1-Fundamentals-of-Quantitative-Design-and-Analysis" class="headerlink" title="Chap 1 - Fundamentals of Quantitative Design and Analysis"></a>Chap 1 - Fundamentals of Quantitative Design and Analysis</h1><h2 id="Computer-Architecture"><a href="#Computer-Architecture" class="headerlink" title="Computer Architecture"></a>Computer Architecture</h2><p>Computer architecture includes instruction set architecture, organization&#x2F;microarchitecture (high-level aspects), hardware&#x2F;system design (hardware components). The following are the seven dimensions of instruction set architecture:</p>
+<h1>Chap 1 - Fundamentals of Quantitative Design and Analysis</h1>
+<h2 id="Computer-Architecture">Computer Architecture</h2>
+<p>Computer architecture includes instruction set architecture, organization/microarchitecture (high-level aspects), hardware/system design (hardware components). The following are the seven dimensions of instruction set architecture:</p>
 <p><strong>Categories of ISA</strong></p>
 <table>
 <thead>
@@ -272,7 +277,8 @@
 <th>Register (load-store)</th>
 </tr>
 </thead>
-<tbody><tr>
+<tbody>
+<tr>
 <td>Push A</td>
 <td>Load A</td>
 <td>Load R1, A</td>
@@ -296,25 +302,29 @@
 <td>Store C, R1</td>
 <td>Store C, R3</td>
 </tr>
-</tbody></table>
+</tbody>
+</table>
 <p><strong>Memory Address</strong> - All ISAs are byte-addressable</p>
 <p><strong>addressing mode</strong></p>
 <ul>
-<li><p>RISC-V (base model)</p>
+<li>
+<p>RISC-V (base model)</p>
 <ul>
 <li>Register</li>
 <li>Immediate</li>
 <li>Displacement (base + offset)</li>
 </ul>
 </li>
-<li><p>x86 &#x2F; 80x86 (extends RISC-V style addressing)</p>
+<li>
+<p>x86 / 80x86 (extends RISC-V style addressing)</p>
 <ul>
 <li>No register (absolute addressing)</li>
 <li>Two registers (base + index)</li>
 <li>Scaled index (base + index × constant)</li>
 </ul>
 </li>
-<li><p>ARMv8 (extends RISC-V)</p>
+<li>
+<p>ARMv8 (extends RISC-V)</p>
 <ul>
 <li>PC-relative addressing</li>
 </ul>
@@ -324,13 +334,15 @@
 <p><strong>Operations</strong> - Data transfer, arithmetic logic, control, floating-point numbers</p>
 <p><strong>Control flow instructions</strong> - Including conditional branches, unconditional jumps, procedure calls, and returns, all using PC-relative addressing</p>
 <ul>
-<li><p>Condition Checking</p>
+<li>
+<p>Condition Checking</p>
 <ul>
 <li>RISC-V → compare registers directly</li>
-<li>x86 &#x2F; ARMv8 → use condition codes (flags)</li>
+<li>x86 / ARMv8 → use condition codes (flags)</li>
 </ul>
 </li>
-<li><p>Return Address Storage</p>
+<li>
+<p>Return Address Storage</p>
 <ul>
 <li>RISC-V → register (ra)</li>
 <li>ARMv8 → register (LR)</li>
@@ -339,8 +351,9 @@
 </li>
 </ul>
 <p><strong>ISA Encoding</strong> - Both ARMv8 and RISC-V have fixed-length instructions of 32 bits; 80x86 instructions are variable-length, ranging from 1 to 18 bytes.</p>
-<h2 id="Quantitative-Principles-of-Computer-Design"><a href="#Quantitative-Principles-of-Computer-Design" class="headerlink" title="Quantitative Principles of Computer Design"></a>Quantitative Principles of Computer Design</h2><p><strong>Leverage parallelism</strong>: data parallelism &#x2F; instruction-level parallelism &#x2F; data-level parallelism</p>
-<p><strong>Principle of localit</strong>y: temporal locality &#x2F; spatial locality</p>
+<h2 id="Quantitative-Principles-of-Computer-Design">Quantitative Principles of Computer Design</h2>
+<p><strong>Leverage parallelism</strong>: data parallelism / instruction-level parallelism / data-level parallelism</p>
+<p><strong>Principle of localit</strong>y: temporal locality / spatial locality</p>
 <p><strong>Focus on the common case</strong></p>
 <p><strong>Amdahl’s Law</strong>: The performance improvement gained by using a faster mode of execution is limited by the fraction of time the faster mode can be used.</p>
 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><msub><mtext>Speedup</mtext><mtext>overall</mtext></msub></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mfrac><msub><mtext>Execution time</mtext><mtext>old</mtext></msub><msub><mtext>Execution time</mtext><mtext>new</mtext></msub></mfrac></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mfrac><mn>1</mn><mrow><mo fence="true">(</mo><mn>1</mn><mo>−</mo><msub><mtext>Fraction</mtext><mtext>enhanced</mtext></msub><mo>+</mo><mfrac><msub><mtext>Fraction</mtext><mtext>enhanced</mtext></msub><msub><mtext>Speedup</mtext><mtext>enhanced</mtext></msub></mfrac><mo fence="true">)</mo></mrow></mfrac></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
@@ -348,9 +361,10 @@
 &amp;= \frac{\text{Execution time}_{\text{old}}}{\text{Execution time}_{\text{new}}} \\
 &amp;= \frac{1}{\left(1 - \text{Fraction}_{\text{enhanced}} + \frac{\text{Fraction}_{\text{enhanced}}}{\text{Speedup}_{\text{enhanced}}}\right)}
 \end{aligned}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:5.8078em;vertical-align:-2.6539em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:3.1539em;"><span style="top:-5.1539em;"><span class="pstrut" style="height:3.3603em;"></span><span class="mord"><span class="mord"><span class="mord text"><span class="mord">Speedup</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.242em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">overall</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.6965em;"><span class="pstrut" style="height:3.3603em;"></span><span class="mord"></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.6539em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:3.1539em;"><span style="top:-5.1539em;"><span class="pstrut" style="height:3.3603em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3603em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord text"><span class="mord">Execution time</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">new</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord text"><span class="mord">Execution time</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">old</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.836em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span><span style="top:-2.6965em;"><span class="pstrut" style="height:3.3603em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3214em;"><span style="top:-2.11em;"><span class="pstrut" style="height:3.15em;"></span><span class="mord"><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size2">(</span></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord text"><span class="mord">Fraction</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">enhanced</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8942em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">Speedup</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2302em;"><span style="top:-2.2341em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">enhanced</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2659em;"><span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.4159em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">Fraction</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3488em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">enhanced</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1512em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.5311em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size2">)</span></span></span></span></span><span style="top:-3.38em;"><span class="pstrut" style="height:3.15em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.827em;"><span class="pstrut" style="height:3.15em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.69em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.6539em;"><span></span></span></span></span></span></span></span></span></span></span>
-
 <p><strong>CPU-related formulas</strong> can be found in the <a href="https://note.noughtq.top/sys/co/1#performance" target="_blank">computer organization</a> notes.</p>
-<h1 id="Chap-2-Memory-Hierarchy-Design"><a href="#Chap-2-Memory-Hierarchy-Design" class="headerlink" title="Chap 2 - Memory Hierarchy Design"></a>Chap 2 - Memory Hierarchy Design</h1><h2 id="Instroduction"><a href="#Instroduction" class="headerlink" title="Instroduction"></a>Instroduction</h2>
+<h1>Chap 2 - Memory Hierarchy Design</h1>
+<h2 id="Instroduction">Instroduction</h2>
+
   </div>
 
   
