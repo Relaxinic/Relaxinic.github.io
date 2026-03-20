@@ -1,3 +1,4 @@
+@charset "UTF-8";
 @font-face {
   font-family: "Frutiger";
   src: url("/font/Frutiger.ttf") format("truetype");
@@ -630,4 +631,118 @@ body {
   font-weight: 400;
   opacity: 0.72;
   margin-top: 0.2em;
+}
+
+/* ---------- inline math only ---------- */
+/* 只处理真正嵌在文本里的行内公式 */
+.post > .content p .katex,
+.post > .content li .katex,
+.post > .content td .katex,
+.post > .content th .katex,
+.post > .content blockquote .katex,
+.post > .content figcaption .katex {
+  display: inline-block !important;
+  line-height: 1 !important;
+  vertical-align: -0.12em;
+  font-size: 1em;
+}
+
+/* inline katex 内部基础层 */
+.post > .content p .katex .base,
+.post > .content li .katex .base,
+.post > .content td .katex .base,
+.post > .content th .katex .base,
+.post > .content blockquote .katex .base,
+.post > .content figcaption .katex .base {
+  line-height: 1 !important;
+}
+
+/* 针对你那种 F_i / A_i 的旧式下标结构 */
+.post > .content p .katex .reset-textstyle.scriptstyle,
+.post > .content p .katex .reset-textstyle.scriptstyle.cramped,
+.post > .content li .katex .reset-textstyle.scriptstyle,
+.post > .content li .katex .reset-textstyle.scriptstyle.cramped,
+.post > .content td .katex .reset-textstyle.scriptstyle,
+.post > .content td .katex .reset-textstyle.scriptstyle.cramped,
+.post > .content blockquote .katex .reset-textstyle.scriptstyle,
+.post > .content blockquote .katex .reset-textstyle.scriptstyle.cramped {
+  font-size: 0.72em !important;
+  line-height: 1 !important;
+}
+
+/* 旧式 vlist / baseline-fix 微调 */
+.post > .content p .katex .vlist,
+.post > .content li .katex .vlist,
+.post > .content td .katex .vlist,
+.post > .content blockquote .katex .vlist {
+  display: inline-block !important;
+  vertical-align: -0.22em !important;
+}
+
+.post > .content p .katex .baseline-fix,
+.post > .content li .katex .baseline-fix,
+.post > .content td .katex .baseline-fix,
+.post > .content blockquote .katex .baseline-fix {
+  display: inline-block !important;
+  width: 0 !important;
+  line-height: 1 !important;
+}
+
+/* ---------- explicitly protect block math ---------- */
+/* markdown-it-katex / 某些 KaTeX 块公式 */
+.post > .content > .katex,
+.post > .content .katex-display,
+.post > .content > p > .katex-display,
+.post > .content > div .katex-display {
+  display: block !important;
+  text-align: center;
+  line-height: 1.2 !important;
+}
+
+/* 你原来已有的块公式规则也可以保留 */
+.post > .content > mjx-container,
+.post > .content > .katex {
+  display: block;
+  text-align: center;
+}
+
+/* 复杂行内公式：多个下标、\dots、紧缩样式 */
+.post > .content p .katex .msupsub,
+.post > .content li .katex .msupsub,
+.post > .content td .katex .msupsub,
+.post > .content blockquote .katex .msupsub {
+  line-height: 1 !important;
+}
+
+.post > .content p .katex .vlist-t,
+.post > .content p .katex .vlist-r,
+.post > .content p .katex .vlist-s,
+.post > .content li .katex .vlist-t,
+.post > .content li .katex .vlist-r,
+.post > .content li .katex .vlist-s,
+.post > .content td .katex .vlist-t,
+.post > .content td .katex .vlist-r,
+.post > .content td .katex .vlist-s,
+.post > .content blockquote .katex .vlist-t,
+.post > .content blockquote .katex .vlist-r,
+.post > .content blockquote .katex .vlist-s {
+  line-height: 1 !important;
+}
+
+.post > .content p .katex .mtight,
+.post > .content li .katex .mtight,
+.post > .content td .katex .mtight,
+.post > .content blockquote .katex .mtight {
+  line-height: 1 !important;
+}
+
+.post > .content p .katex .sizing.reset-size6.size3,
+.post > .content li .katex .sizing.reset-size6.size3,
+.post > .content td .katex .sizing.reset-size6.size3,
+.post > .content blockquote .katex .sizing.reset-size6.size3,
+.post > .content p .katex .sizing.reset-size3.size1,
+.post > .content li .katex .sizing.reset-size3.size1,
+.post > .content td .katex .sizing.reset-size3.size1,
+.post > .content blockquote .katex .sizing.reset-size3.size1 {
+  font-size: 0.72em !important;
 }
