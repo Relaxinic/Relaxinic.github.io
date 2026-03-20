@@ -28,6 +28,42 @@ body {
   margin-bottom: 64px;
 }
 
+.toc-sidebar {
+  position: fixed;
+  top: 128px;
+  left: 32px;
+  width: 240px;
+  z-index: 100;
+}
+
+.toc-sidebar > .toc {
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.toc-sidebar .toc > p {
+  margin: 0 0 10px 0;
+}
+
+.toc-sidebar .toc > p > a {
+  display: block;
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.toc-sidebar .toc > p > a:hover,
+.toc-sidebar .toc > p > a:focus-visible {
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 1200px) {
+  .toc-sidebar {
+    display: none;
+  }
+}
 #main-content > * > .meta {
   margin-top: 128px;
 }
@@ -120,7 +156,7 @@ body {
   /* only `& > .content > pre`, do not include <pre /> in <figure /> */
 }
 .post > .content > p, .post > .content > h1, .post > .content > h2, .post > .content > h3, .post > .content > h4, .post > .content > h5, .post > .content > h6, .post > .content > figure, .post > .content > pre, .post > .content > .divider,
-.post .container, .post > .content > hr, .post > aside > .toc, .post > .content > blockquote, .post > .content > table, .post > .content > video, .post > .content > ul, .post > .content > ol, .post > .content > mjx-container, .post > .content > .katex,
+.post .container, .post > .content > hr, .post > .content > blockquote, .post > .content > table, .post > .content > video, .post > .content > ul, .post > .content > ol, .post > .content > mjx-container, .post > .content > .katex,
 .post .about {
   max-width: 800px;
   margin-left: auto;
@@ -363,6 +399,7 @@ body {
 .post > .content blockquote {
   max-width: 768px;
   padding: 0 8px;
+  color: #858484;
 }
 .post > .content figure figcaption {
   text-align: center;
@@ -641,7 +678,7 @@ body {
 }
 
 /* ---------- inline math only ---------- */
-/* 只处理真正嵌在文本里的行内公式 */
+/* 只处理真正嵌在文本里的行内公式 *
 .post > .content p .katex,
 .post > .content li .katex,
 .post > .content td .katex,
@@ -650,7 +687,7 @@ body {
 .post > .content figcaption .katex {
   display: inline-block !important;
   line-height: 1 !important;
-  vertical-align: -0.12em;
+  vertical-align: 0em;
   font-size: 1em;
 }
 
@@ -661,37 +698,6 @@ body {
 .post > .content th .katex .base,
 .post > .content blockquote .katex .base,
 .post > .content figcaption .katex .base {
-  line-height: 1 !important;
-}
-
-/* 针对你那种 F_i / A_i 的旧式下标结构 */
-.post > .content p .katex .reset-textstyle.scriptstyle,
-.post > .content p .katex .reset-textstyle.scriptstyle.cramped,
-.post > .content li .katex .reset-textstyle.scriptstyle,
-.post > .content li .katex .reset-textstyle.scriptstyle.cramped,
-.post > .content td .katex .reset-textstyle.scriptstyle,
-.post > .content td .katex .reset-textstyle.scriptstyle.cramped,
-.post > .content blockquote .katex .reset-textstyle.scriptstyle,
-.post > .content blockquote .katex .reset-textstyle.scriptstyle.cramped {
-  font-size: 0.72em !important;
-  line-height: 1 !important;
-}
-
-/* 旧式 vlist / baseline-fix 微调 */
-.post > .content p .katex .vlist,
-.post > .content li .katex .vlist,
-.post > .content td .katex .vlist,
-.post > .content blockquote .katex .vlist {
-  display: inline-block !important;
-  vertical-align: -0.22em !important;
-}
-
-.post > .content p .katex .baseline-fix,
-.post > .content li .katex .baseline-fix,
-.post > .content td .katex .baseline-fix,
-.post > .content blockquote .katex .baseline-fix {
-  display: inline-block !important;
-  width: 0 !important;
   line-height: 1 !important;
 }
 

@@ -87,7 +87,10 @@
 
   if (document.body.attributes['data-toc']) {
     const content = document.getElementsByClassName('content')[0]
-    const maxDepth = document.body.attributes['data-toc-max-depth'].value
+    const maxDepth = parseInt(
+      document.body.attributes['data-toc-max-depth'].value,
+      10,
+    )
 
     var headingSelector = ''
     for (var i = 1; i <= maxDepth; i++) {
@@ -96,34 +99,139 @@
     headingSelector = headingSelector.slice(0, -1)
     const headings = Array.from(content.querySelectorAll(headingSelector))
 
-    var source = headings
-      .map(heading => ({
-        html: heading.innerHTML,
-        href:
-          heading.getElementsByClassName('headerlink')[0]?.attributes['href']
-            .value ?? null,
-      }))
+    const source = headings
+      .map(heading => {
+        const level = parseInt(heading.tagName.slice(1), 10)
+        const headerlink = heading.getElementsByClassName('headerlink')[0]
+
+        return {
+          element: heading,
+          html: heading.innerHTML,
+          href: headerlink?.getAttribute('href') ?? null,
+          level,
+          children: [],
+          parent: null,
+        }
+      })
       .filter(heading => heading.href)
 
     const tocContainer = document.createElement('aside')
+    tocContainer.classList.add('toc-sidebar')
     const toc = document.createElement('div')
     toc.classList.add('toc')
-    for (const i in source) {
-      const item = document.createElement('p')
-      const link = document.createElement('a')
-      link.href = source[i].href
-      link.innerHTML = source[i].html
-      link.removeChild(link.getElementsByClassName('headerlink')[0])
-      item.appendChild(link)
-      toc.appendChild(item)
+
+    const roots = []
+    const stack = []
+
+    for (const item of source) {
+      while (stack.length && stack[stack.length - 1].level >= item.level) {
+        stack.pop()
+      }
+
+      if (stack.length) {
+        item.parent = stack[stack.length - 1]
+        item.parent.children.push(item)
+      } else {
+        roots.push(item)
+      }
+
+      stack.push(item)
     }
+
+    const tocGroupsByHref = new Map()
+    const tocLinksByHref = new Map()
+
+    const createTocGroup = item => {
+      const group = document.createElement('div')
+      group.classList.add('toc-group')
+      group.dataset.href = item.href
+
+      const row = document.createElement('p')
+      row.classList.add(`toc-level-${item.level}`)
+
+      const link = document.createElement('a')
+      link.href = item.href
+      link.innerHTML = item.html
+
+      const innerHeaderLink = link.getElementsByClassName('headerlink')[0]
+      if (innerHeaderLink) {
+        innerHeaderLink.remove()
+      }
+
+      row.appendChild(link)
+      group.appendChild(row)
+
+      tocGroupsByHref.set(item.href, group)
+      tocLinksByHref.set(item.href, link)
+
+      if (item.children.length > 0) {
+        const children = document.createElement('div')
+        children.classList.add('toc-children')
+
+        for (const child of item.children) {
+          children.appendChild(createTocGroup(child))
+        }
+
+        group.appendChild(children)
+      }
+
+      return group
+    }
+
+    for (const item of roots) {
+      toc.appendChild(createTocGroup(item))
+    }
+
     tocContainer.appendChild(toc)
 
     if (toc.children.length > 0) {
-      document
-        .getElementsByClassName('post')[0]
-        .getElementsByClassName('meta')[0]
-        .after(tocContainer)
+      document.body.appendChild(tocContainer)
+
+      const getActiveItem = () => {
+        const offset = 140
+
+        for (let i = source.length - 1; i >= 0; i--) {
+          const rect = source[i].element.getBoundingClientRect()
+          if (rect.top <= offset) {
+            return source[i]
+          }
+        }
+
+        return source[0] ?? null
+      }
+
+      const updateTocState = () => {
+        const activeItem = getActiveItem()
+
+        toc.querySelectorAll('.toc-group.is-open').forEach(group => {
+          group.classList.remove('is-open')
+        })
+        toc.querySelectorAll('a.is-active').forEach(link => {
+          link.classList.remove('is-active')
+        })
+
+        if (!activeItem) {
+          return
+        }
+
+        const activeLink = tocLinksByHref.get(activeItem.href)
+        if (activeLink) {
+          activeLink.classList.add('is-active')
+        }
+
+        let current = activeItem
+        while (current) {
+          const group = tocGroupsByHref.get(current.href)
+          if (group) {
+            group.classList.add('is-open')
+          }
+          current = current.parent
+        }
+      }
+
+      updateTocState()
+      window.addEventListener('scroll', updateTocState, { passive: true })
+      window.addEventListener('hashchange', updateTocState)
     }
   }
 

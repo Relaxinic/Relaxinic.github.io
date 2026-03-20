@@ -1,17 +1,101 @@
-.toc > p {
+.toc-group {
+  margin: 0 0 10px 0;
+}
+
+.toc-level-1,
+.toc-level-2,
+.toc-level-3,
+.toc-level-4,
+.toc-level-5,
+.toc-level-6 {
   margin: 0;
 }
-.toc > p > a {
+
+.toc-level-1 > a,
+.toc-level-2 > a,
+.toc-level-3 > a,
+.toc-level-4 > a,
+.toc-level-5 > a,
+.toc-level-6 > a {
   color: var(--color-text-secondary);
   text-decoration: none;
-  display: inline-block;
-  padding: 8px 0;
-  padding-left: 12px;
+  display: block;
+  padding: 2px 0;
+  line-height: 1.3;
   border-left: 1px solid var(--color-border-primary);
   transition: color 0.2s, border-color 0.2s;
 }
-.toc > p > a:hover, .toc > p > a:focus-visible {
+
+.toc-level-1 > a {
+  padding-left: 12px;
+}
+
+.toc-level-2 > a {
+  padding-left: 24px;
+}
+
+.toc-level-3 > a {
+  padding-left: 36px;
+}
+
+.toc-level-4 > a {
+  padding-left: 48px;
+}
+
+.toc-level-5 > a {
+  padding-left: 60px;
+}
+
+.toc-level-6 > a {
+  padding-left: 72px;
+}
+
+.toc-level-1 > a:hover,
+.toc-level-1 > a:focus-visible,
+.toc-level-2 > a:hover,
+.toc-level-2 > a:focus-visible,
+.toc-level-3 > a:hover,
+.toc-level-3 > a:focus-visible,
+.toc-level-4 > a:hover,
+.toc-level-4 > a:focus-visible,
+.toc-level-5 > a:hover,
+.toc-level-5 > a:focus-visible,
+.toc-level-6 > a:hover,
+.toc-level-6 > a:focus-visible {
   color: var(--color-text-secondary-hover);
   text-decoration: none;
   border-color: var(--color-text-secondary-hover);
+}
+
+.toc-children {
+  display: none;
+}
+
+.toc-group.is-open > .toc-children {
+  display: block;
+}
+
+.toc-level-1 > a.is-active,
+.toc-level-2 > a.is-active,
+.toc-level-3 > a.is-active,
+.toc-level-4 > a.is-active,
+.toc-level-5 > a.is-active,
+.toc-level-6 > a.is-active {
+  color: var(--color-text-primary);
+  border-color: var(--color-text-primary);
+}
+
+.toc-sidebar {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.toc-sidebar:hover {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .toc-sidebar {
+    opacity: 1;
+  }
 }
