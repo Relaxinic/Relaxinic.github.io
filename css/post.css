@@ -327,6 +327,7 @@ body {
 }
 .post > .content .highlight, .post > .content > pre {
   max-width: 768px;
+  line-height: 1.5;
 }
 @media (max-width: 800px) {
   .post > .content .highlight, .post > .content > pre {
@@ -342,9 +343,15 @@ body {
 .post > .content > pre {
   max-width: 752px;
   padding: 20px 24px;
+  line-height: 1.5;
 }
-.post > .content > pre * > code {
+.post > .content > pre code {
+  line-height: 1.5;
+}
+.post > .content > pre * > code,
+.post > .content > pre code {
   background-color: transparent;
+  line-height: 1.5;
 }
 .post > .content ul, .post > .content ol {
   padding: 0 16px;
