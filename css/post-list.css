@@ -30,6 +30,11 @@
   margin: auto;
   margin-bottom: 32px;
 }
+.post-list.archives {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  max-width: 980px;
+}
 @media (max-width: 600px) {
   .post-list {
     grid-template-columns: 1fr;
@@ -66,6 +71,19 @@
 .post-list-item {
   background-color: var(--color-background-secondary);
 }
+.post-list.archives .post-list-item {
+  padding: 0;
+  margin: 0;
+  border-bottom: none;
+  height: 450px;
+}
+.post-list.archives .post-list-item:nth-child(n) {
+  margin-left: 0;
+  margin-right: 0;
+}
+.post-list.archives .post-list-item:last-child {
+  border-bottom: none;
+}
 .post-list-item > a {
   color: var(--color-text-primary);
   text-decoration: none;
@@ -76,6 +94,31 @@
   overflow: hidden;
   height: 266px;
 }
+.post-list.archives .post-list-item > a .cover-img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1/1;
+  border-radius: var(--radius-medium);
+}
+@container document-body style(--config-corner-squircle: true) {
+  @supports (corner-shape: squircle) {
+    .post-list.archives .post-list-item > a .cover-img {
+      corner-shape: squircle;
+      --radius-tiny: 10px;
+      --radius-small: 20px;
+      --radius-medium: 30px;
+      --radius-large: 40px;
+      --radius-full: 999px;
+    }
+    .post-list.archives .post-list-item > a .cover-img * {
+      --radius-tiny: 4px;
+      --radius-small: 8px;
+      --radius-medium: 12px;
+      --radius-large: 16px;
+      --radius-full: 999px;
+    }
+  }
+}
 .post-list-item > a .cover-img img {
   width: 100%;
   height: 100%;
@@ -83,6 +126,11 @@
      object-fit: cover;
   filter: brightness(1);
   transition: scale 400ms cubic-bezier(0.4, 0, 0.25, 1), filter 400ms cubic-bezier(0.4, 0, 0.25, 1);
+}
+.post-list.archives .post-list-item > a .cover-img img {
+  display: block;
+  -o-object-position: center 30%;
+     object-position: center 30%;
 }
 .post-list-item > a:hover .cover-img img, .post-list-item > a:focus-visible .cover-img img {
   scale: 1.03;
@@ -102,6 +150,13 @@
 .post-list-item > a .content {
   padding: 32px;
   text-align: center;
+}
+.post-list.archives .post-list-item > a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  height: 100%;
 }
 .post-list-item > a .categories {
   color: var(--color-text-accent);
@@ -142,11 +197,11 @@
 .post-list-item > a .album-title {
   display: block;
   font-weight: 700;
-  font-size: 1.2em;
+  font-size: 0.9em;
 }
 .post-list-item > a .artist-name {
   display: block;
-  font-weight: 500;
-  font-size: 0.9em;
+  font-weight: 400;
+  font-size: 0.7em;
   opacity: 0.7;
 }

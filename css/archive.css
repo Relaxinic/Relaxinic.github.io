@@ -1,3 +1,4 @@
+@charset "UTF-8";
 /* in archive page, use a more compact list view */
 @font-face {
   font-family: "Frutiger";
@@ -26,7 +27,7 @@
   gap: 32px;
   max-width: 980px;
 }
-.post-list.archives .post-list-item {
+.post-list.archives   .post-list-item {
   border-radius: var(--radius-large);
   background-color: var(--color-background-secondary);
   padding: 0;
@@ -35,28 +36,28 @@
   overflow: hidden;
   height: 350px;
 }
-.post-list.archives .post-list-item:nth-child(n) {
+.post-list.archives   .post-list-item:nth-child(n) {
   margin-left: 0;
   margin-right: 0;
 }
-.post-list.archives .post-list-item:last-child {
+.post-list.archives   .post-list-item:last-child {
   border-bottom: none;
 }
-.post-list.archives .post-list-item a {
+.post-list.archives   .post-list-item a {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   height: 100%;
 }
-.post-list.archives .post-list-item .cover-img {
+.post-list.archives   .post-list-item .cover-img {
   width: 100%;
   aspect-ratio: 1/1;
   border-radius: var(--radius-medium);
 }
 @container document-body style(--config-corner-squircle: true) {
   @supports (corner-shape: squircle) {
-    .post-list.archives .post-list-item .cover-img {
+    .post-list.archives   .post-list-item .cover-img {
       corner-shape: squircle;
       --radius-tiny: 10px;
       --radius-small: 20px;
@@ -64,7 +65,7 @@
       --radius-large: 40px;
       --radius-full: 999px;
     }
-    .post-list.archives .post-list-item .cover-img * {
+    .post-list.archives   .post-list-item .cover-img * {
       --radius-tiny: 4px;
       --radius-small: 8px;
       --radius-medium: 12px;
@@ -73,10 +74,10 @@
     }
   }
 }
-.post-list.archives .post-list-item .cover-img {
+.post-list.archives   .post-list-item .cover-img {
   overflow: hidden;
 }
-.post-list.archives .post-list-item img {
+.post-list.archives   .post-list-item img {
   display: block;
   width: 100%;
   height: 100%;
@@ -85,12 +86,12 @@
   -o-object-position: center 30%;
      object-position: center 30%;
 }
-.post-list.archives .post-list-item .album-title {
+.post-list.archives   .post-list-item .album-title {
   display: block;
   font-weight: 700;
   font-size: 0.9em;
 }
-.post-list.archives .post-list-item .artist-name {
+.post-list.archives   .post-list-item .artist-name {
   display: block;
   font-weight: 400;
   font-size: 0.7em;
