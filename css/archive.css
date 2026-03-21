@@ -21,6 +21,13 @@
   font-weight: normal;
   font-style: normal;
 }
+@font-face {
+  font-family: "Menlo";
+  src: url("/font/Menlo_regular.ttf") format("truetype");
+  font-display: swap;
+  font-weight: normal;
+  font-style: normal;
+}
 .post-list.archives {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

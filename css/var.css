@@ -19,6 +19,13 @@
   font-weight: normal;
   font-style: normal;
 }
+@font-face {
+  font-family: "Menlo";
+  src: url("/font/Menlo_regular.ttf") format("truetype");
+  font-display: swap;
+  font-weight: normal;
+  font-style: normal;
+}
 :root {
   --filter-blur: blur(32px);
   --radius-tiny: 4px;
@@ -26,7 +33,7 @@
   --radius-medium: 12px;
   --radius-large: 16px;
   --radius-full: 999px;
-  --font-sans-serif: "Frutiger", "Helvetica Neue", Helvetica, Arial, sans-serif, "sanxelda";
+  --font-sans-serif: "Frutiger", "Helvetica Neue", Helvetica, Arial, sans-serif, "Menlo", "sanxelda";
   --font-sans-serif-feature-settings: 'liga' 1, 'calt' 1; /* fix for Chrome */
 }
 @supports (font-variation-settings: normal) {

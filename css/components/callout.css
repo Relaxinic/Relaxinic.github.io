@@ -19,6 +19,13 @@
   font-weight: normal;
   font-style: normal;
 }
+@font-face {
+  font-family: "Menlo";
+  src: url("/font/Menlo_regular.ttf") format("truetype");
+  font-display: swap;
+  font-weight: normal;
+  font-style: normal;
+}
 :host {
   display: block;
   border-radius: var(--radius-medium);

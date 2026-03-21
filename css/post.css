@@ -20,6 +20,13 @@
   font-weight: normal;
   font-style: normal;
 }
+@font-face {
+  font-family: "Menlo";
+  src: url("/font/Menlo_regular.ttf") format("truetype");
+  font-display: swap;
+  font-weight: normal;
+  font-style: normal;
+}
 body {
   margin-top: 0;
 }
@@ -364,17 +371,16 @@ body {
 .post > .content .highlight, .post > .content > pre {
   max-width: 768px;
   line-height: 1.5;
-}
-@media (max-width: 800px) {
-  .post > .content .highlight, .post > .content > pre {
-    border-radius: 0;
-  }
+  font-family: "Menlo", monospace;
 }
 .post > .content .highlight * {
   border: none;
 }
 .post > .content .highlight .gutter {
   padding-right: 16px;
+}
+.post > .content .highlight .comment, .post > .content .highlight .quote, .post > .content .highlight .hljs-comment, .post > .content .highlight .token.comment, .post > .content .highlight .c, .post > .content .highlight .cm, .post > .content .highlight .c1, .post > .content .highlight .cs, .post > .content > pre code .comment, .post > .content > pre code .hljs-comment, .post > .content > pre code .token.comment, .post > .content > pre code .c, .post > .content > pre code .cm, .post > .content > pre code .c1, .post > .content > pre code .cs {
+  color: #b0b0b0;
 }
 .post > .content > pre {
   max-width: 752px;
@@ -383,11 +389,19 @@ body {
 }
 .post > .content > pre code {
   line-height: 1.5;
+  font-family: "Menlo", monospace;
 }
 .post > .content > pre * > code,
 .post > .content > pre code {
   background-color: transparent;
   line-height: 1.5;
+  font-family: "Menlo", monospace;
+}
+.post > .content code {
+  font-family: "Menlo", monospace;
+}
+.post > .content p code, .post > .content li code, .post > .content td code, .post > .content th code, .post > .content blockquote code, .post > .content figcaption code {
+  font-family: "Menlo", monospace;
 }
 .post > .content ul, .post > .content ol {
   padding: 0 16px;
