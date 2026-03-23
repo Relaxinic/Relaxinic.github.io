@@ -22,7 +22,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Computer_Architecture.jpg">
 <meta property="article:published_time" content="2026-03-01T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-03-22T14:14:52.782Z">
+<meta property="article:modified_time" content="2026-03-23T12:46:05.888Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Computer_Architecture.jpg">
@@ -266,7 +266,7 @@
   Part of these notes draws inspiration from the excellent Computer Architecture notes written by <a href="https://note.noughtq.top/sys/ca/" target="_blank">NoughtQ</a>. I am also grateful to Professor Kai Bu for his teaching and guidance in the course, which helped shape the understanding reflected in these notes.
 </htc-callout>
 
-<h1 id="Chap-1-Fundamentals-of-Quantitative-Design-and-Analysis"><a href="#Chap-1-Fundamentals-of-Quantitative-Design-and-Analysis" class="headerlink" title="Chap 1 - Fundamentals of Quantitative Design and Analysis"></a>Chap 1 - Fundamentals of Quantitative Design and Analysis</h1><h2 id="Computer-Architecture"><a href="#Computer-Architecture" class="headerlink" title="Computer Architecture"></a>Computer Architecture</h2><p>Computer architecture includes instruction set architecture, organization&#x2F;microarchitecture (high-level aspects), hardware&#x2F;system design (hardware components). The following are the seven dimensions of instruction set architecture:</p>
+<h1 id="Chapter-1-Fundamentals-of-Quantitative-Design-and-Analysis"><a href="#Chapter-1-Fundamentals-of-Quantitative-Design-and-Analysis" class="headerlink" title="Chapter 1 Fundamentals of Quantitative Design and Analysis"></a>Chapter 1 Fundamentals of Quantitative Design and Analysis</h1><h2 id="1-1-Computer-Architecture"><a href="#1-1-Computer-Architecture" class="headerlink" title="1.1 Computer Architecture"></a>1.1 Computer Architecture</h2><p>Computer architecture includes instruction set architecture, organization&#x2F;microarchitecture (high-level aspects), hardware&#x2F;system design (hardware components). The following are the seven dimensions of instruction set architecture:</p>
 <p><strong>Categories of ISA</strong></p>
 <table>
 <thead>
@@ -344,7 +344,7 @@
 </li>
 </ul>
 <p><strong>ISA Encoding</strong> - Both ARMv8 and RISC-V have fixed-length instructions of 32 bits; 80x86 instructions are variable-length, ranging from 1 to 18 bytes.</p>
-<h2 id="Quantitative-Principles-of-Computer-Design"><a href="#Quantitative-Principles-of-Computer-Design" class="headerlink" title="Quantitative Principles of Computer Design"></a>Quantitative Principles of Computer Design</h2><p><strong>Leverage parallelism</strong>: data parallelism &#x2F; instruction-level parallelism &#x2F; data-level parallelism</p>
+<h2 id="1-2-Quantitative-Principles-of-Computer-Design"><a href="#1-2-Quantitative-Principles-of-Computer-Design" class="headerlink" title="1.2 Quantitative Principles of Computer Design"></a>1.2 Quantitative Principles of Computer Design</h2><p><strong>Leverage parallelism</strong>: data parallelism &#x2F; instruction-level parallelism &#x2F; data-level parallelism</p>
 <p><strong>Principle of localit</strong>y: temporal locality &#x2F; spatial locality</p>
 <p><strong>Focus on the common case</strong></p>
 <p><strong>Amdahl’s Law</strong>: The performance improvement gained by using a faster mode of execution is limited by the fraction of time the faster mode can be used.</p>
@@ -356,7 +356,135 @@
 
 <p><strong>CPU-related formulas</strong> can be found in the <a href="https://note.noughtq.top/sys/co/1#performance" target="_blank">computer organization</a> notes.</p>
 <hr>
-<h1 id="Chap-2-Memory-Hierarchy-Design"><a href="#Chap-2-Memory-Hierarchy-Design" class="headerlink" title="Chap 2 - Memory Hierarchy Design"></a>Chap 2 - Memory Hierarchy Design</h1><h2 id="Instroduction"><a href="#Instroduction" class="headerlink" title="Instroduction"></a>Instroduction</h2>
+<h1 id="Chapter-2-Memory-Hierarchy-Design"><a href="#Chapter-2-Memory-Hierarchy-Design" class="headerlink" title="Chapter 2 Memory Hierarchy Design"></a>Chapter 2 Memory Hierarchy Design</h1><blockquote>
+<p><strong>Latency</strong>: Determines the time it takes to retrieve the first data word in a data block<br><strong>Bandwidth</strong>: Determines the time it takes to access the remaining content in the data block</p>
+</blockquote>
+<h2 id="2-1-Memory-Hierarchy"><a href="#2-1-Memory-Hierarchy" class="headerlink" title="2.1 Memory Hierarchy"></a>2.1 Memory Hierarchy</h2><h3 id="Memory-Technologies"><a href="#Memory-Technologies" class="headerlink" title="Memory Technologies"></a>Memory Technologies</h3><p><strong>SRAM</strong></p>
+<ul>
+<li>Static storage, no need for refresh, fast speed, but high cost and high power consumption</li>
+<li>Mainly used to build high-speed cache</li>
+</ul>
+<p><strong>DRAM</strong></p>
+<ul>
+<li>Dynamic storage, requires periodic refresh, low cost, high density</li>
+<li>DRAM is organized into multiple banks, each containing rows and columns</li>
+<li>Performance optimization<ul>
+<li>Synchronous DRAM (SDRAM): Supports burst transfer, allowing continuous transmission of multiple data after a row activation</li>
+<li>DDR (double data rate) SDRAM: Transmits data on both the rising and falling edges of the clock</li>
+<li>Multi-bank parallel access: Allows simultaneous access to data in different banks, further increasing bandwidth.</li>
+</ul>
+</li>
+</ul>
+<p><strong>Flash Memory</strong></p>
+<ul>
+<li>Non-volatile, data is not lost after power-off</li>
+<li>NOR flash has fast random read and write speeds, but slow write speeds and high cost; NAND flash has high density, low cost, suitable for large-capacity storage, but slower read and write speeds</li>
+<li>Random access latency is much higher than DRAM, but it has high density and low cost</li>
+</ul>
+<p><strong>Phase-Change Memory (PCM)</strong></p>
+<ul>
+<li>Stores data by changing the resistance state of the material</li>
+</ul>
+<h3 id="Techniques-for-Higher-Bandwidth"><a href="#Techniques-for-Higher-Bandwidth" class="headerlink" title="Techniques for Higher Bandwidth"></a>Techniques for Higher Bandwidth</h3><p><strong>Wider Main Memory</strong>: Increasing the width of cache and memory</p>
+<ul>
+<li>Disadvantages: Requires the use of MUX that increases latency on critical paths; complicates error correction</li>
+</ul>
+<p><strong>Simple Interleaved Memory</strong>: Organizing memory into multiple partitions, allowing simultaneous reading and writing of multiple words.</p>
+<ul>
+<li>Achieves multi-way interleaved access by sharing address lines and data buses</li>
+<li>Leverages parallelism across multiple chips in the memory system</li>
+<li>Regarding partition access<img src="https://note.noughtq.top/sys/ca/images/C2/77.png" alt="set associative mapping" style="max-width: 80%; display: block; margin: 0 auto;"></li>
+</ul>
+<p><strong>Independent Memory Partitions</strong>: Provide independent memory controllers, address lines, and data buses for each partition.</p>
+<ul>
+<li>The number of partitions should be greater than the number of clock cycles required to access a word in a partition to avoid waiting.</li>
+<li>Partition conflicts occur when array size or access patterns cause multiple elements to map to the same memory partition, leading to CPU stalls. Solutions include:<ul>
+<li>Loop interchange: Change the order of nested loops to avoid accessing the same partition.</li>
+<li>Expand array size: Make it not a power of two to force address mapping to different partitions.</li>
+<li>Use a prime number of memory partitions.</li>
+</ul>
+</li>
+</ul>
+<h3 id="Four-Memory-Hierarchy-Questions"><a href="#Four-Memory-Hierarchy-Questions" class="headerlink" title="Four Memory Hierarchy Questions"></a>Four Memory Hierarchy Questions</h3><h4 id="Block-Placement"><a href="#Block-Placement" class="headerlink" title="Block Placement"></a>Block Placement</h4><p><strong>Direct mapped</strong>: Each data block has only one specific location in memory.</p>
+<img src="https://note.noughtq.top/sys/ca/images/C2/103.png" alt="set associative mapping" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p><strong>Fully associative</strong>: Data blocks can be placed anywhere in memory.</p>
+<img src="https://note.noughtq.top/sys/ca/images/C2/104.png" alt="set associative mapping" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p><strong>N-way set associative</strong>: Each data block is restricted to a specific set in memory and can be placed in any of the n locations within that set.</p>
+<img src="https://note.noughtq.top/sys/ca/images/C2/105.png" alt="set associative mapping" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Direct mapped &#x3D; 1-way set associative, Fully associative &#x3D; N-way set associative</p>
+</blockquote>
+<h4 id="Block-Identification"><a href="#Block-Identification" class="headerlink" title="Block Identification"></a>Block Identification</h4><p>The unique address of each cache block is divided into multiple fields as follows:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C2/3.png" alt="set associative mapping" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p><strong>block address</strong>: </p>
+<ul>
+<li>tag</li>
+<li>index: In set-associative mapping, used to select a specific set, number of bits &#x3D; <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi>log</mi><mo>⁡</mo></mrow><mn>2</mn></msub><mo stretchy="false">(</mo><mi mathvariant="normal">#</mi><mtext>sets</mtext><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\log_2(\#\text{sets})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop"><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.207em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord">#</span><span class="mord text"><span class="mord">sets</span></span><span class="mclose">)</span></span></span></span></li>
+</ul>
+<p><strong>block offset</strong>: number of bits &#x3D; <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi>log</mi><mo>⁡</mo></mrow><mn>2</mn></msub><mo stretchy="false">(</mo><mtext>size of block</mtext><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\log_2(\text{size of block})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop"><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.207em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord text"><span class="mord">size of block</span></span><span class="mclose">)</span></span></span></span></p>
+<p><strong>valid bit</strong>: If this bit is 0, it indicates that the address is invalid</p>
+<img src="https://note.noughtq.top/sys/co/images/C5/9.png" alt="set associative mapping" style="max-width: 80%; display: block; margin: 0 auto;">
+
+<h4 id="Block-Replacement"><a href="#Block-Replacement" class="headerlink" title="Block Replacement"></a>Block Replacement</h4><p>When a failure occurs, the controller must decide which data block to replace in order to store the data required by the processor.</p>
+<p>For <strong>direct mapping</strong>: No selection is needed; a specific data block is directly replaced.</p>
+<p>For <strong>set-associative</strong> and <strong>fully associativ</strong>e:</p>
+<ul>
+<li><strong>Random</strong>: Randomly selects a block, which is simple to implement but may evict recently accessed blocks.</li>
+<li><strong>Least Recently Used (LRU)</strong>: Replaces the data block that has not been used for the longest time, with the drawback of being complex to implement.</li>
+<li><strong>First In, First Out</strong>: Replaces the oldest existing data block, which is an approximate implementation of LRU.</li>
+</ul>
+<h4 id="Write-Strategy"><a href="#Write-Strategy" class="headerlink" title="Write Strategy"></a>Write Strategy</h4><p><strong>Two Strategies for Write Hits</strong></p>
+<ul>
+<li><p><strong>Write through</strong>: Information is written to both the data block in the cache and the data block in the next level of memory, with the advantage of being simple to implement.</p>
+<ul>
+<li>Write stall: The processor must wait for the write-through to complete before proceeding to the next step. An optimization method is to add a write buffer, allowing the processor to continue executing subsequent tasks while data is being written into the buffer.</li>
+</ul>
+</li>
+<li><p><strong>Write back</strong>: Information is only written into the data block of the cache. Once a modified data block (dirty block) in the cache is about to be replaced, this data block must be written to the next level of memory to ensure that previous updates are applied to the underlying memory.</p>
+<ul>
+<li>Introduce a dirty bit as a status bit to record the modification status of a data block.</li>
+</ul>
+</li>
+</ul>
+<p><strong>Two Strategies for Write Misses</strong></p>
+<ul>
+<li><strong>Write allocate</strong>: Load the entire data block containing the target address from main memory (or the next level of cache) into the cache (corresponding to Write back)</li>
+<li><strong>No-write allocate&#x2F;Write around</strong>: Write directly to main memory (corresponding to Write through)</li>
+</ul>
+<img src="https://note.noughtq.top/sys/ca/images/C2/16.png" alt="set associative mapping" style="max-width: 100%; display: block; margin: 0 auto;">
+
+<h2 id="2-2-Cache"><a href="#2-2-Cache" class="headerlink" title="2.2 Cache"></a>2.2 Cache</h2><blockquote>
+<p>unified cache: Instructions and data share the same cache space<br>split cache: Instructions and data have their own independent cache spaces</p>
+</blockquote>
+<h3 id="Performance"><a href="#Performance" class="headerlink" title="Performance"></a>Performance</h3><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>CPU execution time</mtext><mo>=</mo><mo stretchy="false">(</mo><mtext>CPU clock cycles</mtext><mo>+</mo><mtext>Memory stall cycles</mtext><mo stretchy="false">)</mo><mo>×</mo><mtext>Clock cycle time</mtext></mrow><annotation encoding="application/x-tex">\text{CPU execution time} = (\text{CPU clock cycles}+ \text{Memory stall cycles})\times \text{Clock cycle time}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord text"><span class="mord">CPU execution time</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord text"><span class="mord">CPU clock cycles</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">Memory stall cycles</span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">Clock cycle time</span></span></span></span></span>
+
+<p>The number of memory stall cycles is jointly determined by the number of misses and the miss penalty.</p>
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mtext>Memory stall cycles</mtext></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>Numbers of misses</mtext><mo>×</mo><mtext>Miss penalty</mtext></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>IC</mtext><mo>×</mo><mfrac><mtext>Misses</mtext><mtext>Instruction</mtext></mfrac><mo>×</mo><mtext>Miss penalty</mtext></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>IC</mtext><mo>×</mo><mfrac><mtext>Memory accesses</mtext><mtext>Instruction</mtext></mfrac><mo>×</mo><mtext>Miss rate</mtext><mo>×</mo><mtext>Miss penalty</mtext></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+\text{Memory stall cycles}
+&amp;= \text{Numbers of misses} \times \text{Miss penalty} \\
+&amp;= \text{IC} \times \frac{\text{Misses}}{\text{Instruction}} \times \text{Miss penalty} \\
+&amp;= \text{IC} \times \frac{\text{Memory accesses}}{\text{Instruction}} \times \text{Miss rate} \times \text{Miss penalty}
+\end{aligned}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:6.1927em;vertical-align:-2.8463em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:3.3463em;"><span style="top:-5.8667em;"><span class="pstrut" style="height:3.3603em;"></span><span class="mord"><span class="mord text"><span class="mord">Memory stall cycles</span></span></span></span><span style="top:-3.8463em;"><span class="pstrut" style="height:3.3603em;"></span><span class="mord"></span></span><span style="top:-1.5em;"><span class="pstrut" style="height:3.3603em;"></span><span class="mord"></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.8463em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:3.3463em;"><span style="top:-5.8667em;"><span class="pstrut" style="height:3.3603em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord text"><span class="mord">Numbers of misses</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord text"><span class="mord">Miss penalty</span></span></span></span><span style="top:-3.8463em;"><span class="pstrut" style="height:3.3603em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord text"><span class="mord">IC</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3603em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">Instruction</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">Misses</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord text"><span class="mord">Miss penalty</span></span></span></span><span style="top:-1.5em;"><span class="pstrut" style="height:3.3603em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord text"><span class="mord">IC</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3603em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">Instruction</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">Memory accesses</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord text"><span class="mord">Miss rate</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord text"><span class="mord">Miss penalty</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.8463em;"><span></span></span></span></span></span></span></span></span></span></span>
+
+<p>Failure loss and failure rate may differ in read and write scenarios, so they can be discussed separately if necessary.</p>
+<span class="katex-error" title="ParseError: KaTeX parse error: Mismatch: \begin{aligned} matched by \end{aliged} at position 280: … miss penalty}
+\̲e̲n̲d̲{aliged}" style="color:#cc0000">\begin{aligned}
+\text{Miss stall clock cycles}
+&amp;= \text{IC} \times \text{Reads per instruction} \times \text{Read miss rate} \times \text{Read miss penalty} \\
+&amp;\quad + \text{IC} \times \text{Writes per instruction} \times \text{Write miss rate} \times \text{Write miss penalty}
+\end{aliged}</span>
+
+<p><strong>average memory access time, AMAT</strong>：</p>
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>Average memory access time</mtext><mo>=</mo><mtext>Hit time</mtext><mo>+</mo><mtext>Miss rate</mtext><mo>×</mo><mtext>Miss penalty</mtext></mrow><annotation encoding="application/x-tex">\text{Average memory access time} = \text{Hit time} + \text{Miss rate} \times \text{Miss penalty}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">Average memory access time</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord text"><span class="mord">Hit time</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord text"><span class="mord">Miss rate</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">Miss penalty</span></span></span></span></span>
+
+<blockquote>
+<p>例子还没看，实在看不进去，好让人没有食欲的题目、、、</p>
+</blockquote>
+<h4 id="Impact-of-Caches-on-Processor-Performance"><a href="#Impact-of-Caches-on-Processor-Performance" class="headerlink" title="Impact of Caches on Processor Performance"></a>Impact of Caches on Processor Performance</h4><h2 id="2-3-Virtual-Memory"><a href="#2-3-Virtual-Memory" class="headerlink" title="2.3 Virtual Memory"></a>2.3 Virtual Memory</h2><h2 id="2-4-The-Design-of-Memory-Hierarchies"><a href="#2-4-The-Design-of-Memory-Hierarchies" class="headerlink" title="2.4 The Design of Memory Hierarchies"></a>2.4 The Design of Memory Hierarchies</h2>
   </div>
 
   
@@ -372,18 +500,18 @@
 
   <div class="container post-prev-next" data-pagefind-ignore>
     
-    <a href="/2026/03/22/Course/Python_Review/" class="next">
+    <a href="/2026/03/02/Course/Object_Oriented_Programing/" class="next">
       <div class="text">
         <p class="label">Next</p>
-        <h3 class="title">Python Review</h3>
+        <h3 class="title">Object-Oriented Programing</h3>
       </div>
     </a>
     
     
-    <a href="/2026/03/02/Course/Object_Oriented_Programing/" class="prev">
+    <a href="/2025/09/22/Course/Python_Review/" class="prev">
       <div class="text">
         <p class="label">Previous</p>
-        <h3 class="title">Object-Oriented Programing</h3>
+        <h3 class="title">Python Review</h3>
       </div>
     </a>
     
