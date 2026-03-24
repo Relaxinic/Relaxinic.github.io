@@ -22,7 +22,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Object_Oriented_Programing.jpg">
 <meta property="article:published_time" content="2026-03-01T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-03-22T14:14:05.897Z">
+<meta property="article:modified_time" content="2026-03-24T06:09:58.917Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Object_Oriented_Programing.jpg">
@@ -498,7 +498,50 @@
 <h2 id="3-2-Friends"><a href="#3-2-Friends" class="headerlink" title="3.2 Friends"></a>3.2 Friends</h2><p><code>Friend</code> declaration within a class allows external classes or functions to access the private or protected members of that class.</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Friend function</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Box</span> </span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> length;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Box</span>(<span class="type">int</span> l) : <span class="built_in">length</span>(l) &#123;&#125;</span><br><span class="line">    <span class="function"><span class="keyword">friend</span> <span class="type">void</span> <span class="title">printLength</span><span class="params">(<span class="type">const</span> Box&amp; b)</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">printLength</span><span class="params">(<span class="type">const</span> Box&amp; b)</span> </span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Length is: &quot;</span> &lt;&lt; b.length &lt;&lt; std::endl;</span><br><span class="line">    <span class="comment">// correct</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Friend class</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Car</span> </span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> speed;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Car</span>() : <span class="built_in">speed</span>(<span class="number">200</span>) &#123;&#125;</span><br><span class="line">    <span class="keyword">friend</span> <span class="keyword">class</span> <span class="title class_">Engine</span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Engine</span> </span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">boost</span><span class="params">(Car&amp; c)</span> </span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        c.speed += <span class="number">100</span>;  </span><br><span class="line">        <span class="comment">// correct</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 
-<h2 id="3-3-Scope-and-Lifetime"><a href="#3-3-Scope-and-Lifetime" class="headerlink" title="3.3 Scope and Lifetime"></a>3.3 Scope and Lifetime</h2><h3 id="Local-Objects"><a href="#Local-Objects" class="headerlink" title="Local Objects"></a>Local Objects</h3><h3 id="Global-Objects"><a href="#Global-Objects" class="headerlink" title="Global Objects"></a>Global Objects</h3><h3 id="Static"><a href="#Static" class="headerlink" title="Static"></a>Static</h3>
+<h2 id="3-3-Scope-and-Lifetime"><a href="#3-3-Scope-and-Lifetime" class="headerlink" title="3.3 Scope and Lifetime"></a>3.3 Scope and Lifetime</h2><h3 id="Local-Objects"><a href="#Local-Objects" class="headerlink" title="Local Objects"></a>Local Objects</h3><p><strong>fields</strong>: Variables defined inside a class but outside of functions.</p>
+<p><strong>parameters</strong>: Variables in the declaration of a function or method, used to receive values passed from outside.</p>
+<p><strong>local variables</strong>: Variables defined inside a function or code block, used for temporary calculations or intermediate states.</p>
+<h3 id="Global-Objects"><a href="#Global-Objects" class="headerlink" title="Global Objects"></a>Global Objects</h3><p>The constructor of global objects needs to be called before entering the <code>main()</code> function, and the destructor is called when <code>main()</code> exits or <code>exit()</code> is invoked.</p>
+<h3 id="Static"><a href="#Static" class="headerlink" title="Static"></a>Static</h3><p><strong>non-local static object</strong>: </p>
+<ul>
+<li>Defined in global or namespace scope</li>
+<li>Declared as static variables within a class or file scope</li>
+</ul>
+<p><strong>Static</strong></p>
+<ul>
+<li>Basic meaning: static storage (persistent), restricted access (hidden)</li>
+<li>Usage scenarios<ul>
+<li>Global variables: scope limited to the current file</li>
+<li>Local variables: lifetime spans the entire program runtime</li>
+<li>Member variables&#x2F;functions: belong to the class itself, declared inside the class, defined outside the class.It does not belong to any object, so the this pointer cannot be used on it.<br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">CostEstimate</span> </span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">static</span> <span class="type">const</span> <span class="type">double</span> cost;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;;</span><br><span class="line"><span class="type">const</span> <span class="type">double</span> CostEstimate::cost = <span class="number">1.35</span>;</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
+<h2 id="3-4-Constants-Cannot-be-modified"><a href="#3-4-Constants-Cannot-be-modified" class="headerlink" title="3.4 Constants (Cannot be modified)"></a>3.4 Constants (Cannot be modified)</h2><p><strong>Modifying Variables</strong></p>
+<ul>
+<li>The compiler attempts to avoid creating memory space for <code>const</code> variables, but if the <code>extern</code> keyword is used in front, it forces the compiler to allocate memory space.</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Solution for initializing class member variables in the constructor</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">HasArray</span> </span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">enum</span> &#123; size = <span class="number">100</span> &#125;; <span class="comment">// 1. anonymous enumeration</span></span><br><span class="line">    <span class="type">static</span> <span class="type">const</span> <span class="type">int</span> size = <span class="number">100</span>; <span class="comment">// 2. use static keyword</span></span><br><span class="line">    <span class="type">int</span> array[size];</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><strong>修饰指针</strong></p>
+<ul>
+<li><code>const int* p1</code> &#x2F; <code>int const* p1</code>：<code>p1</code> 指向的值不得被修改，但 <code>p1</code> 本身可以被修改</li>
+<li><code>int* const p2</code>: <code>p2</code> 本身不得被修改，但可以修改其指向的值</li>
+</ul>
+<p><strong>修饰函数参数</strong></p>
+<ul>
+<li><code>void foo(const int&amp; x)</code>: 防止函数修改传入的参数</li>
+</ul>
+<p><strong>修饰返回值</strong></p>
+<ul>
+<li><code>const std::string&amp; getStr()</code>: 如果返回的是指针或引用，为防止误修改，可以加 <code>const</code></li>
+</ul>
+<p><strong>修饰成员函数</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">A</span> </span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">int</span> <span class="title">getVal</span><span class="params">()</span> <span class="type">const</span> </span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> val;</span><br><span class="line">        &#125;</span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        <span class="type">int</span> val;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>此时该成员函数不能修改成员变量</li>
+</ul>
+
   </div>
 
   
@@ -522,10 +565,10 @@
     </a>
     
     
-    <a href="/2026/03/02/Course/Computer_Architecture/" class="prev">
+    <a href="/2025/09/22/Course/Python_Review/" class="prev">
       <div class="text">
         <p class="label">Previous</p>
-        <h3 class="title">Computer Architecture</h3>
+        <h3 class="title">Python Review</h3>
       </div>
     </a>
     
