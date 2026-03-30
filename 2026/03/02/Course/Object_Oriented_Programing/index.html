@@ -22,7 +22,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Object_Oriented_Programing.jpg">
 <meta property="article:published_time" content="2026-03-01T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-03-24T06:09:58.917Z">
+<meta property="article:modified_time" content="2026-03-26T08:28:43.954Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Object_Oriented_Programing.jpg">
@@ -517,31 +517,82 @@
 </ul>
 </li>
 </ul>
-<h2 id="3-4-Constants-Cannot-be-modified"><a href="#3-4-Constants-Cannot-be-modified" class="headerlink" title="3.4 Constants (Cannot be modified)"></a>3.4 Constants (Cannot be modified)</h2><p><strong>Modifying Variables</strong></p>
+<h2 id="3-4-Constants-Cannot-be-modified"><a href="#3-4-Constants-Cannot-be-modified" class="headerlink" title="3.4 Constants (Cannot be modified)"></a>3.4 Constants (Cannot be modified)</h2><p><strong>Modify Variables</strong></p>
 <ul>
 <li>The compiler attempts to avoid creating memory space for <code>const</code> variables, but if the <code>extern</code> keyword is used in front, it forces the compiler to allocate memory space.</li>
 </ul>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Solution for initializing class member variables in the constructor</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">HasArray</span> </span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">enum</span> &#123; size = <span class="number">100</span> &#125;; <span class="comment">// 1. anonymous enumeration</span></span><br><span class="line">    <span class="type">static</span> <span class="type">const</span> <span class="type">int</span> size = <span class="number">100</span>; <span class="comment">// 2. use static keyword</span></span><br><span class="line">    <span class="type">int</span> array[size];</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 
-<p><strong>修饰指针</strong></p>
+<p><strong>Modify Pointers</strong></p>
 <ul>
-<li><code>const int* p1</code> &#x2F; <code>int const* p1</code>：<code>p1</code> 指向的值不得被修改，但 <code>p1</code> 本身可以被修改</li>
-<li><code>int* const p2</code>: <code>p2</code> 本身不得被修改，但可以修改其指向的值</li>
+<li><code>const int* p1</code> &#x2F; <code>int const* p1</code>: The value pointed to by <code>p1</code> cannot be modified, but <code>p1</code> itself can be modified.</li>
+<li><code>int* const p2</code>: <code>p2</code> itself cannot be modified, but the value it points to can be modified.</li>
 </ul>
-<p><strong>修饰函数参数</strong></p>
+<p><strong>Modify Function Parameters</strong></p>
 <ul>
-<li><code>void foo(const int&amp; x)</code>: 防止函数修改传入的参数</li>
+<li><code>void foo(const int&amp; x)</code>: Prevents the function from modifying the passed parameter.</li>
 </ul>
-<p><strong>修饰返回值</strong></p>
+<p><strong>Modify Return Values</strong></p>
 <ul>
-<li><code>const std::string&amp; getStr()</code>: 如果返回的是指针或引用，为防止误修改，可以加 <code>const</code></li>
+<li><code>const std::string&amp; getStr()</code>: If returning a pointer or reference, <code>const</code> can be added to prevent unintended modifications.</li>
 </ul>
-<p><strong>修饰成员函数</strong></p>
+<p><strong>Modify member functions</strong></p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">A</span> </span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="type">int</span> <span class="title">getVal</span><span class="params">()</span> <span class="type">const</span> </span></span><br><span class="line"><span class="function">        </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> val;</span><br><span class="line">        &#125;</span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        <span class="type">int</span> val;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 <ul>
-<li>此时该成员函数不能修改成员变量</li>
+<li>At this point, the member function cannot modify member variables and can only call other <code>const</code> member functions.</li>
+<li>This <code>const</code> modifies the <code>this</code> pointer.</li>
+<li>Function overloading: You can create two versions of the same member function—one decorated with <code>const</code> and one without. First, define a <code>const</code> version of the function, and then have the non-<code>const</code> version call this function.  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="type">const</span> T&amp; Vector&lt;T&gt;::<span class="built_in">findElement</span>(<span class="type">const</span> T&amp; value) <span class="type">const</span> </span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; logical_size; i++) </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (elems[i] == value) <span class="keyword">return</span> elems[i];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">throw</span> std::<span class="built_in">out_of_range</span>(<span class="string">&quot;Element not found&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">T&amp; Vector&lt;T&gt;::<span class="built_in">findElement</span>(<span class="type">const</span> T&amp; value) </span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">const_cast</span>&lt;T&amp;&gt;(<span class="keyword">static_cast</span>&lt;<span class="type">const</span> Vector&lt;T&gt;&amp;&gt;(*<span class="keyword">this</span>).<span class="built_in">findElement</span>(value));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
 </ul>
+<h2 id="3-5-Composition"><a href="#3-5-Composition" class="headerlink" title="3.5 Composition"></a>3.5 Composition</h2><p>A class uses an object of another class as its member variable, organizing and reusing its code, thereby “possessing” the functionality of the other class.</p>
+<p><strong>Method 1: Value Composition &#x2F; Embedded Objects</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">A</span> </span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">A</span>(<span class="type">int</span> val) : <span class="built_in">x</span>(val) &#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">B</span> </span><br><span class="line">&#123;</span><br><span class="line">    A a1, a2;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">B</span>() : <span class="built_in">a1</span>(<span class="number">10</span>), <span class="built_in">a2</span>(<span class="number">20</span>) &#123;&#125; <span class="comment">// Initialize sub-objects using list initialization</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 
+<p><strong>Method 2: Reference &#x2F; Pointer Combination</strong></p>
+<h2 id="3-6-Inheritance"><a href="#3-6-Inheritance" class="headerlink" title="3.6 Inheritance"></a>3.6 Inheritance</h2><p>Create a new class (called a <strong>derived class</strong> or <strong>subclass</strong>) based on an existing class (called a b<strong>ase class</strong> or <strong>superclass</strong>). The derived class automatically inherits the attributes and methods of the base class.</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Base class</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Animal</span> </span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">speak</span><span class="params">()</span> </span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Animal makes a sound&quot;</span> &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Derived class</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Dog</span> : <span class="keyword">public</span> Animal </span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">bark</span><span class="params">()</span> </span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Dog barks&quot;</span> &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Dog d;</span><br><span class="line"></span><br><span class="line">    d.<span class="built_in">speak</span>(); <span class="comment">// Inherited from Animal</span></span><br><span class="line">    d.<span class="built_in">bark</span>();  <span class="comment">// User-defined functions</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>The content that can be inherited</strong> includes:</p>
+<ul>
+<li>Member variables</li>
+<li><code>public</code> or <code>protected</code> member functions</li>
+<li>Static members: Their scope remains within the class.</li>
+</ul>
+<p><strong>Content that cannot be directly inherited</strong> includes:</p>
+<ul>
+<li>Constructors</li>
+<li>Destructors</li>
+<li>Assignment operators</li>
+</ul>
+<p>Assuming class <code>B</code> is a derived class of class <code>A</code>, then:</p>
+<table>
+<thead>
+<tr>
+<th align="left">Inheritance Type</th>
+<th align="left"><code>public</code></th>
+<th align="left"><code>protected</code></th>
+<th align="left"><code>private</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>public A</code></td>
+<td align="left">Public in B</td>
+<td align="left">Protected in B</td>
+<td align="left">Hidden</td>
+</tr>
+<tr>
+<td align="left"><code>private A</code></td>
+<td align="left">Private in B</td>
+<td align="left">Private in B</td>
+<td align="left">Hidden</td>
+</tr>
+<tr>
+<td align="left"><code>protected A</code></td>
+<td align="left">Protected in B</td>
+<td align="left">Protected in B</td>
+<td align="left">Hidden</td>
+</tr>
+</tbody></table>
+<h2 id="3-7-Polymorphism"><a href="#3-7-Polymorphism" class="headerlink" title="3.7 Polymorphism"></a>3.7 Polymorphism</h2><h3 id="Subclassing-and-Subtyping"><a href="#Subclassing-and-Subtyping" class="headerlink" title="Subclassing and Subtyping"></a>Subclassing and Subtyping</h3>
   </div>
 
   
@@ -565,10 +616,10 @@
     </a>
     
     
-    <a href="/2026/03/02/Course/Database_System/" class="prev">
+    <a href="/2025/09/22/Course/Python_Review/" class="prev">
       <div class="text">
         <p class="label">Previous</p>
-        <h3 class="title">Database System</h3>
+        <h3 class="title">Python Review</h3>
       </div>
     </a>
     
