@@ -557,16 +557,16 @@ body {
   font-size: 34px;
 }
 .post > .content > h2 {
-  font-size: 30px;
-}
-.post > .content > h3 {
   font-size: 26px;
 }
-.post > .content > h4 {
+.post > .content > h3 {
   font-size: 22px;
 }
-.post > .content > h5 {
+.post > .content > h4 {
   font-size: 18px;
+}
+.post > .content > h5 {
+  font-size: 16px;
 }
 .post > .content > h6 {
   font-size: 14px;

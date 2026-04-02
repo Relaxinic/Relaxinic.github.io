@@ -22,7 +22,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Database_System.jpg">
 <meta property="article:published_time" content="2026-03-01T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-03-30T03:54:13.099Z">
+<meta property="article:modified_time" content="2026-04-02T06:37:55.942Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Database_System.jpg">
@@ -209,11 +209,13 @@
       
       <a class="nav-item" href="/categories/Course/" style="--index: 3">Course</a>
       
-      <a class="nav-item" href="/archives" style="--index: 4">Archives</a>
+      <a class="nav-item" href="/categories/Mainline/" style="--index: 4">Mainline</a>
       
-      <a class="nav-item" href="/about" style="--index: 5">About</a>
+      <a class="nav-item" href="/archives" style="--index: 5">Archives</a>
       
-      <a class="nav-item is-icon" href="/search" style="--index: 6"><i class="bi bi-search"></i></a>
+      <a class="nav-item" href="/about" style="--index: 6">About</a>
+      
+      <a class="nav-item is-icon" href="/search" style="--index: 7"><i class="bi bi-search"></i></a>
       
     </div>
   </div>
@@ -705,7 +707,20 @@
 <li>And use <code>REFERENCING OLD TABLE AS</code> and <code>REFERENCING NEW TABLE AS</code> to create transition tables</li>
 </ul>
 <p>Disable trigger: <code>ALTER TRIGGER trigger_name DISABLE</code><br>Delete trigger: <code>DROP TRIGGER trigger_name</code></p>
-
+<h1 id="Chapter-6-Database-Design-Using-the-E-R-Model"><a href="#Chapter-6-Database-Design-Using-the-E-R-Model" class="headerlink" title="Chapter 6 Database Design Using the E-R Model"></a>Chapter 6 Database Design Using the E-R Model</h1><h2 id="6-1-Overview-of-the-Design-Process"><a href="#6-1-Overview-of-the-Design-Process" class="headerlink" title="6.1 Overview of the Design Process"></a>6.1 Overview of the Design Process</h2><ul>
+<li>Use the entity-relationship model as a data model to convert requirements into the conceptual schema of a database.</li>
+<li>Specification of functional requirements: includes the operations (or transactions) that users need to perform on the data.</li>
+<li>Convert the abstract data model into the concrete implementation of the database, divided into:<ul>
+<li>Physical design: specifies the physical functions of the database, including file organization forms, index structures, etc.</li>
+<li>Logical design: maps the high-level conceptual schema to the concrete implementation of the data model.</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>Design Pitfalls: redundancy &amp; incompleteness</p>
+</blockquote>
+<h2 id="6-2-The-Entity-Relationship-Model"><a href="#6-2-The-Entity-Relationship-Model" class="headerlink" title="6.2 The Entity-Relationship Model"></a>6.2 The Entity-Relationship Model</h2><p>It includes the following three basic concepts: <strong>entity set, relationship set, and attribute</strong></p>
+<h3 id="Entity-Sets"><a href="#Entity-Sets" class="headerlink" title="Entity Sets"></a>Entity Sets</h3><h3 id="Relationship-Sets"><a href="#Relationship-Sets" class="headerlink" title="Relationship Sets"></a>Relationship Sets</h3><h2 id="6-3-Complex-Attributes"><a href="#6-3-Complex-Attributes" class="headerlink" title="6.3 Complex Attributes"></a>6.3 Complex Attributes</h2>
   </div>
 
   
