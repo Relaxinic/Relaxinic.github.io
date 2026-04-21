@@ -22,7 +22,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Computer_Architecture.jpg">
 <meta property="article:published_time" content="2026-03-01T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-04-03T13:59:52.637Z">
+<meta property="article:modified_time" content="2026-04-11T11:18:14.291Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Computer_Architecture.jpg">
@@ -492,7 +492,390 @@
 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle scriptlevel="0" displaystyle="true"><mfrac><mtext>Memory stall cycles</mtext><mtext>Instruction</mtext></mfrac></mstyle><mo>=</mo><mstyle scriptlevel="0" displaystyle="true"><mfrac><mtext>Misses</mtext><mtext>Instruction</mtext></mfrac></mstyle><mo>×</mo><mo stretchy="false">(</mo><mtext>Total miss latency</mtext><mo>−</mo><mtext>Overlapped miss latency</mtext><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\dfrac{\text{Memory stall cycles}}{\text{Instruction}} = \dfrac{\text{Misses}}{\text{Instruction}} \times (\text{Total miss latency} - \text{Overlapped miss latency})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.0574em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">Instruction</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">Memory stall cycles</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.0463em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3603em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">Instruction</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">Misses</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord text"><span class="mord">Total miss latency</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">Overlapped miss latency</span></span><span class="mclose">)</span></span></span></span>
 
 <p>We need to consider <strong>the length of memory latency</strong> and <strong>the length of latency overlap</strong>.</p>
-<h2 id="2-3-Virtual-Memory"><a href="#2-3-Virtual-Memory" class="headerlink" title="2.3 Virtual Memory"></a>2.3 Virtual Memory</h2><h2 id="2-4-The-Design-of-Memory-Hierarchies"><a href="#2-4-The-Design-of-Memory-Hierarchies" class="headerlink" title="2.4 The Design of Memory Hierarchies"></a>2.4 The Design of Memory Hierarchies</h2>
+<blockquote>
+<p>When evaluating the trade-offs of memory hierarchy, designers typically use simulators for out-of-order processors and memory to verify that measures aimed at improving average memory latency indeed enhance program performance.</p>
+</blockquote>
+<htc-callout type="success">
+  <span slot="icon"><i class="bi bi-check-circle-fill"></i></span>
+  <span slot="title">Summary of Performance Calculation <img src="https://note.noughtq.top/sys/ca/images/C2/12.png" style="max-width: 100%; display: block; margin: 0 auto;">
+</htc-callout>
+
+<h3 id="Basic-Optimizations"><a href="#Basic-Optimizations" class="headerlink" title="Basic Optimizations"></a>Basic Optimizations</h3><p>Three directions to improve cache performance:</p>
+<ul>
+<li>Reduce miss rate</li>
+<li>Reduce miss penalty</li>
+<li>Reduce hit time</li>
+</ul>
+<p>Classification of miss situations:</p>
+<ul>
+<li>Compulsory: A miss inevitably occurs when accessing a data block in the cache for the first time, as the corresponding data block must first be brought into the cache.</li>
+<li>Capacity: The cache cannot contain all the required data blocks.</li>
+<li>Conflict: For set-associative or direct-mapped caches, multiple data blocks map to the same set, causing earlier stored data to be replaced.</li>
+</ul>
+<p>Summary of Six Basic Cache Optimization Methods:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C2/14.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p><code>+</code> indicates a <strong>positive</strong> effect on the factor, <code>-</code> indicates a <strong>negative</strong> effect on the factor, and a blank indicates <strong>no</strong> effect</p>
+</blockquote>
+<h4 id="Larger-Block-Size"><a href="#Larger-Block-Size" class="headerlink" title="Larger Block Size"></a>Larger Block Size</h4><p>Leveraging the advantage of spatial locality reduces the occurrence of forced conflicts.</p>
+<p>Increasing the penalty of misses, as the number of data blocks decreases, leading to conflict misses and even capacity misses.</p>
+<p>The selection of data block size needs to consider both the latency and bandwidth of the lower-level memory. If both latency and bandwidth are high, consider using larger data blocks; otherwise, use smaller ones.</p>
+<h4 id="Larger-Caches"><a href="#Larger-Caches" class="headerlink" title="Larger Caches"></a>Larger Caches</h4><p>It may result in longer hit times, as well as higher costs and power consumption.</p>
+<h4 id="Higher-Associativity"><a href="#Higher-Associativity" class="headerlink" title="Higher Associativity"></a>Higher Associativity</h4><p>Two rules of thumb:</p>
+<ul>
+<li>The effect of reducing misses with an 8-way set-associative cache is nearly equivalent to that of a fully associative cache.</li>
+<li>For a direct-mapped cache of size N, its miss rate is equal to that of a 2-way set-associative cache of size N&#x2F;2.</li>
+</ul>
+<p>The trade-off is an increase in hit time, so increasing the degree of associativity is not recommended for processors with high clock frequencies.</p>
+<h4 id="Multilevel-Caches"><a href="#Multilevel-Caches" class="headerlink" title="Multilevel Caches"></a>Multilevel Caches</h4><p>First, consider the simplest scenario—a two-level cache hierarchy:</p>
+<ul>
+<li>L1 can be made small enough to keep up with the processor’s clock cycles, affecting the processor’s clock frequency.</li>
+<li>L2 can be made large enough to capture more memory accesses, with its speed only impacting the penalty of L1 misses.</li>
+</ul>
+<p>The formula for AMAT becomes:</p>
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mtext>Average memory access time</mtext><mo>=</mo></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><msub><mtext>Hit time</mtext><mtext>L1</mtext></msub><mo>+</mo><msub><mtext>Miss rate</mtext><mtext>L1</mtext></msub></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>×</mo><mo stretchy="false">(</mo><msub><mtext>Hit time</mtext><mtext>L2</mtext></msub><mo>+</mo><msub><mtext>Miss rate</mtext><mtext>L2</mtext></msub><mo>×</mo><msub><mtext>Miss penalty</mtext><mtext>L2</mtext></msub><mo stretchy="false">)</mo></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+\text{Average memory access time} = &amp; \text{Hit time}_{\text{L1}} + \text{Miss rate}_{\text{L1}} \notag \\
+&amp; \times (\text{Hit time}_{\text{L2}} + \text{Miss rate}_{\text{L2}} \times \text{Miss penalty}_{\text{L2}}) \notag 
+\end{aligned}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:3em;vertical-align:-1.25em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.75em;"><span style="top:-3.91em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">Average memory access time</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.25em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.75em;"><span style="top:-3.91em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mord"><span class="mord text"><span class="mord">Hit time</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">L1</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord text"><span class="mord">Miss rate</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">L1</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mopen">(</span><span class="mord"><span class="mord text"><span class="mord">Hit time</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">L2</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord text"><span class="mord">Miss rate</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">L2</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord text"><span class="mord">Miss penalty</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2342em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">L2</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.25em;"><span></span></span></span></span></span></span></span></span></span></span>
+
+<blockquote>
+<p><strong>Local miss rate</strong>: Number of misses in a specific cache &#x2F; Total number of memory accesses to that cache<br><strong>Global miss rate (better for multilevel cache)</strong>: Number of misses in a specific cache &#x2F; Total number of memory accesses from the processor</p>
+</blockquote>
+<p>The number of misses per instruction can be used as a metric, calculated as:</p>
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mtext>Average memory stalls per instruction</mtext><mo>=</mo></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><msub><mtext>Misses per instruction</mtext><mtext>L1</mtext></msub><mo>×</mo><msub><mtext>Hit time</mtext><mtext>L2</mtext></msub></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>+</mo><msub><mtext>Misses per instruction</mtext><mtext>L2</mtext></msub><mo>×</mo><msub><mtext>Miss penalty</mtext><mtext>L2</mtext></msub></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+\text{Average memory stalls per instruction} = &amp; \text{Misses per instruction}_{\text{L1}} \times \text{Hit time}_{\text{L2}} \notag \\
+&amp; + \text{Misses per instruction}_{\text{L2}} \times \text{Miss penalty}_{\text{L2}} \notag 
+\end{aligned}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:3em;vertical-align:-1.25em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.75em;"><span style="top:-3.91em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">Average memory stalls per instruction</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.25em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.75em;"><span style="top:-3.91em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mord"><span class="mord text"><span class="mord">Misses per instruction</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2342em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">L1</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord text"><span class="mord">Hit time</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">L2</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord text"><span class="mord">Misses per instruction</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2342em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">L2</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord text"><span class="mord">Miss penalty</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2342em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">L2</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.25em;"><span></span></span></span></span></span></span></span></span></span></span>
+
+<blockquote>
+<p>The associativity of L2 also affects the overall cache miss penalty.</p>
+</blockquote>
+<ul>
+<li><p><strong>Multilevel Inclusion</strong>: Data from L1 will always appear in L2,  </p>
+<ul>
+<li>This ensures data consistency.  </li>
+<li>The drawback is that additional processing is required for multilevel caches with different block sizes.</li>
+</ul>
+</li>
+<li><p><strong>Multilevel Exclusion</strong>: Data from L1 will never appear in L2,  </p>
+<ul>
+<li>This is suitable when L2 is only slightly larger than L1.  </li>
+<li>When a miss occurs in L1, data is swapped between L1 and L2.</li>
+</ul>
+</li>
+</ul>
+<h4 id="Giving-Priority-to-Read-Misses-over-Writes"><a href="#Giving-Priority-to-Read-Misses-over-Writes" class="headerlink" title="Giving Priority to Read Misses over Writes"></a>Giving Priority to Read Misses over Writes</h4><p>In the write-through strategy, we utilize the write buffer to enhance its performance.</p>
+<p>The write buffer may contain the latest updated value for a certain location, and the data at this location may be requested during a read miss.</p>
+<p>If a read operation directly fetches data from main memory while the data in the write buffer has not yet been written to main memory, it can lead to a RAW data hazard (i.e., reading stale data).</p>
+<p>The optimization method is: when a read miss occurs, check the contents of the write buffer.</p>
+<ul>
+<li><p>If the address of the read request exists in the write buffer (meaning there is pending latest data to be written), fetch the data directly from the write buffer.</p>
+</li>
+<li><p>If there is no conflict and the memory system is available, allow the read miss to proceed and fetch data from main memory.</p>
+</li>
+</ul>
+<p>Regarding write-back caches:</p>
+<ul>
+<li><p>When a read miss requires replacing a “dirty” memory block, copy the dirty block to the write buffer.</p>
+</li>
+<li><p>Then immediately read the new block from main memory.</p>
+</li>
+<li><p>The write-back operation of the dirty block is handled in the background by the write buffer.</p>
+</li>
+<li><p>The processor also needs to check the write buffer for conflicting addresses during a read miss.</p>
+</li>
+</ul>
+<h4 id="Avoiding-Address-Translation-During-Indexing-of-the-Cache"><a href="#Avoiding-Address-Translation-During-Indexing-of-the-Cache" class="headerlink" title="Avoiding Address Translation During Indexing of the Cache"></a>Avoiding Address Translation During Indexing of the Cache</h4><p>For indexes and tags, virtual addresses are not used entirely (i.e., VIVT (Virtual Index, Virtual Tag))</p>
+<ul>
+<li><p>Although it can eliminate the time required for translation</p>
+</li>
+<li><p>Considering the page-level protection mechanism when converting virtual addresses to physical addresses</p>
+<ul>
+<li>Solution: Copy the protection information on the TLB when it becomes invalid, store this information in a field, and check it each time the virtual cache is accessed</li>
+</ul>
+</li>
+<li><p>Ambiguity problem: Whenever a process is switched, the same virtual address points to a different physical address, requiring a cache flush operation</p>
+<ul>
+<li>Solution: Increase the width of the address tag bits to serve as a process-identifier tag (PID)</li>
+</ul>
+</li>
+<li><p>The operating system and user programs may use two different virtual addresses to refer to the same physical address</p>
+<ul>
+<li><p>Solution 1: Antialiasing, ensuring that each cache data block corresponds to a unique physical address</p>
+</li>
+<li><p>Solution 2: Force these aliases to share some address bits, a restriction known as page coloring</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>Virtual Index, Physical Tag (VIPT): A method that leverages the advantages of both virtual and physical caches simultaneously.</p>
+<ul>
+<li><p>Uses the portion of the virtual and physical addresses where the page offset is identical to index the cache.</p>
+</li>
+<li><p>While using this index to read the cache, translates the virtual portion of the address.</p>
+</li>
+<li><p>And matches the tag with the physical address.</p>
+</li>
+<li><p>This approach enables immediate reading of cache data while still using the physical address for comparison.</p>
+</li>
+</ul>
+<h3 id="Advanced-Optimizations"><a href="#Advanced-Optimizations" class="headerlink" title="Advanced Optimizations"></a>Advanced Optimizations</h3><img src="https://note.noughtq.top/sys/ca/images/C2/42.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<h4 id="Small-and-Simple-First-Level-Caches"><a href="#Small-and-Simple-First-Level-Caches" class="headerlink" title="Small and Simple First-Level Caches"></a>Small and Simple First-Level Caches</h4><p>Reduce the size of the first-level cache, or lower its associativity</p>
+<h4 id="Way-Prediction"><a href="#Way-Prediction" class="headerlink" title="Way Prediction"></a>Way Prediction</h4><p>Keep extra bits in the cache (called block predictor bits) to predict the next data block that may be accessed.</p>
+<ul>
+<li><p>If the prediction is correct: The cache access latency is the fast hit time.</p>
+</li>
+<li><p>If the prediction fails: Try the next data block, change the predictor’s content, and incur an additional clock cycle delay.</p>
+</li>
+</ul>
+<p>A major drawback of this method is that it increases the difficulty of pipelining cache accesses.</p>
+<h4 id="Pipelined-Access-and-Multibanked-Caches"><a href="#Pipelined-Access-and-Multibanked-Caches" class="headerlink" title="Pipelined Access and Multibanked Caches"></a>Pipelined Access and Multibanked Caches</h4><p>These optimization methods primarily target L1.</p>
+<p>The approach of multiple partitions can also be applied to L2 and L3 caches, but it is mainly used as a power management technique.</p>
+<p>Pipelined Access: Results in a higher number of clock cycles at the cost of increased latency.</p>
+<p>Multibanked Caches: The cache is divided into independent partitions, each supporting independent access.</p>
+<ul>
+<li><p>How addresses are mapped to partitions affects the behavior of the memory system.</p>
+</li>
+<li><p>Sequential interleaving: A mapping method that evenly distributes addresses to each partition in order.</p>
+</li>
+</ul>
+<img src="https://note.noughtq.top/sys/ca/images/C2/48.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h4 id="Nonblocking-Caches"><a href="#Nonblocking-Caches" class="headerlink" title="Nonblocking Caches"></a>Nonblocking Caches</h4><p>Non-blocking caches allow data to continue providing hits even when cache misses occur, leveraging the potential advantages of out-of-order pipeline CPUs.</p>
+<p>A method to further reduce the penalty of cache misses is “hit under multiple miss” or “miss under miss,” which involves overlapping multiple misses.</p>
+<p>The characteristic that cache misses do not cause the processor to stall increases the difficulty of evaluating the performance of non-blocking caches. The effective miss penalty is the non-overlapping time that causes the processor to stall. The benefits of non-blocking caches depend on the penalties from multiple misses, memory reference patterns, and the number of instructions the processor can execute while outstanding misses are pending.</p>
+<p>Out-of-order processors can hide the penalty of L1 misses that hit in L2 but cannot hide the penalties from lower-level cache misses.</p>
+<p>Implementing a non-blocking high-speed cache is challenging for the following reasons:</p>
+<ul>
+<li><p>Arbitration for contention between hits and misses</p>
+<ul>
+<li>Solution: Give higher priority to hits, then order conflicting misses</li>
+</ul>
+</li>
+<li><p>Tracking outstanding misses to determine when to allow load and store operations to proceed</p>
+<ul>
+<li>Solution: Use a miss status handling register (MSHR) to record outstanding misses and their associated information.</li>
+</ul>
+</li>
+</ul>
+<h4 id="Critical-Word-First-and-Early-Start"><a href="#Critical-Word-First-and-Early-Start" class="headerlink" title="Critical Word First and Early Start"></a>Critical Word First and Early Start</h4><p>critical word first: Request the invalid word data from memory, and once the data is obtained, immediately send it to the processor, allowing the processor to continue executing instructions while the remaining words in the data block are being filled.</p>
+<p>early start: Once the required word data is obtained, send it to the processor and allow the processor to continue executing instructions.</p>
+<p>It only provides significant benefits when the cache data block is large, but it is difficult to calculate the penalty of invalidation.</p>
+<h4 id="Merging-Write-Buffer"><a href="#Merging-Write-Buffer" class="headerlink" title="Merging Write Buffer"></a>Merging Write Buffer</h4><p>Write-back sometimes also uses a write buffer.</p>
+<p>Write merging: If the address of new data matches a valid entry in the write buffer, the new data is merged into that entry.</p>
+<p>If the write buffer is full and there is no address match, the cache (and processor) must wait until there is an empty entry in the write buffer.</p>
+<p>This allows for more efficient use of memory and also reduces the number of stalls.</p>
+<h4 id="Compiler-Optimizations"><a href="#Compiler-Optimizations" class="headerlink" title="Compiler Optimizations"></a>Compiler Optimizations</h4><p>For <strong>instructions</strong>:</p>
+<ul>
+<li><p>Reorder processes in memory to reduce conflict misses</p>
+</li>
+<li><p>Analyze whether instruction conflicts occur</p>
+</li>
+</ul>
+<p>For <strong>data</strong>:</p>
+<ul>
+<li><p>Merging arrays: Represent composite elements with a single array to improve spatial locality</p>
+</li>
+<li><p>Loop interchange: Sometimes, by swapping the inner and outer loops, the order of data access better matches the order of data storage. This reduces miss rates by improving spatial locality</p>
+</li>
+<li><p>Loop fusion: Merge two independent loops that have the same iteration pattern and overlapping variables</p>
+</li>
+<li><p>Blocking: Divide a large array into smaller blocks (blocks), and solve the entire array by addressing each small block separately. This leverages both spatial and temporal locality. Example: Matrix multiplication</p>
+</li>
+</ul>
+<h4 id="Hardware-Prefetching-of-Instructions-and-Data"><a href="#Hardware-Prefetching-of-Instructions-and-Data" class="headerlink" title="Hardware Prefetching of Instructions and Data"></a>Hardware Prefetching of Instructions and Data</h4><p>Core idea:</p>
+<ul>
+<li><p>Use non-blocking cache to allow overlapping memory access during execution.</p>
+</li>
+<li><p>Prefetch instructions and data into the cache or external buffer in advance before the processor requests the data.</p>
+<ul>
+<li><p>Instruction Prefetching: usually done by the hardware outside the cache</p>
+<ul>
+<li><p>When the instruction fails, the processor will not only request the currently missing instruction block, but also pre-take the next consecutive instruction block.</p>
+</li>
+<li><p>These pre-retried blocks will be placed in the instruction stream buffer.</p>
+</li>
+<li><p>If the requested block is already in the stream buffer, cancel the original cache request and send the next pre-get request.</p>
+</li>
+</ul>
+</li>
+<li><p>Data Prefetching: the above method is also applicable to data access</p>
+</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>Disadvantages:<br>If the pre-pickup and the actual demand access compete for bandwidth, the performance may be reduced.<br>If the pre-acquired data is not used in the end, it will waste memory bandwidth and cache space.<br>Useless pre-tached data may expel the really useful data in the cache.<br>Pre-pickup operation will consume additional power consumption.</p>
+</blockquote>
+<h4 id="Compiler-Controlled-Prefetching"><a href="#Compiler-Controlled-Prefetching" class="headerlink" title="Compiler-Controlled Prefetching"></a>Compiler-Controlled Prefetching</h4><p>Using a compiler, insert prefetch instructions for requested data before the processor fetches it.</p>
+<ul>
+<li><p>Register prefetch: Loads a value into a register.</p>
+</li>
+<li><p>Cache prefetch: Loads data only into the cache.</p>
+</li>
+</ul>
+<p>Prefetch instructions that are not error-triggered will automatically become no-ops if they would normally cause an exception.</p>
+<p>The most effective prefetching is “semantically invisible” to the program: prefetching does not alter the contents of registers or memory, and it does not cause virtual address errors. This type of prefetching is also known as nonbinding prefetch.</p>
+<p>Loops can be used for prefetch optimization.</p>
+<p>Issuing prefetch instructions incurs additional instruction overhead.</p>
+<h4 id="Using-HBM-to-Extend-the-Memory-Hierarchy"><a href="#Using-HBM-to-Extend-the-Memory-Hierarchy" class="headerlink" title="Using HBM to Extend the Memory Hierarchy"></a>Using HBM to Extend the Memory Hierarchy</h4><p>HBM: high bandwidth memory</p>
+<p>Core Idea: Reduce the frequency of “opening new rows” and strive to accomplish more work within the same row.</p>
+<p><strong>Loh and Hill (L-H) Scheme</strong>:</p>
+<ul>
+<li><p>Store tags and data in the same row of HBM SDRAM.</p>
+</li>
+<li><p>While opening a row is time-consuming, accessing different parts of the same row significantly reduces latency.</p>
+</li>
+<li><p>The L4 cache is organized as a 29-way set-associative structure, with each row containing a set of tags and 29 data segments.</p>
+</li>
+</ul>
+<p><strong>Qureshi and Loh (Alloy Cache) Scheme</strong>:</p>
+<ul>
+<li><p>An improvement upon the L-H scheme, integrating tags and data together.</p>
+</li>
+<li><p>Adopts a direct-mapped cache structure.</p>
+</li>
+<li><p>Reduces L4 access time to a single HBM cycle (through direct indexing and burst transfers).</p>
+</li>
+<li><p>Trade-off: Significantly reduces hit time but slightly increases miss rate.</p>
+</li>
+</ul>
+<p>Solutions for the problem of miss latency:</p>
+<ul>
+<li><p>Use mapping to track the presence of blocks in the cache</p>
+</li>
+<li><p>Use a memory access predictor (based on historical prediction techniques) to predict possible misses. Small predictors can predict misses with high accuracy, thereby reducing the penalty of misses</p>
+</li>
+</ul>
+<h2 id="2-3-Virtual-Memory"><a href="#2-3-Virtual-Memory" class="headerlink" title="2.3 Virtual Memory"></a>2.3 Virtual Memory</h2><p>Virtual memory divides physical memory into blocks and allocates them to different processes.</p>
+<ul>
+<li><p>Shared and protected memory space</p>
+</li>
+<li><p>Automatic management of memory hierarchy</p>
+</li>
+<li><p>Simplifies the loading of executable programs</p>
+</li>
+<li><p>Reduces the time to start programs</p>
+</li>
+</ul>
+<hr>
+<p><strong>Common Concepts in Virtual Memory</strong></p>
+<p>Page: A fixed-length block of virtual memory data, where a fixed-length address is divided into a page number and a page offset.</p>
+<p>Segment: A variable-length block of virtual memory data, using one word to represent the segment number and another word to represent the segment offset.</p>
+<p>Advantages and disadvantages of the two methods:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C2/38.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>Page fault&#x2F;address fault (analogous to cache miss)</p>
+</li>
+<li><p>Virtual address and physical address</p>
+</li>
+<li><p>Memory mapping&#x2F;address translation</p>
+</li>
+</ul>
+<h3 id="Four-Memory-Hierarchy-Questions-Revisited"><a href="#Four-Memory-Hierarchy-Questions-Revisited" class="headerlink" title="Four Memory Hierarchy Questions Revisited"></a>Four Memory Hierarchy Questions Revisited</h3><p><strong>Data Block Placement</strong>: Fully Associative</p>
+<ul>
+<li>Reason: The penalty for virtual memory misses is extremely high.</li>
+</ul>
+<p><strong>Data Block Identification</strong>: Indexed by page&#x2F;segment number to locate the corresponding page&#x2F;segment.</p>
+<ul>
+<li><p>Typically, a data structure called the page table is used to store the physical addresses of virtual memory data blocks (for segments, offsets are also stored).</p>
+</li>
+<li><p>The size of the page table equals the number of pages in the virtual address space.</p>
+</li>
+</ul>
+<blockquote>
+<p>Inversed page table: A hash function is applied to the virtual address, making its size equal to the number of physical pages in memory.</p>
+</blockquote>
+<ul>
+<li>To reduce address translation time, a Translation Lookaside Buffer (TLB) is often used.</li>
+</ul>
+<p><strong>Data Block Replacement</strong>: LRU (Least Recently Used)</p>
+<ul>
+<li>A use&#x2F;reference bit is employed. The operating system periodically clears the use bit and then sets it again, allowing it to track page access over a period of time.</li>
+</ul>
+<p><strong>Write Strategy</strong>: Write-Back</p>
+<ul>
+<li><p>Reason: The significant difference in access times between memory and the processor.</p>
+</li>
+<li><p>The virtual memory system uses a dirty bit, allowing data blocks to be written to the hard disk when they are modified due to being read from the hard disk.</p>
+</li>
+</ul>
+<h3 id="Techniques-for-Fast-Address-Translation"><a href="#Techniques-for-Fast-Address-Translation" class="headerlink" title="Techniques for Fast Address Translation"></a>Techniques for Fast Address Translation</h3><p>TLB: Leveraging the principle of locality, it retains translations for some addresses in a special cache.</p>
+<ul>
+<li><p>The tag field stores the virtual address.</p>
+</li>
+<li><p>The data field stores the physical page number, protection fields, valid bit, and possibly usage and dirty bits.</p>
+</li>
+<li><p>If the physical page number or protection information in the page table is changed, the operating system must invalidate the corresponding entry in the TLB.</p>
+</li>
+</ul>
+<p>Operations within the TLB during address translation:</p>
+<ul>
+<li><p>Send the virtual address to all tags.</p>
+</li>
+<li><p>Check the memory access type against the protection information in the TLB.</p>
+</li>
+<li><p>The matching tag sends the physical address to the MUX.</p>
+</li>
+<li><p>Concatenate the page offset with the physical page frame to form the final physical address.</p>
+</li>
+</ul>
+<h3 id="Page-Size"><a href="#Page-Size" class="headerlink" title="Page Size"></a>Page Size</h3><p>Reasons for using larger pages:</p>
+<ul>
+<li><p>Save storage space for page tables</p>
+</li>
+<li><p>Utilize larger caches</p>
+</li>
+<li><p>Make full use of secondary storage</p>
+</li>
+<li><p>More memory can be effectively mapped, reducing TLB misses</p>
+</li>
+</ul>
+<p>Reasons for using smaller pages:</p>
+<ul>
+<li><p>Conserve storage space</p>
+</li>
+<li><p>Speed up process startup</p>
+</li>
+</ul>
+<p>Adopting multiple page sizes: Achieve both benefits</p>
+<h3 id="Protection"><a href="#Protection" class="headerlink" title="Protection"></a>Protection</h3><p><strong>Multiprogramming</strong>: Concurrently running programs share the resources of a single computer.</p>
+<p><strong>Process</strong>: Includes the program currently running and the state in which the program is running.</p>
+<p><strong>Time-sharing</strong>: A variant of multiprogramming that shares processor and memory resources among multiple interactive users, making it appear as if each user has their own computer.</p>
+<p><strong>Process&#x2F;Context Switch</strong>: The act of switching from one process to another at any given time.</p>
+<p>Since processes may be interrupted or switched multiple times, computer (hardware) and operating system designers are responsible for ensuring correct process behavior. Specifically:</p>
+<ul>
+<li><p>Computer designers ensure that the processor-related state of a process can be saved and restored.</p>
+</li>
+<li><p>Operating system designers ensure that processes do not interfere with each other by partitioning memory to ensure that different processes have their own state at the same time.</p>
+</li>
+</ul>
+<p>Each process has its own page table, pointing to different memory pages, to protect the process.</p>
+<p><strong>Ring</strong>: A protection mechanism of the processor, divided into user, kernel, and possibly more privilege levels.</p>
+<p>In addition to protection mechanisms, computers must also provide shared code and data between processes to allow inter-process communication or to save memory space by reducing copies of the same information.</p>
+<h2 id="2-4-The-Design-of-Memory-Hierarchies"><a href="#2-4-The-Design-of-Memory-Hierarchies" class="headerlink" title="2.4 The Design of Memory Hierarchies"></a>2.4 The Design of Memory Hierarchies</h2><h3 id="Protection-Virtualization-and-Instruction-Set-Architecture"><a href="#Protection-Virtualization-and-Instruction-Set-Architecture" class="headerlink" title="Protection, Virtualization and Instruction Set Architecture"></a>Protection, Virtualization and Instruction Set Architecture</h3><p>Virtual memory and virtualization technologies impose new demands on processor architecture and operating systems, necessitating adjustments to the instruction set architecture to support these functionalities.</p>
+<h3 id="Autonomous-Instruction-Fetch-Units"><a href="#Autonomous-Instruction-Fetch-Units" class="headerlink" title="Autonomous Instruction Fetch Units"></a>Autonomous Instruction Fetch Units</h3><p>Modern out-of-order execution and deep pipeline processors typically use independent instruction fetch units. These units can fetch entire instruction blocks and prefetch them into the L1 cache, thereby reducing instruction cache miss penalties. Although this may increase the miss rate of the data cache (because data that is not immediately needed is prefetched), the overall miss penalty is reduced.</p>
+<h3 id="Speculation-and-Memory-Access"><a href="#Speculation-and-Memory-Access" class="headerlink" title="Speculation and Memory Access"></a>Speculation and Memory Access</h3><p>Speculation</p>
+<ul>
+<li><p>Based on branch prediction, speculative execution is attempted before the processor determines whether the instruction truly needs to be executed.</p>
+</li>
+<li><p>If speculation is incorrect, speculative instructions in the pipeline are cleared, potentially causing unnecessary memory references, which can increase cache miss rates.</p>
+</li>
+<li><p>When combined with prefetching techniques, speculation can actually reduce the overall penalty of cache misses.</p>
+</li>
+</ul>
+<h3 id="Special-Instruction-Caches"><a href="#Special-Instruction-Caches" class="headerlink" title="Special Instruction Caches"></a>Special Instruction Caches</h3><p>To meet the high instruction bandwidth demands of superscalar processors, a small cache can be used to store recently translated micro-operations, which helps reduce the penalty caused by branch prediction errors.</p>
+<h3 id="Coherency-of-Cached-Data"><a href="#Coherency-of-Cached-Data" class="headerlink" title="Coherency of Cached Data"></a>Coherency of Cached Data</h3><p>When there are multiple copies of data, we need to ensure the consistency (coherency) of this data.</p>
+<p>I&#x2F;O cache coherency: When I&#x2F;O devices interact with cached data, it is necessary to ensure that the data involved in I&#x2F;O operations remains consistent with the data in the cache. Otherwise, it may cause the processor to see stale data or stall while waiting for I&#x2F;O.</p>
+<p>Solutions:</p>
+<ul>
+<li>Invalidate cache entries</li>
+<li>Flush buffers</li>
+</ul>
+<h1 id="Chapter-3-Instruction-Level-Parallelism-and-Its-Exploitation"><a href="#Chapter-3-Instruction-Level-Parallelism-and-Its-Exploitation" class="headerlink" title="Chapter 3 Instruction-Level Parallelism and Its Exploitation"></a>Chapter 3 Instruction-Level Parallelism and Its Exploitation</h1><h2 id="3-1-Introduction"><a href="#3-1-Introduction" class="headerlink" title="3.1 Introduction"></a>3.1 Introduction</h2><h3 id="Dependences-in-Instructions"><a href="#Dependences-in-Instructions" class="headerlink" title="Dependences in Instructions"></a>Dependences in Instructions</h3><h2 id="3-2-Basic-Compiler-Techniques-Loop-Unrolling-and-Scheduling"><a href="#3-2-Basic-Compiler-Techniques-Loop-Unrolling-and-Scheduling" class="headerlink" title="3.2 Basic Compiler Techniques: Loop Unrolling and Scheduling"></a>3.2 Basic Compiler Techniques: Loop Unrolling and Scheduling</h2><h2 id="3-3-Advanced-Branch-Prediction"><a href="#3-3-Advanced-Branch-Prediction" class="headerlink" title="3.3 Advanced Branch Prediction"></a>3.3 Advanced Branch Prediction</h2><h2 id="3-4-Dynamic-Scheduling"><a href="#3-4-Dynamic-Scheduling" class="headerlink" title="3.4 Dynamic Scheduling"></a>3.4 Dynamic Scheduling</h2><h2 id="3-5-Hardware-Based-Speculation"><a href="#3-5-Hardware-Based-Speculation" class="headerlink" title="3.5 Hardware-Based Speculation"></a>3.5 Hardware-Based Speculation</h2><h2 id="3-6-Multiple-Issue"><a href="#3-6-Multiple-Issue" class="headerlink" title="3.6 Multiple Issue"></a>3.6 Multiple Issue</h2><h2 id="3-7-Advanced-Techniques-for-Instruction-Delivery-and-Speculation"><a href="#3-7-Advanced-Techniques-for-Instruction-Delivery-and-Speculation" class="headerlink" title="3.7 Advanced Techniques for Instruction Delivery and Speculation"></a>3.7 Advanced Techniques for Instruction Delivery and Speculation</h2><h2 id="3-8-Cross-Cutting-Issues"><a href="#3-8-Cross-Cutting-Issues" class="headerlink" title="3.8 Cross-Cutting Issues"></a>3.8 Cross-Cutting Issues</h2><h2 id="3-9-Multithreading-Exploiting-Thread-Level-Parallelism-to-Improve-Uniprocessor-Throughput"><a href="#3-9-Multithreading-Exploiting-Thread-Level-Parallelism-to-Improve-Uniprocessor-Throughput" class="headerlink" title="3.9 Multithreading: Exploiting Thread-Level Parallelism to Improve Uniprocessor Throughput"></a>3.9 Multithreading: Exploiting Thread-Level Parallelism to Improve Uniprocessor Throughput</h2>
   </div>
 
   
@@ -509,10 +892,10 @@
   <div class="container post-prev-next" data-pagefind-ignore>
     <a class="next"></a>
     
-    <a href="/2026/03/02/Course/Database_System/" class="prev">
+    <a href="/2026/03/02/Course/Object_Oriented_Programing/" class="prev">
       <div class="text">
         <p class="label">Previous</p>
-        <h3 class="title">Database System</h3>
+        <h3 class="title">Object-Oriented Programing</h3>
       </div>
     </a>
     
