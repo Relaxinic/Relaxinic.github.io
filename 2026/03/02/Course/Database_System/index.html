@@ -22,7 +22,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Database_System.jpg">
 <meta property="article:published_time" content="2026-03-01T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-04-20T14:16:49.456Z">
+<meta property="article:modified_time" content="2026-04-28T05:13:35.130Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Database_System.jpg">
@@ -1132,7 +1132,193 @@
 <h3 id="Denormalization-for-Performance"><a href="#Denormalization-for-Performance" class="headerlink" title="Denormalization for Performance"></a>Denormalization for Performance</h3><p>In some applications, redundancy leads to performance improvements, and database designers actually prefer having redundant information.</p>
 <p>The process of denormalizing normalized data is called <strong>denormalization</strong>.</p>
 <h3 id="Other-Design-Issues"><a href="#Other-Design-Issues" class="headerlink" title="Other Design Issues"></a>Other Design Issues</h3><p>crosstab</p>
+<h1 id="Chapter-8-Physical-Storage-Systems"><a href="#Chapter-8-Physical-Storage-Systems" class="headerlink" title="Chapter 8 Physical Storage Systems"></a>Chapter 8 Physical Storage Systems</h1><h2 id="8-1-Overview-of-Physical-Storage-Media"><a href="#8-1-Overview-of-Physical-Storage-Media" class="headerlink" title="8.1 Overview of Physical Storage Media"></a>8.1 Overview of Physical Storage Media</h2><p>Storage device hierarchy diagram related to databases:</p>
+<img src="https://note.noughtq.top/sys/db/images/lec8/1.png" style="max-width: 50%; display: block; margin: 0 auto;">
 
+<h3 id="primary-storage"><a href="#primary-storage" class="headerlink" title="primary storage"></a>primary storage</h3><p><strong>cache</strong>:</p>
+<ul>
+<li>Fastest speed, highest cost</li>
+</ul>
+<p><strong>main memory</strong>:</p>
+<ul>
+<li><p>Data-related operations (executed by machine instructions) are all performed on the main memory.</p>
+</li>
+<li><p>Main memory is volatile; when power is cut off or the system crashes, the contents in the main memory are lost.</p>
+</li>
+</ul>
+<h3 id="secondary-storage-online-storage"><a href="#secondary-storage-online-storage" class="headerlink" title="secondary storage &#x2F; online storage"></a>secondary storage &#x2F; online storage</h3><p><strong>flash memory</strong>:</p>
+<ul>
+<li><p>Non-volatile, meaning data will not be lost in the event of a power outage or failure</p>
+</li>
+<li><p>Examples: USB flash drives, solid-state drives</p>
+</li>
+</ul>
+<p><strong>magnetic-disk storage</strong>:</p>
+<ul>
+<li>Accessing data on a disk is relatively cumbersome: first, the system must move the data from the disk to a location in main memory where it can be accessed; after the system completes the specified operation, the modified data must be written back to the disk.</li>
+</ul>
+<h3 id="teriary-storage-offline-storage"><a href="#teriary-storage-offline-storage" class="headerlink" title="teriary storage &#x2F; offline storage"></a>teriary storage &#x2F; offline storage</h3><p><strong>optical storage</strong>:</p>
+<ul>
+<li>Including: DVD (digital video disk), Blu-ray DVD</li>
+<li>Optical disk jukebox</li>
+</ul>
+<p><strong>tape storage</strong>:</p>
+<ul>
+<li>Generally used for backing up and storing archival data.</li>
+</ul>
+<h2 id="8-2-Storage-Interfaces"><a href="#8-2-Storage-Interfaces" class="headerlink" title="8.2 Storage Interfaces"></a>8.2 Storage Interfaces</h2><ul>
+<li>Serial ATA, SATA</li>
+<li>Serial Attached SCSI，SAS</li>
+<li>Non-Volatile Memory Express，NVMe</li>
+<li>storage area network,SAN</li>
+<li>Network attached storage，NAS</li>
+<li>cloud storage</li>
+</ul>
+<h2 id="8-3-Magnetic-Disks"><a href="#8-3-Magnetic-Disks" class="headerlink" title="8.3 Magnetic Disks"></a>8.3 Magnetic Disks</h2><h3 id="Physical-Characteristics"><a href="#Physical-Characteristics" class="headerlink" title="Physical Characteristics"></a>Physical Characteristics</h3><p>Model diagram:<br><img src="https://note.noughtq.top/sys/db/images/lec8/2.png" style="max-width: 60%; display: block; margin: 0 auto;"></p>
+<p>A disk consists of the following parts:</p>
+<ul>
+<li><p>A set of platters</p>
+</li>
+<li><p>A drive motor and spindle</p>
+</li>
+<li><p>The disk surface is divided into multiple tracks, and tracks are further divided into multiple sectors</p>
+</li>
+<li><p>Above the surface of each platter, there is a read-write head, which is mounted on a disk arm</p>
+</li>
+<li><p>The read-write heads on all platters move together, so the i-th track of all platters is called the i-th cylinder</p>
+</li>
+<li><p>A disk controller connects the computer system and the disk drive. It accepts read&#x2F;write commands for a specific sector and then initiates the operation.</p>
+</li>
+</ul>
+<h3 id="Performance-Measures"><a href="#Performance-Measures" class="headerlink" title="Performance Measures"></a>Performance Measures</h3><ul>
+<li><p><strong>Access time</strong>: The period from initiating a read&#x2F;write request to the start of data transmission, including:</p>
+<ul>
+<li><p>Seek time: The time required to locate the specified track</p>
+<ul>
+<li>Average seek time: Assuming all tracks have the same number of sectors, the average seek time &#x3D; 1&#x2F;3 * worst-case seek time</li>
+</ul>
+</li>
+<li><p>Rotational latency: The time to wait for the read&#x2F;write head to find the specified sector</p>
+<ul>
+<li>Average latency: Generally equal to the time required for half a rotation</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>Data transfer rate</strong>: The speed at which data is retrieved or stored.</p>
+<ul>
+<li><p>Disk I&#x2F;O requests are typically initiated by the file system or directly by the database system.</p>
+</li>
+<li><p>The request includes the address to be referenced, i.e., the block number (a “block” is the logical unit for storage allocation and retrieval).</p>
+</li>
+<li><p>Requests can be categorized into sequential access mode and random access mode.</p>
+<ul>
+<li><p>Sequential access: Consecutive requests target consecutive block numbers, usually on the same or adjacent tracks.</p>
+</li>
+<li><p>Random access: Consecutive requests target random block numbers, and performance can be measured in I&#x2F;O operations per second (IOPS).</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>Mean time to failure (MTTF)</strong>: The average time a system can run continuously without failure, used to measure disk reliability.</p>
+</li>
+</ul>
+<h2 id="8-4-Flash-Memory"><a href="#8-4-Flash-Memory" class="headerlink" title="8.4 Flash Memory"></a>8.4 Flash Memory</h2><p>Flash memory is divided into two types: NOR flash and NAND flash.</p>
+<p>When reading data from flash memory, an entire page (typically 4 KB) must be read.</p>
+<p>Solid-state drives (SSDs) are built on NAND flash memory and provide the same block-oriented interface as disks.</p>
+<p>When performing a write operation, the data must first be erased and then rewritten, and this erase operation must be carried out simultaneously across multiple pages. Each flash memory page has a maximum number of erase cycles; once this limit is exceeded, the page can no longer be used to store data.</p>
+<p>In addition to being limited by the relatively slow erase speed, the performance of flash memory is also constrained by the update speed of mapping logical page numbers to physical page numbers.</p>
+<p>To extend the lifespan of flash memory, it employs a wear leveling mechanism: physical pages that have been erased many times are assigned “cold data,” which is data that is rarely updated, while physical pages with fewer erase cycles are assigned “hot data,” which is frequently updated. The above operations are all implemented by a software layer called the flash translation layer.</p>
+<hr>
+<p>The performance of flash memory is typically measured by the following indicators:</p>
+<ul>
+<li>number of random block reads per second</li>
+<li>data transfer rate</li>
+<li>number of random block writes per second</li>
+</ul>
+<h2 id="8-5-RAID"><a href="#8-5-RAID" class="headerlink" title="8.5 RAID"></a>8.5 RAID</h2><p>redundant arrays of independent disks</p>
+<h3 id="Improvement-of-Reliability-via-Redundancy"><a href="#Improvement-of-Reliability-via-Redundancy" class="headerlink" title="Improvement of Reliability via Redundancy"></a>Improvement of Reliability via Redundancy</h3><p>Improving reliability through redundancy means storing redundant information that is generally not needed but can be used to recover lost information after a hard drive failure.</p>
+<p><strong>Mirroring&#x2F;Shadowing</strong>:</p>
+<ul>
+<li><p>The simplest implementation method</p>
+</li>
+<li><p>Duplicates every hard drive</p>
+</li>
+<li><p>MTTF must consider the mean time to repair, which is the time required to recover data from a failed hard drive, and the mean time to data loss.</p>
+</li>
+</ul>
+<h3 id="Improvement-in-Performance-via-Parallelism"><a href="#Improvement-in-Performance-via-Parallelism" class="headerlink" title="Improvement in Performance via Parallelism"></a>Improvement in Performance via Parallelism</h3><p>Improve performance by supporting parallel access to multiple hard drives.</p>
+<p>Use data striping to increase transfer rates.</p>
+<ul>
+<li><p>Bit-level striping: Divides byte data across multiple hard drives into bits.</p>
+</li>
+<li><p>Block-level striping: Treats a group of hard drives as a single large hard drive, assigning each block a logical number (starting from 0). The i-th logical block is placed on the ⌊<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mi>i</mi><mi>n</mi></mfrac></mrow><annotation encoding="application/x-tex">\frac{i}{n}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.2007em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8557em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span>⌋-th physical block of the (i mod n) + 1-th hard drive.</p>
+</li>
+</ul>
+<h3 id="RAID-Levels"><a href="#RAID-Levels" class="headerlink" title="RAID Levels"></a>RAID Levels</h3><p>Combining hard disk striping and parity blocks</p>
+<ul>
+<li><p>Divide the blocks in the RAID system into multiple groups, each group has a parity block, where the i-th bit is the result of XOR operation on the i-th bit of all blocks in the group.</p>
+</li>
+<li><p>If a block in the group loses data due to a failure, the data of that block can be recovered by performing XOR operation on the remaining blocks plus the parity block.</p>
+</li>
+<li><p>When data in any block is updated, the parity bit must be recalculated and the result written to the parity block.</p>
+</li>
+</ul>
+<p>Based on the technology described above, we classify it into multiple RAID levels:<br><img src="https://note.noughtq.top/sys/db/images/lec8/4.png" style="max-width: 50%; display: block; margin: 0 auto;"></p>
+<ul>
+<li><p>RAID 0: Block-level striping</p>
+</li>
+<li><p>RAID 1: Disk mirroring + block-level striping</p>
+</li>
+<li><p>RAID 5: Block-interleaved distributed parity</p>
+</li>
+<li><p>RAID 6: P + Q redundancy, similar to RAID 5, but uses an additional disk to store error-correcting codes, allowing for the failure of two disks.</p>
+</li>
+</ul>
+<h3 id="Hardware-Issues"><a href="#Hardware-Issues" class="headerlink" title="Hardware Issues"></a>Hardware Issues</h3><p><strong>Latent Failure &#x2F; Bit Rot:</strong></p>
+<p>Even if data is written correctly, it may later become unreadable in that sector.</p>
+<p><strong>Scrubbing:</strong></p>
+<p>When the disk is idle, every sector of each hard drive is read. If a sector is found to be unreadable, data is recovered from the other drives and written back to that sector. If the sector has physical damage, the logical sector address must be remapped to a different physical sector.</p>
+<p><strong>Hot Swapping:</strong></p>
+<p>Without powering off, remove the faulty hard drive and replace it with a new one.</p>
+<h3 id="Choice-of-RAID-Level"><a href="#Choice-of-RAID-Level" class="headerlink" title="Choice of RAID Level"></a>Choice of RAID Level</h3><p>When selecting a RAID level, the following factors need to be considered:</p>
+<ul>
+<li>The monetary cost of additional hard drive storage requirements  </li>
+<li>Performance requirements in terms of I&#x2F;O operations per second  </li>
+<li>Performance during hard drive failure  </li>
+<li>Performance during data reconstruction (rebuilding data from a failed drive onto a new one)</li>
+</ul>
+<p>A brief overview of the applicable scenarios for different RAID levels:</p>
+<ul>
+<li><strong>RAID 0</strong>: Suitable for a few scenarios where data security is not critical but high performance is needed  </li>
+<li><strong>RAID 1</strong>: Ideal for applications that store log files (due to its best write performance) and have high demands for random I&#x2F;O  </li>
+<li><strong>RAID 5</strong>: Suitable for situations where data is frequently read but writes are infrequent  </li>
+<li><strong>RAID 6</strong>: Offers the best reliability, making it suitable for scenarios where data security is extremely important</li>
+</ul>
+<h2 id="8-6-Disk-Block-Access"><a href="#8-6-Disk-Block-Access" class="headerlink" title="8.6 Disk-Block Access"></a>8.6 Disk-Block Access</h2><p>Some techniques to improve access speed by reducing (random) access times:</p>
+<ul>
+<li><p><strong>buffering</strong>: Data blocks read from the hard disk are temporarily stored in the memory buffer to meet future access demands.</p>
+</li>
+<li><p><strong>read-ahead</strong>: When accessing a certain data block on the disk, a continuous group of blocks located on the same track will be read into the buffer simultaneously.</p>
+</li>
+<li><p><strong>scheduling</strong>: disk-arm scheduling algorithm, Try to sort all accesses in order of track to increase the number of accesses that can be processed, similar to the elevator algorithm.</p>
+</li>
+<li><p><strong>file organization</strong>: Organize the blocks in the hard disk according to how we expect to access them.</p>
+<ul>
+<li><strong>fragmented</strong>: Data blocks are distributed across multiple hard drives.</li>
+</ul>
+</li>
+<li><p><strong>non-volatile write buffers</strong>: </p>
+<ul>
+<li><p>Using non-volatile random-access memory (NVRAM) to accelerate hard disk write operations</p>
+</li>
+<li><p>When a database system or operating system initiates a request to write a block to disk, the disk controller writes the block to a non-volatile write buffer and immediately informs the operating system that the write operation is complete; afterward, the disk controller writes the data to the disk in a manner that minimizes disk arm movement.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="Chapter-9"><a href="#Chapter-9" class="headerlink" title="Chapter 9"></a>Chapter 9</h1>
   </div>
 
   
@@ -1147,19 +1333,12 @@
   
 
   <div class="container post-prev-next" data-pagefind-ignore>
+    <a class="next"></a>
     
-    <a href="/2026/03/02/Course/Object_Oriented_Programing/" class="next">
-      <div class="text">
-        <p class="label">Next</p>
-        <h3 class="title">Object-Oriented Programing</h3>
-      </div>
-    </a>
-    
-    
-    <a href="/2025/09/22/Course/Python_Review/" class="prev">
+    <a href="/2026/03/02/Course/Computer_Architecture/" class="prev">
       <div class="text">
         <p class="label">Previous</p>
-        <h3 class="title">Python Review</h3>
+        <h3 class="title">Computer Architecture</h3>
       </div>
     </a>
     

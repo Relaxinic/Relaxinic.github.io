@@ -28,6 +28,13 @@
   font-weight: normal;
   font-style: normal;
 }
+@font-face {
+  font-family: "Blonde";
+  src: url("/font/Blonde.ttf") format("truetype");
+  font-display: swap;
+  font-weight: 400;
+  font-style: normal;
+}
 .post-list.archives {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

@@ -22,7 +22,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Object_Oriented_Programing.jpg">
 <meta property="article:published_time" content="2026-03-01T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-03-26T08:28:43.954Z">
+<meta property="article:modified_time" content="2026-04-28T13:16:00.048Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Object_Oriented_Programing.jpg">
@@ -594,7 +594,105 @@
 <td align="left">Hidden</td>
 </tr>
 </tbody></table>
-<h2 id="3-7-Polymorphism"><a href="#3-7-Polymorphism" class="headerlink" title="3.7 Polymorphism"></a>3.7 Polymorphism</h2><h3 id="Subclassing-and-Subtyping"><a href="#Subclassing-and-Subtyping" class="headerlink" title="Subclassing and Subtyping"></a>Subclassing and Subtyping</h3>
+<h2 id="3-7-Polymorphism"><a href="#3-7-Polymorphism" class="headerlink" title="3.7 Polymorphism"></a>3.7 Polymorphism</h2><p>Its core idea is “one interface, multiple implementations.”</p>
+<h3 id="Subclassing-and-Subtyping"><a href="#Subclassing-and-Subtyping" class="headerlink" title="Subclassing and Subtyping"></a>Subclassing and Subtyping</h3><p><code>public</code> inheritance: establishes an “is-a” relationship and allows implicit type conversion from derived class to base class</p>
+<p>Liskov Substitution Principle (LSP): derived classes must also be behaviorally compatible with the base class</p>
+<ul>
+<li><p>A derived class cannot strengthen the preconditions of a base class method (i.e., impose stricter input requirements)</p>
+</li>
+<li><p>A derived class cannot weaken the postconditions of a base class method (i.e., provide fewer guarantees on output)</p>
+</li>
+<li><p>A derived class must maintain the invariants of the base class</p>
+</li>
+</ul>
+<h3 id="Upcasting"><a href="#Upcasting" class="headerlink" title="Upcasting"></a>Upcasting</h3><p>Convert a pointer or reference of a derived class to a pointer or reference of a base class.</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Animal</span> &#123;&#125;;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Dog</span> : <span class="keyword">public</span> Animal &#123;&#125;;</span><br><span class="line"></span><br><span class="line">Dog myDog;</span><br><span class="line">Animal* pAnimal = &amp;myDog; <span class="comment">// Upcasting</span></span><br><span class="line">Animal&amp; rAnimal = myDog;  <span class="comment">// Upcasting</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Only <code>virtual</code> allows <code>override</code>.</p>
+</blockquote>
+<h3 id="Dynamic-Binding-Late-Binding-Runtime-Binding"><a href="#Dynamic-Binding-Late-Binding-Runtime-Binding" class="headerlink" title="Dynamic Binding (Late Binding &#x2F; Runtime Binding)"></a>Dynamic Binding (Late Binding &#x2F; Runtime Binding)</h3><p>The mechanism that determines which version of a member function to call based on the actual object type pointed to by a pointer or reference during program execution.</p>
+<p>The conditions for this to occur are:</p>
+<ul>
+<li>The call must be made through a pointer or reference to a base class.</li>
+<li>The called member function must be declared as <code>virtual</code> in the base class.</li>
+</ul>
+<blockquote>
+<p><strong>static binding</strong>: During compilation, the specific function to be called has already been determined based on the declared type of the pointer or reference.</p>
+</blockquote>
+<hr>
+<p>Virtual functions allow subclasses to override the behavior of the base class and determine which version of the function to call at runtime based on the actual type of the object.</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Shape</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">Draw</span><span class="params">()</span> </span>&#123; cout &lt;&lt; <span class="string">&quot;Drawing a generic shape&quot;</span> &lt;&lt; endl; &#125;</span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">Shape</span>() &#123;&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>If a derived class object is deleted through a base class pointer, and the base class destructor is not <code>virtual</code>, then only the base class destructor will be called, resulting in a “partially destroyed” object.</p>
+<p>Therefore, if a class is intended to be used as a base class and derived class objects may later be deleted through a base class pointer, its destructor must be declared as <code>virtual</code>.</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">Base</span>() = <span class="keyword">default</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Never call virtual functions in constructors or destructors.<br>Never redefine inherited default parameter values.</p>
+</blockquote>
+<blockquote>
+<p>Alternatives &#x2F; Enhancements for Virtual Functions</p>
+<ol>
+<li>Non-Virtual Interface (NVI) method: It is a template method</li>
+<li>Strategy pattern: The core idea is to decouple the algorithm (strategy) from the context that uses it and make it interchangeable.</li>
+</ol>
+</blockquote>
+<hr>
+<p>The purpose of <strong>overriding</strong> is to provide a function in a subclass that has exactly the same signature as a virtual function in the base class, in order to implement its own specific behavior.</p>
+<ul>
+<li>函数签名：名称、参数列表、<code>const</code> 修饰符必须严格一致</li>
+<li>基类函数必须是 <code>virtual</code>，派生类重写时也建议写上 <code>virtual</code></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">display</span><span class="params">(<span class="type">int</span> x)</span> <span class="type">const</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span> : <span class="keyword">public</span> Base &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">display</span><span class="params">(<span class="type">int</span> x)</span> <span class="type">const</span> <span class="keyword">override</span></span>;</span><br><span class="line">    <span class="comment">// void display(int x) override; // Compilation error! const mismatch</span></span><br><span class="line">    <span class="comment">// void display(double x) const override; // Compilation error! Parameter type mismatch</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>Covariant return types: If a base class virtual function returns <code>Base*</code> or <code>Base&amp;</code>, a derived class can override it to return <code>Derived*</code> or <code>Derived&amp;</code> (where <code>Derived</code> inherits from <code>Base</code>).</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Document</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> Document* <span class="title">clone</span><span class="params">()</span> <span class="type">const</span> </span>= <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">Document</span>() = <span class="keyword">default</span>;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">TextDocument</span> : <span class="keyword">public</span> Document &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function">TextDocument* <span class="title">clone</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span> </span>&#123; <span class="keyword">return</span> <span class="keyword">new</span> <span class="built_in">TextDocument</span>(*<span class="keyword">this</span>); &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>The access level of a derived class’s overridden function cannot be more restrictive than that of the base class.</p>
+</blockquote>
+<p><strong>name hiding</strong>:</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">func</span><span class="params">(<span class="type">int</span>)</span></span>;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(<span class="type">double</span>)</span></span>; <span class="comment">// overloading</span></span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span> : <span class="keyword">public</span> Base &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// Only rewrite the int version</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">(<span class="type">int</span>)</span> <span class="keyword">override</span></span>;</span><br><span class="line">    <span class="comment">// If there is no next line, Base::func(double) will be hidden</span></span><br><span class="line">    <span class="keyword">using</span> Base::func;<span class="comment">// Bring Base&#x27;s func(double) into Derived&#x27;s scope</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Abstract-Classes"><a href="#Abstract-Classes" class="headerlink" title="Abstract Classes"></a>Abstract Classes</h3><p>A class that contains at least one pure virtual function</p>
+<p>Pure virtual function: Adding <code>= 0</code> at the end of the declaration indicates that the function has no implementation and must be provided by a derived class</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// Shape is an abstract class</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Shape</span> &#123; </span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// Pure virtual function: defines an interface, forcing subclasses to implement it</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">double</span> <span class="title">calculateArea</span><span class="params">()</span> <span class="type">const</span> </span>= <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Abstract classes can have ordinary member functions and data members</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">setColor</span><span class="params">(<span class="type">const</span> std::string&amp; c)</span> </span>&#123; color = c; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Even abstract classes need virtual destructors if they might be inherited!</span></span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">Shape</span>() = <span class="keyword">default</span>;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::string color;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>Its function is to provide a unified interface specification, forcing subclasses to implement it.</p>
+<h2 id="3-8-Inheritance-of-Interface-and-Implementation"><a href="#3-8-Inheritance-of-Interface-and-Implementation" class="headerlink" title="3.8 Inheritance of Interface and Implementation"></a>3.8 Inheritance of Interface and Implementation</h2><p>Inheritance can be divided into interface inheritance and implementation inheritance.</p>
+<div align="center">
+| Type | What You Inherit | Can It Be Changed? | Essential Meaning |
+| :---: | :---: | :---: | :---: |
+| Pure Virtual Function | Only the "rule" | Must implement yourself | Only defines the interface |
+| Virtual Function | Rule + default implementation | Can be changed | Has default behavior |
+| Non-Virtual Function | Rule + enforced implementation | Cannot be changed | No variation allowed |
+</div>
+
+<hr>
+<p><strong>Multiple inheritance</strong> refers to a mechanism where a class can inherit from multiple base classes simultaneously.</p>
+<ul>
+<li>Implementing multiple interfaces: A class can satisfy multiple different contracts at the same time. When encountering members with the same name inherited from different base classes, we need to manually specify which base class’s member to use.</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Clickable</span> &#123;</span><br><span class="line"><span class="keyword">public</span>: </span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">onClick</span><span class="params">()</span> </span>= <span class="number">0</span>; </span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">Clickable</span>() = <span class="keyword">default</span>; </span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Serializable</span> &#123; </span><br><span class="line"><span class="keyword">public</span>: </span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">serialize</span><span class="params">(std::ostream&amp; os)</span> <span class="type">const</span> </span>= <span class="number">0</span>; </span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">Serializable</span>() = <span class="keyword">default</span>; </span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Button implements both the Clickable and Serializable interfaces</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Button</span> : <span class="keyword">public</span> Clickable, <span class="keyword">public</span> Serializable &#123; <span class="comment">/* ... implement interface ... */</span> &#125;;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Mixed inheritance: inheriting from a concrete base class while implementing one or more interfaces.</li>
+</ul>
+<p><strong>Diamond Problem</strong>: When a class inherits from the same indirect base class through different paths, multiple copies of the base class’s members exist in the derived class, leading to ambiguity in access.</p>
+<p>The solution to this problem is to use virtual inheritance, i.e., applying the <code>virtual</code> keyword when the intermediate classes inherit from the common base class.</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Top</span> &#123; <span class="keyword">public</span>: <span class="type">int</span> value; &#125;;</span><br><span class="line"><span class="comment">// Using virtual inheritance</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Left</span> : <span class="keyword">virtual</span> <span class="keyword">public</span> Top &#123;&#125;;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Right</span> : <span class="keyword">virtual</span> <span class="keyword">public</span> Top &#123;&#125;;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Bottom</span> : <span class="keyword">public</span> Left, <span class="keyword">public</span> Right &#123;&#125;;</span><br><span class="line"></span><br><span class="line">Bottom b;</span><br><span class="line">b.value = <span class="number">10</span>;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Design Principles for Inheritance and Polymorphism</p>
+<ol>
+<li>Prefer composition over inheritance</li>
+<li>Use multiple inheritance with caution</li>
+<li>Beware of default parameters in virtual functions</li>
+<li>Do not call virtual functions in constructors&#x2F;destructors</li>
+</ol>
+</blockquote>
+<h1 id="Chapter-4-Functions"><a href="#Chapter-4-Functions" class="headerlink" title="Chapter 4 Functions"></a>Chapter 4 Functions</h1><h2 id="Parameter-Passing"><a href="#Parameter-Passing" class="headerlink" title="Parameter Passing"></a>Parameter Passing</h2><h2 id="Function-Return"><a href="#Function-Return" class="headerlink" title="Function Return"></a>Function Return</h2><h2 id="Overloaded-Functions"><a href="#Overloaded-Functions" class="headerlink" title="Overloaded Functions"></a>Overloaded Functions</h2><h2 id="Default-Arguments"><a href="#Default-Arguments" class="headerlink" title="Default Arguments"></a>Default Arguments</h2><h2 id="Inline-Functions"><a href="#Inline-Functions" class="headerlink" title="Inline Functions"></a>Inline Functions</h2><h2 id="Lambda"><a href="#Lambda" class="headerlink" title="Lambda"></a>Lambda</h2><h2 id="Ranges-and-Views"><a href="#Ranges-and-Views" class="headerlink" title="Ranges and Views"></a>Ranges and Views</h2><h2 id="Factory-Functions"><a href="#Factory-Functions" class="headerlink" title="Factory Functions"></a>Factory Functions</h2>
   </div>
 
   
@@ -618,10 +716,10 @@
     </a>
     
     
-    <a href="/2026/03/02/Course/Database_System/" class="prev">
+    <a href="/2025/09/22/Course/Python_Review/" class="prev">
       <div class="text">
         <p class="label">Previous</p>
-        <h3 class="title">Database System</h3>
+        <h3 class="title">Python Review</h3>
       </div>
     </a>
     
