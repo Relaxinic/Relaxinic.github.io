@@ -22,7 +22,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Object_Oriented_Programing.jpg">
 <meta property="article:published_time" content="2026-03-01T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-04-28T13:16:00.048Z">
+<meta property="article:modified_time" content="2026-05-05T12:15:20.209Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Object_Oriented_Programing.jpg">
@@ -641,8 +641,8 @@
 <hr>
 <p>The purpose of <strong>overriding</strong> is to provide a function in a subclass that has exactly the same signature as a virtual function in the base class, in order to implement its own specific behavior.</p>
 <ul>
-<li>函数签名：名称、参数列表、<code>const</code> 修饰符必须严格一致</li>
-<li>基类函数必须是 <code>virtual</code>，派生类重写时也建议写上 <code>virtual</code></li>
+<li>Function signature: The name, parameter list, and <code>const</code> modifier must be strictly consistent</li>
+<li>The base class function must be <code>virtual</code>, and it is recommended to also write <code>virtual</code> when overriding in a derived class</li>
 </ul>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">display</span><span class="params">(<span class="type">int</span> x)</span> <span class="type">const</span></span>;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span> : <span class="keyword">public</span> Base &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">display</span><span class="params">(<span class="type">int</span> x)</span> <span class="type">const</span> <span class="keyword">override</span></span>;</span><br><span class="line">    <span class="comment">// void display(int x) override; // Compilation error! const mismatch</span></span><br><span class="line">    <span class="comment">// void display(double x) const override; // Compilation error! Parameter type mismatch</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 
@@ -661,14 +661,34 @@
 
 <p>Its function is to provide a unified interface specification, forcing subclasses to implement it.</p>
 <h2 id="3-8-Inheritance-of-Interface-and-Implementation"><a href="#3-8-Inheritance-of-Interface-and-Implementation" class="headerlink" title="3.8 Inheritance of Interface and Implementation"></a>3.8 Inheritance of Interface and Implementation</h2><p>Inheritance can be divided into interface inheritance and implementation inheritance.</p>
-<div align="center">
-| Type | What You Inherit | Can It Be Changed? | Essential Meaning |
-| :---: | :---: | :---: | :---: |
-| Pure Virtual Function | Only the "rule" | Must implement yourself | Only defines the interface |
-| Virtual Function | Rule + default implementation | Can be changed | Has default behavior |
-| Non-Virtual Function | Rule + enforced implementation | Cannot be changed | No variation allowed |
-</div>
-
+<table>
+<thead>
+<tr>
+<th align="center">Type</th>
+<th align="center">What You Inherit</th>
+<th align="center">Can It Be Changed?</th>
+<th align="center">Essential Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">Pure Virtual Function</td>
+<td align="center">Only the “rule”</td>
+<td align="center">Must implement yourself</td>
+<td align="center">Only defines the interface</td>
+</tr>
+<tr>
+<td align="center">Virtual Function</td>
+<td align="center">Rule + default implementation</td>
+<td align="center">Can be changed</td>
+<td align="center">Has default behavior</td>
+</tr>
+<tr>
+<td align="center">Non-Virtual Function</td>
+<td align="center">Rule + enforced implementation</td>
+<td align="center">Cannot be changed</td>
+<td align="center">No variation allowed</td>
+</tr>
+</tbody></table>
 <hr>
 <p><strong>Multiple inheritance</strong> refers to a mechanism where a class can inherit from multiple base classes simultaneously.</p>
 <ul>
@@ -716,10 +736,10 @@
     </a>
     
     
-    <a href="/2025/09/22/Course/Python_Review/" class="prev">
+    <a href="/2026/03/02/Course/Database_System/" class="prev">
       <div class="text">
         <p class="label">Previous</p>
-        <h3 class="title">Python Review</h3>
+        <h3 class="title">Database System</h3>
       </div>
     </a>
     

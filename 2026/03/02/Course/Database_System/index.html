@@ -22,7 +22,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Database_System.jpg">
 <meta property="article:published_time" content="2026-03-01T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-04-28T05:13:35.130Z">
+<meta property="article:modified_time" content="2026-05-06T12:29:54.390Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Database_System.jpg">
@@ -1318,7 +1318,402 @@
 </ul>
 </li>
 </ul>
-<h1 id="Chapter-9"><a href="#Chapter-9" class="headerlink" title="Chapter 9"></a>Chapter 9</h1>
+<h1 id="Chapter-9-Database-Storage-Structures"><a href="#Chapter-9-Database-Storage-Structures" class="headerlink" title="Chapter 9 Database Storage Structures"></a>Chapter 9 Database Storage Structures</h1><h2 id="9-1-File-Organization"><a href="#9-1-File-Organization" class="headerlink" title="9.1 File Organization"></a>9.1 File Organization</h2><p>A database is mapped to multiple different files.</p>
+<p>A file contains a sequence of records from the database, and these records are mapped to disk blocks (or pages), which serve as the basic units for storage allocation and data transfer.</p>
+<p>For the convenience of subsequent discussion, we agree that:</p>
+<ul>
+<li><p>A record must not be larger than the size of a disk block (while a disk block may contain multiple records).</p>
+</li>
+<li><p>Each record can only be contained within one disk block.</p>
+</li>
+</ul>
+<h3 id="Pages"><a href="#Pages" class="headerlink" title="Pages"></a>Pages</h3><p>A page can contain different types of data (tuples, indexes, etc.), but most systems do not allow mixing multiple types of data within a single page.</p>
+<p>Each page has a unique identifier (called a page ID). If the database is a single file, the page ID is the file offset. Most DBMSs provide an indirection layer that maps page IDs to file paths and offsets, with the storage manager handling this translation.</p>
+<p>There are generally three types of page sizes:</p>
+<ul>
+<li>Hardware page: typically 4KB</li>
+<li>OS page: 4KB</li>
+<li>Database page: 1-16KB</li>
+</ul>
+<p>The storage device guarantees that the size of an atomic write is equal to the hardware page size.</p>
+<h3 id="Records"><a href="#Records" class="headerlink" title="Records"></a>Records</h3><h4 id="Fixed-Length-Records"><a href="#Fixed-Length-Records" class="headerlink" title="Fixed-Length Records"></a>Fixed-Length Records</h4><p>A very simple method is to directly allocate the maximum byte space for variable-length types. However, this approach leads to the following issues:</p>
+<ul>
+<li><p>Some records may cross block boundaries, meaning certain records are located within two blocks. Accessing such records requires two read&#x2F;write operations.</p>
+<ul>
+<li>Solution: Only allocate records that can fit entirely within each block, and simply ignore the extra space.</li>
+</ul>
+</li>
+<li><p>It is difficult to delete such records because after deletion, the space needs to be filled with other records or simply ignored.</p>
+</li>
+</ul>
+<p>For the issue of record deletion, the following solutions exist:</p>
+<ul>
+<li><p>Move all records after the deleted record forward to fill the space left by the deleted record.</p>
+<ul>
+<li>This method requires moving a large number of records and is inefficient.</li>
+</ul>
+</li>
+<li><p>Directly fill the space of the deleted record with the last record.</p>
+<ul>
+<li>This may lead to additional block accesses.</li>
+</ul>
+</li>
+<li><p>Temporarily leave the space of the deleted record open and wait for subsequent insertions.</p>
+<ul>
+<li><p>At the beginning of the file, we allocate some specific bytes as the file header, which contains information about the file.</p>
+</li>
+<li><p>Here, we only care about the address of the first deleted record (where space is freed). On this record, we record the second deleted free record.</p>
+</li>
+<li><p>These deleted records form a linked list, commonly referred to as a free list.</p>
+</li>
+</ul>
+</li>
+</ul>
+<img src="https://note.noughtq.top/sys/db/images/lec9/4.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h4 id="Variable-Length-Records"><a href="#Variable-Length-Records" class="headerlink" title="Variable-Length Records"></a>Variable-Length Records</h4><p><strong>How to represent a single record so that extracting a single attribute is relatively easy, even if the attribute is of variable length</strong></p>
+<p>Variable-length attributes are represented in two parts: <strong>fixed-length information (offset (starting position of the data) + length (size of the variable-length attribute)), and the variable-length attribute value</strong>. The structure diagram is as follows:</p>
+<img src="https://note.noughtq.top/sys/db/images/lec9/5.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>This record first stores the fixed-length information of three variable-length attributes, followed by a fixed-length attribute value, and finally the variable-length attribute values.</p>
+<p>Between the fixed-length attribute value and the variable-length attribute values, there is a set of zeros called the null bitmap, which is used to record whether an attribute value is null. If an attribute value is null, the corresponding bit in the null bitmap is set to 1.</p>
+<hr>
+<blockquote>
+<p>Each page has a header that contains metadata related to the page’s content, including: page size, checksum, DBMS version, etc.</p>
+</blockquote>
+<p><strong>How to store variable-length records within a block to make it easier to extract records from the block</strong></p>
+<p>We use a slotted-page structure to organize records within a block, as shown in the following figure:</p>
+<img src="https://note.noughtq.top/sys/db/images/lec9/6.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Each block begins with a header that contains the following information:</p>
+<ul>
+<li>The number of records in the header  </li>
+<li>The end position of free space within the block  </li>
+<li>An array containing the position and size of each record</li>
+</ul>
+<p>When a record is inserted, space is allocated at the end of the free space, and the record’s position and size are recorded in the header.  </p>
+<p>When a record is deleted, the space it occupies is released, and the corresponding entry in the header array is marked as deleted (for example, by setting its size to -1).  </p>
+<p>Additionally, all records before the deleted record need to be moved to free up space equivalent to the size of the deleted record. The cost of moving is not significant because the block size is limited to a certain range.  </p>
+<p>This slotted-page structure requires that pointers do not directly point to records but instead point to the corresponding header array elements, which contain the record’s position. This indirection helps avoid fragmentation within the block.  </p>
+<p>Drawbacks include:  </p>
+<ul>
+<li>Internal fragmentation within the page: Deleting certain records can create gaps in the page’s internal space.  </li>
+<li>Due to the block-oriented nature of non-volatile memory, updating a record requires fetching the entire block.  </li>
+<li>Updating multiple tuples may require jumping between different locations, which can make I&#x2F;O very slow.</li>
+</ul>
+<hr>
+<p>The DBMS is responsible for tracking and interpreting these bytes as attributes. It wants to ensure that tuples are word-aligned, so that the CPU does not encounter abnormal behavior or perform extra work when accessing data. There are two ways to achieve this:</p>
+<ul>
+<li><p>Padding: Adding empty spaces after attributes to ensure that tuples are word-aligned.</p>
+</li>
+<li><p>Reordering: Changing the order of attributes in the physical layout to ensure they are aligned.</p>
+</li>
+</ul>
+<hr>
+<p>A tuple is essentially a byte sequence (which may not be contiguous). The DBMS needs to interpret this sequence as attributes and their corresponding values.</p>
+<ul>
+<li><p>Tuple header (i.e., metadata of the tuple)</p>
+</li>
+<li><p>Tuple data: the actual data about the attributes</p>
+</li>
+<li><p>Unique identifier: mostly <code>page_id + (offset or slot)</code></p>
+</li>
+</ul>
+<p>The organization of records within a file:</p>
+<ul>
+<li>Heap file organization: Any record can be placed anywhere in the file without considering order. A relation can be stored in one or more files.</li>
+<li>Sequential file organization: Records are stored in order based on the value of each record’s “search key.”</li>
+<li>Multitable clustering file organization: Records from different relations are stored in the same file to reduce the cost of join operations.</li>
+<li>B+ tree file organization: Maintains the order of records even when insert, delete, and update operations change the record order. This content will be introduced in the next lecture.</li>
+<li>Hash file organization: A hash function is computed based on certain attributes to determine which block a record should be placed in.</li>
+</ul>
+<h3 id="Heap-File-Organization"><a href="#Heap-File-Organization" class="headerlink" title="Heap File Organization"></a>Heap File Organization</h3><p>In a heap file organization, a record can be placed at any position in the file. However, once its position is determined, the record generally cannot be moved.</p>
+<p>When inserting records into a file, a strategy of always appending them to the end of the file can be adopted.</p>
+<p>For record deletion, we need to consider utilizing the space freed by deleted records to store new records, maximizing space usage.</p>
+<p>Most databases use a data structure called a free-space map to efficiently locate free space.</p>
+<ul>
+<li><p>This data structure is typically represented as an array, where each element corresponds to a block, and its value indicates the proportion of free space in that block.</p>
+</li>
+<li><p>To find a block that can store a new record, the database needs to scan the free-space map to locate a block with sufficient free space.</p>
+</li>
+<li><p>If no such block exists, a new block must be allocated for the relation.</p>
+</li>
+</ul>
+<p>Suppose each element of the free-space map is 3 bits in size. When an element has a value of 7, it indicates that at least 7&#x2F;8 of the corresponding block’s space is free.</p>
+<img src="https://note.noughtq.top/sys/db/images/lec9/7.png" style="max-width: 30%; display: block; margin: 0 auto;">
+
+<p>For large files, such scanning is still too time-consuming. In this case, we can create a second-level free space map, where each element corresponds to the maximum value of 100 elements in the primary (first-level) free space map. For even larger files, additional levels of free space maps can be created.</p>
+<p>Continuing with the example above, if one element in the second-level free space map corresponds to four elements in the first level, its content would be:</p>
+<img src="https://note.noughtq.top/sys/db/images/lec9/8.png" style="max-width: 10%; display: block; margin: 0 auto;">
+
+<p>If the free space map were written to the hard drive with every update, the cost would be too high. Therefore, the free space map is typically written periodically. However, this means the free space map on the hard drive may become outdated, and accessing such a map could lead to errors.</p>
+<blockquote>
+<p>Page Location Methods<br>Linked List: The header page contains pointers to free pages and data pages. If the DBMS needs to find a specific page, it must sequentially scan the list of data pages until it finds the required page.<br>Page Directory: The DBMS maintains a special page called the page directory to track the locations of data pages, the amount of free space on each page, lists of free&#x2F;empty pages, and page types. Each database object has a corresponding entry in the page directory.</p>
+</blockquote>
+<h3 id="Sequential-File-Organization"><a href="#Sequential-File-Organization" class="headerlink" title="Sequential File Organization"></a>Sequential File Organization</h3><p>Sequential files are used to efficiently process ordered records, and they are implemented based on a search key.</p>
+<p>To retrieve records more quickly, we link these records using pointers. Additionally, to minimize the number of block accesses, we physically store the records in the order of the search key.</p>
+<img src="https://note.noughtq.top/sys/db/images/lec9/9.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Maintaining the order of records at the physical level is difficult because records can be inserted and deleted at any time.</p>
+<ul>
+<li><p>For deletion, it can be handled by moving pointers.</p>
+</li>
+<li><p>For insertion, the following rules must be followed:</p>
+<ul>
+<li><p>Before inserting a record by its search key, find the position of the record in the file.</p>
+</li>
+<li><p>If there is a free record located in the same block as the record, place the new record directly in that free space. Otherwise, insert the new record into an overflow block. In both cases, the corresponding pointers need to be adjusted to maintain the order of the search keys.</p>
+</li>
+</ul>
+</li>
+</ul>
+<img src="https://note.noughtq.top/sys/db/images/lec9/10.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>As time passes, the correlation between the search key order and the physical order gradually diminishes, making sequential processing less effective. At this point, we need to reorganize the file, but such an operation is costly and must be performed when the system load is low. The frequency of reorganization depends on the frequency of record insertions.</p>
+<h3 id="Multitable-Clustering-File-Organization"><a href="#Multitable-Clustering-File-Organization" class="headerlink" title="Multitable Clustering File Organization"></a>Multitable Clustering File Organization</h3><p>In some cases, it is more useful to store records from multiple relations within a single block.</p>
+<p>Multitable clustering file organization is a file organization that stores related records from multiple relations within a single block. The clustering key is the attribute used to define which records are stored together.</p>
+<p>Although this file organization speeds up specific join query operations, it can affect the performance of processing other types of queries, so use it with caution.</p>
+<h3 id="Partitioning"><a href="#Partitioning" class="headerlink" title="Partitioning"></a>Partitioning</h3><p>Many databases allow partitioning a relation into multiple smaller relations, storing them separately, thereby reducing the cost of certain operations by decreasing the size of the relation.</p>
+<p>We can also divide a relation into multiple parts and store different parts on different storage devices—for example, placing frequently used parts on SSDs and less frequently used ones on disks.</p>
+<h2 id="9-2-Data-Dictionary-Storage"><a href="#9-2-Data-Dictionary-Storage" class="headerlink" title="9.2 Data-Dictionary Storage"></a>9.2 Data-Dictionary Storage</h2><p>We generally refer to this “data about data” as metadata. Such metadata is stored in a structure called a data dictionary or system catalog.</p>
+<p>The system must store the following metadata:</p>
+<ul>
+<li>Names of relations  </li>
+<li>Attribute names for each relation  </li>
+<li>Domains and lengths of attributes  </li>
+<li>Names and definitions of views  </li>
+<li>Integrity constraints</li>
+</ul>
+<p>In addition, many systems also store data about users, including: usernames, default schemas of users, passwords of authorized users, and other information.</p>
+<p>Some databases may also store statistical and descriptive data about relations and attributes, such as the number of tuples in each relation, the number of distinct values for each attribute, and so on.</p>
+<p>The data dictionary may also record the storage organization of relations (heap, sequential, hash, etc.) and the location where the relation is stored. If a relation is stored in an operating system file, the dictionary records the file name containing the relation; if the database stores all relations in a single file, the dictionary uses data structures like linked lists to record the blocks where the records of each relation are located.</p>
+<p>We also need to store information related to indexes (which will be covered in detail in the next lecture), including: index names, the names of the indexed relations, the attributes defining the index, and the type of index structure.</p>
+<p>This metadata essentially forms a miniature database. Therefore, we can store it within a relation in the database, simplifying the overall system structure and leveraging the fast access capabilities of the database.</p>
+<img src="https://note.noughtq.top/sys/db/images/lec9/14.png" style="max-width: 30%; display: block; margin: 0 auto;">
+
+<p>The relationships in the stored data dictionary are denormalized to ensure faster access.</p>
+<p>When a database system needs to retrieve data from a certain relationship, it must first query this relationship called <code>Relation_metadata</code> to find the location and storage organization of the relationship before it can retrieve the records.</p>
+<p>Since these system metadata are frequently accessed, most databases read them into an in-memory data structure for efficient access, and this step is performed as part of the database startup process.</p>
+<h2 id="9-3-Database-Buffer"><a href="#9-3-Database-Buffer" class="headerlink" title="9.3 Database Buffer"></a>9.3 Database Buffer</h2><p>A major goal of database systems is to minimize the number of data block transfers between the disk and memory. The buffer is the portion of main memory used to store copies of disk blocks, and the allocation of buffer space is managed by the buffer manager.</p>
+<h3 id="Buffer-Manager"><a href="#Buffer-Manager" class="headerlink" title="Buffer Manager"></a>Buffer Manager</h3><p>When a program within the database system requires a data block from the hard disk, it sends a request to the buffer manager.</p>
+<ul>
+<li><p>If the data block is already in the buffer, the buffer manager sends the address of the block in main memory to the requester.</p>
+</li>
+<li><p>If not, the buffer manager first allocates space for the block in the buffer. If necessary, it may discard some existing blocks, but if these blocks have been modified since they were last written from the hard disk to main memory, they must be written back to the hard disk first. Then, the buffer manager reads the required block from the hard disk into main memory and sends the main memory address to the requester.</p>
+</li>
+</ul>
+<blockquote>
+<p>The buffer pool consists of an array of fixed-size frames. When the DBMS requests a page, the buffer manager first checks whether the page already exists in a memory frame; if not found, it reads&#x2F;copies the page from disk to a free frame.<br>The buffer manager implements a write-back strategy, meaning that modified dirty pages are temporarily stored in the buffer rather than being immediately written to disk.<br>The buffer pool can be used for: tuple storage and indexing, sorting and join buffers, query and dictionary caches, maintenance and log buffers.<br>The buffer pool must maintain some metadata to ensure efficient and correct execution: page table, dirty flag, pin&#x2F;reference counter.</p>
+</blockquote>
+<p>If there is no extra space in the buffer, a data block must be evicted, meaning it is removed before reading in a new data block. The specific eviction strategy will be introduced in the next section.</p>
+<hr>
+<p>Sometimes this situation occurs: when the main memory is reading&#x2F;writing a certain data block, another concurrent process evicts this data block and replaces it with a different one, which can lead to reading incorrect data or corrupting the data.</p>
+<p>Therefore, it is necessary to ensure that the data block will not be evicted before reading data from the buffer. Specifically, the process performs a <strong>“pin”</strong> operation on the data block to prevent the buffer manager from evicting it. Once the read operation is completed, the process performs an <strong>“unpin”</strong> operation, allowing the data block to be evicted.</p>
+<p>When designing a database, care must be taken not to pin too many blocks; otherwise, the database will not function properly.</p>
+<p>If multiple processes are simultaneously reading a certain data block in the buffer, each process will perform pin and unpin operations, and the data block can only be evicted after all processes have performed the unpin operation.</p>
+<p>A simple approach is to maintain a pin count. Each pin operation increments this count by 1, and each unpin operation decrements it by 1. The data block can only be evicted when this count equals 0.</p>
+<hr>
+<p>The process of adding or removing a tuple from a data block may require moving the contents of the data block. During this time, no other process should read the contents of the data block; otherwise, data inconsistency may occur.</p>
+<p>To achieve this, the buffer manager provides a locking system that allows database processes to acquire a shared lock or an exclusive lock on a data block before accessing it. Once the access is complete, the lock is released.</p>
+<ul>
+<li>Any number of processes can simultaneously hold a shared lock on the same data block.</li>
+<li>At any given time, only one process is allowed to hold an exclusive lock on a data block. When a process holds an exclusive lock, other processes cannot use a shared lock. Therefore, an exclusive lock can only be granted to a process when no other process holds a lock on the data block.</li>
+<li>If a process requests an exclusive lock on a data block that already has a shared lock or an exclusive lock, the request will wait until all previous locks are released.</li>
+<li>When a data block is not locked or already has a shared lock, a shared lock request from a process will be accepted. However, if the data block has an exclusive lock, the request must wait until the lock is released.</li>
+</ul>
+<p>Specific locking operations:</p>
+<ul>
+<li>Before performing any operation on a data block, the process must first pin the data block, then acquire a lock on it. This lock will be released before the unpin operation is executed.</li>
+<li>Before performing any operation on a data block, the process must first pin the data block, then acquire a lock on it. This lock will be released before the unpin operation is executed.</li>
+<li>Before reading a data block, the process must acquire a shared lock. Once the reading is complete, the process must release the lock.</li>
+<li>Before updating a data block, the process must acquire an exclusive lock. Once the update is complete, the process must release the lock.</li>
+</ul>
+<p>Forced output: Write the data block from the buffer back to the hard disk to ensure the consistency of specific data on the hard disk.</p>
+<h3 id="Buffer-Replacement-Strategies"><a href="#Buffer-Replacement-Strategies" class="headerlink" title="Buffer-Replacement Strategies"></a>Buffer-Replacement Strategies</h3><p>The goal is to minimize access to the hard disk.</p>
+<p><strong>Least Recently Used (LRU)</strong>: Replaces the data block that has not been referenced for the longest time.</p>
+<ul>
+<li><strong>Clock</strong>: An approximate implementation of LRU. It uses a reference bit instead of a timestamp. When a page is accessed, its reference bit is set to 1. These pages are placed in a circular buffer, and a clock hand scans through them in order: it checks whether the reference bit of the page pointed to by the hand is 1; if so, it sets it to 0; otherwise, it evicts the page.</li>
+</ul>
+<hr>
+<p>Compared to operating systems, database systems can predict future access patterns more accurately. A user’s request to a database system consists of multiple steps, and the database system can read these steps to determine in advance which data blocks will be needed. Therefore, database systems may adopt a replacement strategy better than LRU.</p>
+<p><strong>Toss-immediate</strong>: Once a tuple’s data block has been processed, the main memory no longer needs this block, even if it was recently used. When the last tuple in the data block has been processed, the buffer manager releases the space occupied by this block.</p>
+<p><strong>Most Recently Used (MRU) strategy</strong>: The most recently used block will be the last to be referenced again, while the least recently used block will be the next one to be referenced.</p>
+<hr>
+<p>An ideal database replacement strategy requires knowledge of database operation-related information, including both currently executing and future operations. However, no known strategy can handle all scenarios. In fact, most database systems use LRU, despite its issues: it only records the last access time of a page, without tracking the frequency of page accesses.</p>
+<p><strong>LRU-K</strong>: Tracks the history of the previous K references (as timestamps) and calculates the intervals between subsequent accesses. This history is used to predict when a page will be accessed next. However, this approach incurs higher storage overhead. Additionally, an in-memory cache must be maintained for recently evicted pages to prevent them from being constantly evicted.</p>
+<p><strong>Localization</strong>: The DBMS selects which page to evict based on individual queries or transactions, thereby minimizing the pollution of the buffer by each query.</p>
+<p><strong>Priority Hints</strong>: The buffer can determine which pages are important based on the context of query execution, using information from transactions about each page.</p>
+<h3 id="Reordering-of-Writes-and-Recovery"><a href="#Reordering-of-Writes-and-Recovery" class="headerlink" title="Reordering of Writes and Recovery"></a>Reordering of Writes and Recovery</h3><p>Database buffers allow write operations to be completed in main memory and then output to the hard disk after some time, which may cause the order of output to the hard disk to differ from the order in which the write operations were executed. Additionally, the file system may also reorder write operations, but this can lead to inconsistencies in hard disk data in the event of a system crash.</p>
+<p>Early file systems performed a file system consistency check upon system restart to ensure data structure consistency. If inconsistencies were found, additional steps were required to restore consistency. However, these checks resulted in long delays.</p>
+<p>If the file system could write updates to metadata in a carefully chosen order, many inconsistencies could be avoided. However, doing so would render some optimization strategies ineffective, such as disk arm scheduling, thereby affecting update efficiency.</p>
+<p>Modern file systems use a hard disk to store a log of write operations sorted by execution order. Such a hard disk is called a log disk. Once a write operation is completed, the record is removed from the log disk.</p>
+<p>File systems that support a log disk are called journaling file systems. These systems allow data and logs to be stored on the same hard disk, reducing costs at the expense of performance. Since no consistency check is required, they enable faster system restarts.</p>
+<hr>
+<p>Optimization methods for the buffer pool:</p>
+<ul>
+<li><p><strong>Multiple buffer pools</strong>: The DBMS can maintain buffer pools for different purposes. These buffer pools can adopt customized strategies based on the stored data to reduce latch contention and improve locality. Object IDs and hashing are two common methods for mapping pages to specific buffer pools:</p>
+<ul>
+<li><p><strong>Object ID</strong>: Extended from record IDs, these IDs maintain mappings to achieve fine-grained control over buffer pool allocation, but they incur additional storage overhead.</p>
+</li>
+<li><p><strong>Hashing</strong>: The DBMS hashes the page ID to select a specific buffer pool.</p>
+</li>
+</ul>
+</li>
+<li><p><strong>Pre-fetching</strong>: When the first set of pages is processed, the second set can also be pre-fetched into the buffer pool. The advantage lies in sequential scanning.</p>
+</li>
+<li><p>S<strong>can sharing (synchronized scans)</strong>: Query cursors can reuse data retrieved from storage or computation.</p>
+</li>
+<li><p><strong>Buffer pool bypass</strong>: Sequential scan operators (or when reading a large contiguous block of pages) do not store the fetched pages in the buffer pool to avoid overhead. This is suitable for temporary data.</p>
+</li>
+</ul>
+<h2 id="9-4-Column-Oriented-Storage"><a href="#9-4-Column-Oriented-Storage" class="headerlink" title="9.4 Column-Oriented Storage"></a>9.4 Column-Oriented Storage</h2><p><strong>row-oriented storage</strong>: Place all attributes of the tuple in a single record.</p>
+<p><strong>column-oriented storage</strong>: Store each attribute in the relationship separately.</p>
+<img src="https://note.noughtq.top/sys/db/images/lec9/15.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>This column-oriented storage is suitable for data analysis queries, which need to process multiple rows in a relation but typically access only a subset of attributes.</p>
+<ul>
+<li><p>Reduces I&#x2F;O operations</p>
+</li>
+<li><p>Improves CPU cache performance</p>
+</li>
+<li><p>Enhances compression capabilities</p>
+</li>
+<li><p>Enables vector processing</p>
+</li>
+</ul>
+<p>Column-oriented storage also has the following drawbacks:</p>
+<ul>
+<li>High cost of tuple reconstruction</li>
+</ul>
+<blockquote>
+<p>Tuple Reconstruction Methods<br>Fixed-Length Offsets: We place the value from one column and the value from another column at the same offset into the same tuple. Therefore, each individual value in a column must have the same length.<br>Embedded Tuple IDs: For each attribute in a column, the DBMS stores a tuple ID associated with it. Additionally, the system stores a mapping that tells it how to jump to each attribute with that ID. This method is not recommended due to its high storage overhead (storing a tuple ID for each attribute entry).</p>
+</blockquote>
+<ul>
+<li><p>High cost of tuple deletion and updates</p>
+</li>
+<li><p>High cost of decompression</p>
+</li>
+</ul>
+<p>ORC and Parquet are columnar file representations used in many big data processing applications. ORC divides a sequence of tuples occupying several hundred MB into a columnar representation called a stripe, and an ORC file contains multiple such stripes. The following figure shows some details of the ORC file format:</p>
+<img src="https://note.noughtq.top/sys/db/images/lec9/16.png" style="max-width: 30%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>Each stripe contains an index data, row data, and a stripe footer. ORC files also have a file footer, but we will not consider these two “footers.”</p>
+</li>
+<li><p>Row data contains the compressed sequence values of each column.</p>
+</li>
+<li><p>Index data is used for fast access to the required tuples.</p>
+</li>
+</ul>
+<h2 id="9-5-Storage-Organization-in-Main-Memory-Databases"><a href="#9-5-Storage-Organization-in-Main-Memory-Databases" class="headerlink" title="9.5 Storage Organization in Main- Memory Databases"></a>9.5 Storage Organization in Main- Memory Databases</h2><p>A main-memory database refers to a database where all data resides in memory, used to optimize performance. A main-memory database may retain direct pointers to records in memory, allowing a record to be accessed through a single pointer traversal, which is highly efficient.</p>
+<p>If the main memory uses a column-oriented storage method, all values of a particular column are stored in contiguous memory locations. However, when records are appended to a relation, to ensure contiguous space allocation, the space for existing data needs to be reallocated. To avoid this overhead, the logical array of a column is divided into multiple physical arrays, and an indirection table is used to store pointers to all physical arrays, as shown below:</p>
+<img src="https://note.noughtq.top/sys/db/images/lec9/17.png" style="max-width: 30%; display: block; margin: 0 auto;">
+
+<h1 id="Chapter-10-Indexing"><a href="#Chapter-10-Indexing" class="headerlink" title="Chapter 10 Indexing"></a>Chapter 10 Indexing</h1><p>Indices are composed of organized or sorted columns in a table, used to efficiently access database content. A DBMS ensures that the table content and indices are logically synchronized.</p>
+<p>The following two basic types of indices are commonly used in databases:</p>
+<ul>
+<li>Ordered indices: based on sorted values</li>
+<li>Hash indices: based on the uniform distribution of values across buckets, where the bucket a value is assigned to is determined by a hash function</li>
+</ul>
+<p>Relevant metrics:</p>
+<ul>
+<li>Access type: includes finding records with specified attributes or attribute value ranges</li>
+<li>Access time: the time required to find a single or multiple data items</li>
+<li>Insertion time: includes the time needed to find the correct position for inserting new data and updating the index structure</li>
+<li>Deletion time: includes the time needed to find the data item to be deleted and updating the index structure</li>
+<li>Space overhead: the additional space occupied by the index structure; if this space is not large, it is worth trading for performance improvement</li>
+</ul>
+<p>A single attribute or multiple attributes used to locate records in a file are called search keys, and each index corresponds to a specific search key.</p>
+<h2 id="10-1-Ordered-Indices"><a href="#10-1-Ordered-Indices" class="headerlink" title="10.1 Ordered Indices"></a>10.1 Ordered Indices</h2><p>If the order within the file is defined by the search key, the corresponding index is called a clustering index or primary index, and the corresponding file is referred to as an index-sequential file.</p>
+<p>For indexes where the search key order differs from the file order, we call them nonclustering indexes or secondary indexes.</p>
+<h3 id="Dense-and-Sparse-Indices"><a href="#Dense-and-Sparse-Indices" class="headerlink" title="Dense and Sparse Indices"></a>Dense and Sparse Indices</h3><p>An index entry or index record consists of a search key value and a pointer to one or more records that have the same value as the search key.</p>
+<p>This pointer includes the identifier of the disk block and the offset within the disk block to identify the specific record within the block.</p>
+<p>Sequential indexes can be divided into the following two categories:</p>
+<ul>
+<li><strong>Dense index</strong>: There is a corresponding index entry for every search key value in the file. In a dense clustered index, the index record contains the search key value and a pointer to the first record with that search key value, while the remaining records with the same search key value are stored sequentially after this first record.</li>
+</ul>
+<img src="https://note.noughtq.top/sys/db/images/lec10/1.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p><strong>Sparse Index</strong>: Only some search key values in the file have corresponding index entries.</p>
+<ul>
+<li><p>In this case, only clustered indexes are allowed. Each index entry contains a search key value and a pointer to the first record with that search key value.</p>
+</li>
+<li><p>To locate a record, find the index entry corresponding to the largest search key value that is less than or equal to the target search key value. Then, starting from that record, follow the pointers in the file until the desired record is found.</p>
+</li>
+</ul>
+</li>
+</ul>
+<img src="https://note.noughtq.top/sys/db/images/lec10/2.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The main cost of processing database requests is the time required to bring data blocks from the hard disk to main memory.</p>
+<h3 id="Multilevel-Indices"><a href="#Multilevel-Indices" class="headerlink" title="Multilevel Indices"></a>Multilevel Indices</h3><p>When the index is very large, the process of searching the index becomes particularly time-consuming. To address this issue, we can treat the index as a record in a file and build a sparse index for it. The original index is called the internal index, while the newly constructed index is referred to as the external index, as shown below:</p>
+<img src="https://note.noughtq.top/sys/db/images/lec10/3.png" style="max-width: 30%; display: block; margin: 0 auto;">
+
+<p>To find a specific record, we first perform a binary search on the outer index to locate the record with the largest search key value that does not exceed that of the target record. This record corresponds to a pointer to an inner index block. Then, within that inner index block, we find the record with the largest search key value that does not exceed the target record’s search key value, which corresponds to a pointer to a file block containing the record we are looking for.</p>
+<p>When the index becomes very large, we can use multiple levels of indexing, known as multilevel indices. Compared to using only binary search, searching for records on multilevel indices can significantly reduce I&#x2F;O operations.</p>
+<h3 id="Index-Update"><a href="#Index-Update" class="headerlink" title="Index Update"></a>Index Update</h3><h4 id="Insertion-3"><a href="#Insertion-3" class="headerlink" title="Insertion"></a>Insertion</h4><ul>
+<li><p>First, the system locates the insertion point for the record using the search key.</p>
+</li>
+<li><p>Dense index</p>
+<ul>
+<li><p>If the search key value does not appear in the index, the system inserts a new index entry with that search key at the appropriate position.</p>
+</li>
+<li><p>Otherwise, if the index entry stores pointers to all records with the same search key, the system adds a pointer to the new record in the index entry.</p>
+</li>
+<li><p>Otherwise, the index only stores a pointer to the first record with that search key, and the system inserts the new record after the records with the same search key value.</p>
+</li>
+</ul>
+</li>
+<li><p>Sparse index:</p>
+<ul>
+<li><p>Assume the index stores one entry per block. If the system creates a new block, it inserts the search key value obtained from the new block into the index.</p>
+</li>
+<li><p>If the search key value of the new record is the smallest within the block, the system updates the index entry to point to that block; otherwise, no change is made.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="Deletion-2"><a href="#Deletion-2" class="headerlink" title="Deletion"></a>Deletion</h4><ul>
+<li><p>First, the system needs to locate the record to be deleted.</p>
+</li>
+<li><p>Dense index:</p>
+<ul>
+<li><p>If the deleted record is the only record corresponding to the search key value, the system will delete the corresponding index entry.</p>
+</li>
+<li><p>Otherwise, if the index entry stores pointers to all records with the same search key, the system will delete the pointer to the deleted record.</p>
+</li>
+<li><p>Otherwise, the index only stores a pointer to the first record with that search key, and the system will update the index entry to point to the next record.</p>
+</li>
+</ul>
+</li>
+<li><p>Sparse index:</p>
+<ul>
+<li><p>Assume that the index stores only one index entry per block, and the index entry points to the first record in that block.</p>
+</li>
+<li><p>After deleting a record, the index usually does not need to be modified.</p>
+</li>
+<li><p>However, if the deleted record happens to be the first record in the block, then the corresponding index entry for that block needs to be updated to point to the next record in the block.</p>
+</li>
+<li><p>If the block becomes empty after deletion, the system will delete the corresponding index entry; if the database also reclaims the empty block, it may be necessary to adjust the index information of adjacent blocks accordingly.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="Secondary-Indices"><a href="#Secondary-Indices" class="headerlink" title="Secondary Indices"></a>Secondary Indices</h3><p>Secondary indexes can also be dense indexes, where the index entries correspond to all search key values and contain pointers to all records.</p>
+<p>A secondary index on a candidate key resembles a dense clustered index, but the difference is that the set of records pointed to by consecutive values in the index is not stored in order.</p>
+<p>If multiple records in a relation have the same search key value, such a search key is called a nonunique search key.</p>
+<p>One method for implementing a secondary index on a nonunique search key is to have the pointers in the secondary index not directly point to records, but instead let each pointer point to a bucket that contains pointers to the file. The following figure illustrates such a structure:</p>
+<img src="https://note.noughtq.top/sys/db/images/lec10/4.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The drawbacks are:</p>
+<ul>
+<li>Index access time becomes longer  </li>
+<li>If there are few duplicate search keys, a lot of space will be wasted</li>
+</ul>
+<p>Since the order of secondary search keys differs from the order of physical search keys, attempting to scan the file in the order of secondary search keys results in reading each record as if reading every block on the hard drive, which is quite slow.</p>
+<p>In general, secondary indexes improve performance when querying using keys other than the clustered index’s search key, but they introduce additional overhead for database modifications.</p>
+<h2 id="10-2-B-Tree-Index-Files"><a href="#10-2-B-Tree-Index-Files" class="headerlink" title="10.2 B+ Tree Index Files"></a>10.2 B+ Tree Index Files</h2><h2 id="10-3-B-Tree-Extension"><a href="#10-3-B-Tree-Extension" class="headerlink" title="10.3 B+ Tree Extension"></a>10.3 B+ Tree Extension</h2><h2 id="10-4-Hash-Indices"><a href="#10-4-Hash-Indices" class="headerlink" title="10.4 Hash Indices"></a>10.4 Hash Indices</h2><h2 id="10-5-Multiple-Key-Access"><a href="#10-5-Multiple-Key-Access" class="headerlink" title="10.5 Multiple-Key Access"></a>10.5 Multiple-Key Access</h2><h2 id="10-6-Indices-in-SQL"><a href="#10-6-Indices-in-SQL" class="headerlink" title="10.6 Indices in SQL"></a>10.6 Indices in SQL</h2><h2 id="10-7-Write-Optimized-Index-Structure"><a href="#10-7-Write-Optimized-Index-Structure" class="headerlink" title="10.7 Write-Optimized Index Structure"></a>10.7 Write-Optimized Index Structure</h2><h2 id="10-8-Bitmap-Indices"><a href="#10-8-Bitmap-Indices" class="headerlink" title="10.8 Bitmap Indices"></a>10.8 Bitmap Indices</h2>
   </div>
 
   
@@ -1333,12 +1728,19 @@
   
 
   <div class="container post-prev-next" data-pagefind-ignore>
-    <a class="next"></a>
     
-    <a href="/2026/03/02/Course/Computer_Architecture/" class="prev">
+    <a href="/2026/03/02/Course/Object_Oriented_Programing/" class="next">
+      <div class="text">
+        <p class="label">Next</p>
+        <h3 class="title">Object-Oriented Programing</h3>
+      </div>
+    </a>
+    
+    
+    <a href="/2025/09/22/Course/Python_Review/" class="prev">
       <div class="text">
         <p class="label">Previous</p>
-        <h3 class="title">Computer Architecture</h3>
+        <h3 class="title">Python Review</h3>
       </div>
     </a>
     
