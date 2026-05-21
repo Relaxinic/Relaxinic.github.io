@@ -22,7 +22,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Computer_Architecture.jpg">
 <meta property="article:published_time" content="2026-03-01T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-04-11T11:18:14.291Z">
+<meta property="article:modified_time" content="2026-05-16T07:00:28.102Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Computer_Architecture.jpg">
@@ -875,7 +875,643 @@
 <li>Invalidate cache entries</li>
 <li>Flush buffers</li>
 </ul>
-<h1 id="Chapter-3-Instruction-Level-Parallelism-and-Its-Exploitation"><a href="#Chapter-3-Instruction-Level-Parallelism-and-Its-Exploitation" class="headerlink" title="Chapter 3 Instruction-Level Parallelism and Its Exploitation"></a>Chapter 3 Instruction-Level Parallelism and Its Exploitation</h1><h2 id="3-1-Introduction"><a href="#3-1-Introduction" class="headerlink" title="3.1 Introduction"></a>3.1 Introduction</h2><h3 id="Dependences-in-Instructions"><a href="#Dependences-in-Instructions" class="headerlink" title="Dependences in Instructions"></a>Dependences in Instructions</h3><h2 id="3-2-Basic-Compiler-Techniques-Loop-Unrolling-and-Scheduling"><a href="#3-2-Basic-Compiler-Techniques-Loop-Unrolling-and-Scheduling" class="headerlink" title="3.2 Basic Compiler Techniques: Loop Unrolling and Scheduling"></a>3.2 Basic Compiler Techniques: Loop Unrolling and Scheduling</h2><h2 id="3-3-Advanced-Branch-Prediction"><a href="#3-3-Advanced-Branch-Prediction" class="headerlink" title="3.3 Advanced Branch Prediction"></a>3.3 Advanced Branch Prediction</h2><h2 id="3-4-Dynamic-Scheduling"><a href="#3-4-Dynamic-Scheduling" class="headerlink" title="3.4 Dynamic Scheduling"></a>3.4 Dynamic Scheduling</h2><h2 id="3-5-Hardware-Based-Speculation"><a href="#3-5-Hardware-Based-Speculation" class="headerlink" title="3.5 Hardware-Based Speculation"></a>3.5 Hardware-Based Speculation</h2><h2 id="3-6-Multiple-Issue"><a href="#3-6-Multiple-Issue" class="headerlink" title="3.6 Multiple Issue"></a>3.6 Multiple Issue</h2><h2 id="3-7-Advanced-Techniques-for-Instruction-Delivery-and-Speculation"><a href="#3-7-Advanced-Techniques-for-Instruction-Delivery-and-Speculation" class="headerlink" title="3.7 Advanced Techniques for Instruction Delivery and Speculation"></a>3.7 Advanced Techniques for Instruction Delivery and Speculation</h2><h2 id="3-8-Cross-Cutting-Issues"><a href="#3-8-Cross-Cutting-Issues" class="headerlink" title="3.8 Cross-Cutting Issues"></a>3.8 Cross-Cutting Issues</h2><h2 id="3-9-Multithreading-Exploiting-Thread-Level-Parallelism-to-Improve-Uniprocessor-Throughput"><a href="#3-9-Multithreading-Exploiting-Thread-Level-Parallelism-to-Improve-Uniprocessor-Throughput" class="headerlink" title="3.9 Multithreading: Exploiting Thread-Level Parallelism to Improve Uniprocessor Throughput"></a>3.9 Multithreading: Exploiting Thread-Level Parallelism to Improve Uniprocessor Throughput</h2>
+<h1 id="Chapter-3-Instruction-Level-Parallelism-and-Its-Exploitation"><a href="#Chapter-3-Instruction-Level-Parallelism-and-Its-Exploitation" class="headerlink" title="Chapter 3 Instruction-Level Parallelism and Its Exploitation"></a>Chapter 3 Instruction-Level Parallelism and Its Exploitation</h1><h2 id="3-1-Introduction"><a href="#3-1-Introduction" class="headerlink" title="3.1 Introduction"></a>3.1 Introduction</h2><p>Instruction-level parallelism (ILP) allows instructions to be computed in parallel.</p>
+<p>The CPI calculation formula for a pipelined CPU is: Pipeline CPI &#x3D; Ideal pipeline CPI + Structural stalls + Data hazard stalls + Control stalls</p>
+<hr>
+<p>Basic block: A small sequence of code that satisfies both that no branch enters it (unless it is the entry) and that no branch exits from it (unless it is the exit).</p>
+<p>To achieve sufficient performance improvement, we should exploit ILP across multiple basic blocks.</p>
+<h3 id="Dependences-in-Instructions"><a href="#Dependences-in-Instructions" class="headerlink" title="Dependences in Instructions"></a>Dependences in Instructions</h3><p>When designing ILP, we must consider whether there are dependencies between instructions. Dependencies are generally divided into three types: data dependence, name dependence, and control dependence, which will be introduced in detail below.</p>
+<h4 id="Data-Dependences"><a href="#Data-Dependences" class="headerlink" title="Data Dependences"></a>Data Dependences</h4><p>If instruction j data depends on instruction i through some path, then we say instruction j is data-dependent on instruction i.</p>
+<p>If there is a data dependency between two instructions, the execution order of these two instructions must be preserved, and they must not be executed simultaneously.</p>
+<p>A data dependency conveys three things, which are precisely the limitations it imposes on ILP:</p>
+<ul>
+<li><p>The probability of a hazard occurring</p>
+</li>
+<li><p>The order in which results must be computed</p>
+</li>
+<li><p>The upper limit of parallelism that can be exploited</p>
+</li>
+</ul>
+<p>Of course, we certainly hope to overcome the above limitations—we can do so through two different approaches:</p>
+<ul>
+<li><p>Maintain the dependency but avoid hazards. A common practice is to perform appropriate scheduling of the code, which can be implemented by the compiler or hardware.</p>
+</li>
+<li><p>Eliminate the dependency by modifying the code.</p>
+</li>
+</ul>
+<h4 id="Name-Dependences"><a href="#Name-Dependences" class="headerlink" title="Name Dependences"></a>Name Dependences</h4><p>When two instructions use the same register or memory location (referred to as a name), but there is no data flow between the two instructions regarding that name, a name dependence is considered to have occurred. There are two types of name dependences (assuming instruction j follows instruction i in program order):</p>
+<ul>
+<li><p>Antidependence: Instruction j writes to a register or memory location that instruction i reads.</p>
+</li>
+<li><p>Output dependence: Both instruction i and instruction j write to the same register or memory location.</p>
+</li>
+</ul>
+<p>Such instructions can be executed in parallel or reordered, as long as the names (registers or memory locations) used by these instructions are changed to avoid conflicts.</p>
+<p>For registers, this renaming operation is easier (referred to as register renaming) and can be handled by the compiler or dynamically by hardware.</p>
+<h4 id="Data-Hazards"><a href="#Data-Hazards" class="headerlink" title="Data Hazards"></a>Data Hazards</h4><p>hazard: When there is a name or data dependency between instructions, if such instructions are close enough to be overlapped in execution, the order of accessing and depending on related operands may be altered, and a hazard occurs.</p>
+<p>For data hazards, based on the read and write access order of instructions, they are classified into the following types (still assuming that instruction j comes after instruction i in program order):</p>
+<ul>
+<li><p>RAW (read after write): j attempts to read a source operand before i writes to it, so j will obtain the old data. This is the most common type of hazard and corresponds to a true data dependency (i.e., true dependence).</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// r1 has RAW</span><br><span class="line">add r1, r2, r3</span><br><span class="line">sub r4, r1, r3</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>WAW (Write After Write): j attempts to write to an operand before i has written to it, causing an incorrect execution order of write operations. The final result of the operand is the value written by i, not j. This hazard corresponds to an output dependency and only exists in pipelines that allow writing data in multiple stages, or in cases where instructions are allowed to continue executing while the preceding instruction is stalled.</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">// r1 has WAW</span><br><span class="line">add r1, r2, r3</span><br><span class="line">sub r1, r4, r3</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>WAR (Write After Read): j attempts to write to a destination operand before i reads it, causing i to incorrectly obtain the new data. This hazard corresponds to an anti-dependency and does not occur in most statically issued pipelines.</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">  // r1 has WAR</span><br><span class="line">sub r4, r1, r3</span><br><span class="line">add r1, r2, r3</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h4 id="Control-Dependences"><a href="#Control-Dependences" class="headerlink" title="Control Dependences"></a>Control Dependences</h4><p>Control dependence determines the order of instruction i with respect to branch instructions. Except for the first basic block of a program, all instructions have control dependencies on certain branches, and these control dependencies must be preserved to maintain program order.</p>
+<p>Control dependence imposes the following constraints:</p>
+<ul>
+<li><p>An instruction that is control-dependent on a branch must not be moved before that branch; otherwise, the instruction would no longer be controlled by that branch.</p>
+</li>
+<li><p>An instruction that is not control-dependent on a branch must not be moved after that branch; otherwise, the instruction would become controlled by that branch.</p>
+</li>
+</ul>
+<p>In fact, we do not need to strictly preserve control dependence; we only need to preserve two key properties: exception behavior and data flow.</p>
+<ul>
+<li><p>Preserving exception behavior means that any changes to the execution order of instructions must not alter how exceptions are generated by the program.</p>
+<blockquote>
+<p>The speculation technique introduced later allows us to ignore exceptions caused by branch selection, thereby enabling instruction reordering while preserving data dependencies.</p>
+</blockquote>
+</li>
+<li><p>Data flow refers to the actual flow of data values produced as results or received as inputs between instructions.</p>
+<blockquote>
+<p>The speculation technique introduced later can also be applied in this context: reducing the impact of control dependence while maintaining data flow.</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="3-2-Basic-Compiler-Techniques-Loop-Unrolling-and-Scheduling"><a href="#3-2-Basic-Compiler-Techniques-Loop-Unrolling-and-Scheduling" class="headerlink" title="3.2 Basic Compiler Techniques: Loop Unrolling and Scheduling"></a>3.2 Basic Compiler Techniques: Loop Unrolling and Scheduling</h2><p>To keep the pipeline fully operational, we need to identify instructions that are independent and can be executed in an overlapping manner. To avoid pipeline stalls, a dependent instruction must be separated from the instruction it depends on by a gap of several clock cycles (equal to the pipeline latency of the dependent instruction). The compiler’s ability to implement such scheduling depends on the amount of available ILP in the program and the latency of the functional units in the pipeline.</p>
+<p>In this section, we will introduce how the compiler can increase the amount of available ILP by transforming loops—consider the following example:</p>
+<p>For the following C code:</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = <span class="number">999</span>; i &gt;= <span class="number">0</span>; i--)</span><br><span class="line">    x[i] += s;</span><br></pre></td></tr></table></figure>
+
+<p>The result of converting it into RISC-V code without any scheduling is as follows:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Loop:</span><br><span class="line">    fld     f0, 0(x1)</span><br><span class="line">    fadd.d  f4, f0, f2</span><br><span class="line">    fsd     f4, 0(x1)</span><br><span class="line">    addi    x1, x1, -8</span><br><span class="line">    bne     x1, x2, Loop</span><br></pre></td></tr></table></figure>
+
+<p>If there is no scheduling, executing one loop iteration requires a stall of 8 clock cycles:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/2.png" style="max-width: 30%; display: block; margin: 0 auto;">
+
+<p>However, if scheduling is performed, one pause can be eliminated:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/3.png" style="max-width: 30%; display: block; margin: 0 auto;">
+
+<p>Here we moved the <code>addi</code> instruction to the position right after the <code>fld</code> instruction.</p>
+<hr>
+<p>For the above example, there are actually only three instructions that operate on the array (<code>fld</code>, <code>fadd.d</code>, <code>fsd</code>). For the remaining two stalls, as well as the <code>addi</code> and <code>bne</code> instructions, we hope to eliminate them. To achieve this, a method called loop unrolling is introduced here:</p>
+<ul>
+<li><p>Specifically, it involves copying multiple copies of the loop body and adjusting the code related to loop termination.</p>
+</li>
+<li><p>This method is most effective when each iteration of the loop is independent of the others, meaning there are no dependencies. In such cases, modern processors (superscalar, out-of-order execution) can execute these independent operations in parallel, thereby maximizing ILP.</p>
+</li>
+</ul>
+<p>Continuing with the above example, using loop unrolling, we copy four copies of the loop body. Here, it is assumed that the value of <code>x1 - x2</code> is a multiple of 32, which also means the number of iterations is a multiple of 4. Redundant computations are eliminated while ensuring that no registers are reused.</p>
+<p>During unrolling, we merged the <code>addi</code> instructions and removed unnecessary duplicate <code>bne</code> instructions. The result is as follows:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/4.png" style="max-width: 30%; display: block; margin: 0 auto;">
+
+<p>Without scheduling, the above changes would not bring much improvement in performance. However, with scheduling, performance can be significantly enhanced (3.5 clock cycles per iteration), as shown in the results below:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/5.png" style="max-width: 30%; display: block; margin: 0 auto;">
+
+<hr>
+<p>Loop unrolling is usually done before compilation, so that redundant computations can be discovered and eliminated by the optimizer.</p>
+<p>In real programs, we often do not know the upper bound of a loop. Suppose the upper bound is n , and we want to unroll the loop by copying the loop body k times. Loop unrolling generates a pair of consecutive loops: the first loop executes (n mod k) times with the original loop body, and the second loop is the unrolled loop body wrapped by an outer loop that iterates (n &#x2F; k) times. For larger n , most of the execution time is spent within the unrolled loop body.</p>
+<p>Loop unrolling improves performance by eliminating instruction overhead and discovering more computations that can reduce stalls through scheduling, but at the cost of significantly increasing code size.</p>
+<p>Before obtaining the final unrolled code, we must make the following judgments and transformations:</p>
+<ul>
+<li><p>Determine whether loop unrolling is useful by identifying independent loop iterations.</p>
+</li>
+<li><p>Use different registers to avoid unnecessary constraints caused by different computations using the same register.</p>
+</li>
+<li><p>Eliminate extra checks and branch instructions, and correct the loop termination and iteration code.</p>
+</li>
+<li><p>Determine whether loads and stores in the unrolled loop can be interchanged by observing whether they are independent across different iterations. This transformation requires analyzing memory addresses to ensure they do not point to the same location.</p>
+</li>
+<li><p>Preserve dependencies through code scheduling to ensure the results are consistent with the original code.</p>
+</li>
+</ul>
+<h2 id="3-3-Advanced-Branch-Prediction"><a href="#3-3-Advanced-Branch-Prediction" class="headerlink" title="3.3 Advanced Branch Prediction"></a>3.3 Advanced Branch Prediction</h2><h3 id="Correlating-Branch-Predictors"><a href="#Correlating-Branch-Predictors" class="headerlink" title="Correlating Branch Predictors"></a>Correlating Branch Predictors</h3><p>Improving prediction accuracy by observing the recent behavior of other branches.</p>
+<p>This is a multi-branch code:</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (aa != <span class="number">2</span>)</span><br><span class="line">    aa = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">if</span> (bb != <span class="number">2</span>)</span><br><span class="line">    bb = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">if</span> (aa == bb) </span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>The corresponding RISC-V code is:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">    addi x3, x1, -2</span><br><span class="line">    bnez x3, L1         // branch b1</span><br><span class="line">    add x1, x0, x0      // aa = 0</span><br><span class="line">L1:</span><br><span class="line">    addi x3, x2, 02</span><br><span class="line">    bnez x3, L2         // branch b2</span><br><span class="line">    add x2, x0, x0      // bb = 0</span><br><span class="line">L2:</span><br><span class="line">    sub x3, x1, x2      // x3 = aa - bb</span><br><span class="line">    beqz x3, L3         // branch b3</span><br></pre></td></tr></table></figure>
+
+<p>It can be observed that the behavior of branch b3 is related to that of branches b1 and b2. If a predictor can only observe the behavior of a single branch, it will fail.</p>
+<p>We refer to predictors that can leverage the behavior of other branches for prediction as correlating predictors or two-level predictors. Correlating predictors incorporate information about the behavior of recent branches to determine how to predict a given branch.</p>
+<p>A typical correlating predictor has two bits:</p>
+<ul>
+<li><p>First bit: If the last branch was not taken (NT), use it as a reference for the current branch.</p>
+</li>
+<li><p>Second bit: If the last branch was taken (T), use it as a reference for the current branch.</p>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">Prediction Combination</th>
+<th align="center">First Bit</th>
+<th align="center">Second Bit</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">NT&#x2F;NT</td>
+<td align="center">NT</td>
+<td align="center">NT</td>
+</tr>
+<tr>
+<td align="center">NT&#x2F;T</td>
+<td align="center">NT</td>
+<td align="center">T</td>
+</tr>
+<tr>
+<td align="center">T&#x2F;NT</td>
+<td align="center">T</td>
+<td align="center">NT</td>
+</tr>
+<tr>
+<td align="center">T&#x2F;T</td>
+<td align="center">T</td>
+<td align="center">T</td>
+</tr>
+</tbody></table>
+<p>The following figure illustrates the structure of a correlating predictor:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/35.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+
+<p>A <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mi>m</mi><mo separator="true">,</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(m, n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal">m</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span> correlating predictor can predict the behavior of the most recent <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi></mrow><annotation encoding="application/x-tex">m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">m</span></span></span></span> branches to select from <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mi>m</mi></msup></mrow><annotation encoding="application/x-tex">2^m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6644em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6644em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">m</span></span></span></span></span></span></span></span></span></span></span> branch predictors, each being an <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span>-bit predictor for a single branch. This type of predictor can achieve a higher prediction rate than a 2-bit predictor with only a small increase in hardware. The structure of the correlating predictor is roughly as follows:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/6.png" style="max-width: 30%; display: block; margin: 0 auto;">
+
+<p>Among them, the total number of bits of the <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mi>m</mi><mo separator="true">,</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(m, n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal">m</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span> predictor is:</p>
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mi>m</mi></msup><mo>×</mo><mi>n</mi><mo>×</mo><mtext>Number of prediction entries selected by the branch address</mtext></mrow><annotation encoding="application/x-tex">2^m \times n \times \text{Number of prediction entries selected by the branch address}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7477em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6644em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">m</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">Number of prediction entries selected by the branch address</span></span></span></span></span>
+
+<p>The reason hardware is simple is that the global history of the most recent <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi></mrow><annotation encoding="application/x-tex">m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">m</span></span></span></span> branches can be recorded by an <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi></mrow><annotation encoding="application/x-tex">m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">m</span></span></span></span>-bit shift register, where each bit indicates whether the corresponding branch was taken. The branch prediction buffer is then indexed by concatenating the low-order bits of the branch address with the <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi></mrow><annotation encoding="application/x-tex">m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">m</span></span></span></span>-bit global history. By combining local and global information through concatenation (or a simple hash function), we can index a predictor table to achieve faster predictions than a 2-bit predictor. This type of predictor, which can combine local branch information with global branch history, is also known as an alloyed predictor or a hybrid predictor.</p>
+<h3 id="Tournament-Predictors"><a href="#Tournament-Predictors" class="headerlink" title="Tournament Predictors"></a>Tournament Predictors</h3><p>Tournament predictors also utilize multiple predictors (global + local), but they select the best one from these predictors through a selector (essentially another type of alloy predictor or hybrid predictor). The general structure is as follows:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/7.png" style="max-width: 30%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>Global predictors use recent branch history to index the predictor.</p>
+</li>
+<li><p>Local predictors use the branch address as an index.</p>
+</li>
+</ul>
+<p>Tournament predictors achieve better accuracy at moderate sizes (8K-32K bits) and can effectively utilize a large number of prediction bits. They use a 2-bit saturating counter for each branch to select between the two predictors based on which one has been more accurate recently. In the original 2-bit predictor, this saturating predictor would make two incorrect predictions before switching to the better predictor.</p>
+<h3 id="Tagged-Hybrid-Predictors"><a href="#Tagged-Hybrid-Predictors" class="headerlink" title="Tagged Hybrid Predictors"></a>Tagged Hybrid Predictors</h3><p>A better-performing predictor, which references an algorithm similar to a branch prediction algorithm called PPM (Prediction by Partial Matching), uses a series of global predictors indexed by histories of different lengths. Its general structure is as follows:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/9.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>It can be seen that it has 5 prediction tables: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mn>0</mn><mo stretchy="false">)</mo><mo separator="true">,</mo><mi>P</mi><mo stretchy="false">(</mo><mn>1</mn><mo stretchy="false">)</mo><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><mi>P</mi><mo stretchy="false">(</mo><mn>4</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">P(0), P(1), \dots, P(4)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord">0</span><span class="mclose">)</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord">1</span><span class="mclose">)</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord">4</span><span class="mclose">)</span></span></span></span>. It uses the hash value of the PC and the most recent <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span> branches (stored in a shift register) to access <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mi>i</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">P(i)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord mathnormal">i</span><span class="mclose">)</span></span></span></span>. Apart from the different history lengths, another feature is the use of tags on the tables <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mn>0</mn><mo>…</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">P(0 \dots n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord">0</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span>. Generally, small tags of 4-8 bits achieve the best results. Predictions from <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mn>1</mn><mo stretchy="false">)</mo><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><mi>P</mi><mo stretchy="false">(</mo><mn>4</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">P(1), \dots, P(4)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord">1</span><span class="mclose">)</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord">4</span><span class="mclose">)</span></span></span></span> are used only when the tag matches the hash of the branch address and the global branch history. Each predictor in the <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mn>0</mn><mo>…</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">P(0 \dots n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord">0</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span> example can be a standard 2-bit predictor. In practice, 3-bit counters perform slightly better than 2-bit counters.</p>
+<p>The prediction for a given branch comes from the predictor with the longest branch history that has a matching tag. <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false">(</mo><mn>0</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">P(0)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mopen">(</span><span class="mord">0</span><span class="mclose">)</span></span></span></span> always matches because it has no tag, so if none of the other tables match, it provides the default prediction. The predictor also uses a 2-bit use field, which indicates whether the prediction has been used recently, and thus may be more accurate. All use fields are periodically reset to clear old predictions.</p>
+<p>The disadvantage of this type of predictor is that it is overly complex to implement and may be slower (because checking multiple tags and selecting the prediction result takes time). Nevertheless, for multi-stage pipeline processors where the cost of branch misprediction is high, the advantages of this type of predictor clearly outweigh the disadvantages.</p>
+<p>Larger predictors bring other issues, such as how to initialize the predictor—if done randomly, it requires a considerable amount of execution time. Therefore, some predictors use a valid bit to indicate whether an entry in the predictor has been set or is in an “unused state.”</p>
+<h2 id="3-4-Dynamic-Scheduling"><a href="#3-4-Dynamic-Scheduling" class="headerlink" title="3.4 Dynamic Scheduling"></a>3.4 Dynamic Scheduling</h2><p>A technique that determines the order of instruction execution based on the current processor state and resource availability during program execution. Specifically, it reorders instruction execution through hardware to reduce stalls while maintaining (i.e., without altering) data flow and exception behavior.</p>
+<hr>
+<p>A major limitation of simple pipeline technology is the use of in-order instruction issue and execution, meaning instructions are issued in program order. If an instruction stalls, subsequent instructions cannot proceed. Therefore, if there is a dependency between two closely spaced instructions, a hazard occurs, leading to a stall. If multiple functional units are available, they remain idle during the stall period. For the following instruction sequence:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">fdiv.d  f0, f2, f4</span><br><span class="line">fadd.d  f10, f0, f8</span><br><span class="line">fsub.d  f12, f8, f14</span><br></pre></td></tr></table></figure>
+
+<p>The first two instructions have a dependency, causing a stall. The third instruction has no dependency with the first two but still has to stall along with them. Therefore, we hope to continue executing the third instruction while the stall occurs.</p>
+<p>To achieve this, we divide the issue process into two parts: checking for structural hazards and waiting for data hazards to resolve. Thus, we still use in-order instruction issue, but we want instructions to execute as soon as the processor’s operands are available. Such a pipeline performs out-of-order execution.</p>
+<p>Out-of-order execution introduces the possibility of WAR and WAW hazards, which did not exist in the original pipeline. However, both types of hazards can be avoided through register renaming.</p>
+<p>Out-of-order execution also complicates exception handling. A dynamically scheduled processor preserves exception behavior by delaying notification of an instruction’s exception until the processor knows that the instruction is the next one to be executed. Additionally, dynamically scheduled processors can produce imprecise exceptions, where the processor cannot guarantee that all instructions before the exception point have completed execution, and subsequent instructions may have been partially executed.</p>
+<p>In contrast, precise exceptions strictly ensure that the instruction context at the exception point is fully reproducible. Modern processors typically convert imprecise exceptions into precise exceptions using mechanisms such as checkpoint recovery (similar to the ARIES algorithm in database systems) or reorder buffers (ROB).</p>
+<hr>
+<p>To implement out-of-order execution, we divide the ID (decode) stage of the pipeline into two sub-stages:</p>
+<ul>
+<li><p>Issue (IS): Decode the instruction and check for structural hazards (in-order issue)</p>
+</li>
+<li><p>Read Operands (RO): Wait until there are no data hazards, then read the operands (out-of-order execution)</p>
+</li>
+</ul>
+<p>The following techniques implement dynamic scheduling:</p>
+<ul>
+<li><p>Scoreboarding: A technique that allows instructions to execute out of order when sufficient resources are available and there are no data dependencies.</p>
+</li>
+<li><p>Tomasulo’s Algorithm: A more sophisticated technique compared to scoreboarding, which handles anti-dependencies and output dependencies by dynamically renaming registers. Additionally, it can be extended to handle speculation.</p>
+</li>
+</ul>
+<p>These techniques will be detailed below.</p>
+<h3 id="Scoreboarding"><a href="#Scoreboarding" class="headerlink" title="Scoreboarding"></a>Scoreboarding</h3><p>A scoreboard is a technique that allows instructions to be executed out of order when sufficient resources are available and there are no data dependencies. Its goal is to maintain an execution rate of one instruction per clock cycle by executing instructions as early as possible. Therefore, when the next instruction to be executed is stalled, other instructions that do not depend on any currently active or stalled instructions can be issued and executed.</p>
+<p>The following diagram shows the basic structure of a processor under the RISC-V architecture with a scoreboard:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/31.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Each instruction (primarily for floating-point operations) goes through the following execution steps:</p>
+<p><strong>Issue:</strong></p>
+<ul>
+<li>If the required functional unit is idle and no other instruction uses the same registers as the current instruction, the scoreboard issues the instruction to that functional unit and updates its internal data structures.</li>
+<li>By ensuring that no other active functional unit intends to write its result to the same destination register, WAW hazards are prevented.</li>
+<li>If a structural hazard or WAW hazard exists, instruction issuing (including other instructions) must be stalled until these hazards are resolved.</li>
+<li>When issuing is stalled, the buffer between the IF (instruction fetch) and issue stages will be filled. If the buffer holds only a single entry, IF can stop immediately; if the buffer is a queue capable of holding multiple instructions, IF stops only when the queue is full.</li>
+</ul>
+<p><strong>Read Operands:</strong></p>
+<ul>
+<li>The scoreboard monitors the availability of source operands.</li>
+<li>If no previously issued active instruction intends to write to a source operand, that operand is available. The scoreboard then tells the functional unit that it can read the operand from the register and proceed.</li>
+<li>At this step, the scoreboard dynamically resolves RAW hazards, and instructions may be sent to the execution stage out of order.</li>
+<li>This step, combined with the previous one, completes the function of the ID stage in the original RISC-V pipeline.</li>
+</ul>
+<p><strong>Execution:</strong></p>
+<ul>
+<li>Once all operands are received, the functional unit begins execution.</li>
+<li>When the result is computed, it notifies the scoreboard of this completion.</li>
+<li>This step replaces the EX stage of the original RISC-V pipeline and may take multiple clock cycles for floating-point operations.</li>
+</ul>
+<p><strong>Write Result:</strong></p>
+<ul>
+<li>Once the scoreboard knows that the functional unit has completed execution, it first checks for WAR hazards and, if necessary, stalls the instruction that has completed execution.</li>
+<li>An instruction that has completed execution cannot write its result temporarily if a prior instruction (issued before it) has not yet read its operands and that operand uses the same register as the result of the completed instruction.</li>
+<li>If no WAR hazard exists or it has been resolved, the scoreboard tells the functional unit to store the result in the destination register.</li>
+<li>This step replaces the WB stage of the original RISC-V pipeline.</li>
+</ul>
+<p>Unlike a simple pipeline, this method ensures that once execution is complete, the instruction’s result is immediately written to the register file (assuming no hazards), thereby reducing pipeline latency. However, because the write result and read operand stages cannot overlap, the scoreboard method introduces an additional clock cycle. This overhead can be eliminated by adding buffers.</p>
+<p>Based on its own data structures, the scoreboard controls the progress of instructions through each stage by communicating with the functional units. However, the limited number of source operand buses and result buses in the register file indicates potential structural hazards. Therefore, the scoreboard must ensure that the number of functional units allowed to read operands or write results in steps 2–4 does not exceed the available buses. The CDC 6600 addressed this by dividing its 16 functional units into 4 groups, providing each group with a data trunk (a set of buses), and stipulating that only one unit per group could read operands or write results per clock cycle.</p>
+<p>In analyzing the scoreboard, we use the following three tables:</p>
+<ul>
+<li><strong>Instruction Status Table:</strong> Records the stage and status of each instruction.</li>
+<li><strong>Functional Unit Status Table:</strong> Records the following information:<ul>
+<li><strong>Busy:</strong> Whether the functional unit is idle.</li>
+<li><strong>Op:</strong> The operation being executed.</li>
+<li><strong>Fi, Fj, Fk:</strong> The registers corresponding to the operands.</li>
+<li><strong>Qj, Qk:</strong> The source of the operands (functional unit).</li>
+<li><strong>Rj, Rk:</strong> The readiness status of the operands.</li>
+</ul>
+</li>
+<li><strong>Register Status Table:</strong> If a register’s value is still being computed in a functional unit, it retains the operation number; once computed, the actual value is filled in.</li>
+</ul>
+<p><strong>Limitations of the Scoreboard:</strong></p>
+<ul>
+<li><strong>Degree of ILP:</strong> If we cannot find independent instructions to execute, the scoreboard is of little use.</li>
+<li><strong>Size of the Issue Window:</strong> This factor determines how far ahead the CPU looks for parallelizable instructions.</li>
+<li><strong>Number, Type, and Speed of Functional Units:</strong> These determine the frequency of stalls due to structural hazards.</li>
+<li><strong>Presence of Anti-dependencies and Output Dependencies:</strong> Compared to RAW hazards, WAR and WAW hazards impose greater restrictions on the scoreboard because they cause stalls. RAW issues arise in any technique, but WAR and WAW hazards can be resolved using methods other than the scoreboard.</li>
+</ul>
+<h3 id="Tomasulo’s-Algorithm"><a href="#Tomasulo’s-Algorithm" class="headerlink" title="Tomasulo’s Algorithm"></a>Tomasulo’s Algorithm</h3><p>In a dynamically scheduled processor using the Tomasulo algorithm,</p>
+<ul>
+<li><p>RAW hazards can be avoided by executing instructions as soon as their operands are available.</p>
+</li>
+<li><p>WAR and WAW hazards can be eliminated through register renaming. If enough registers are available, the compiler can implement this renaming.</p>
+</li>
+</ul>
+<p>In the Tomasulo algorithm, register renaming is implemented by reservation stations. These act as buffers for instructions waiting to be issued and associated with functional units (their physical properties are closer to those of registers). The basic idea here is that when an operand becomes available, the reservation station fetches and caches it, eliminating the need to retrieve the operand from a register. Additionally, waiting instructions specify the reservation station that will provide their inputs. When an instruction is issued, the register identifiers for the waiting operands are renamed to the names of the reservation stations, thereby achieving register renaming.</p>
+<p>The following diagram shows the basic structure of a floating-point unit based on the Tomasulo algorithm:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/10.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>It contains a floating-point unit and a load-store unit.</p>
+</li>
+<li><p>Each reservation station holds an issued instruction that is waiting to be executed in a functional unit.</p>
+</li>
+<li><p>If the operand values of the instruction have already been computed, they are also stored; otherwise, the reservation station stores the names of the reservation stations that will provide the operand values.</p>
+</li>
+<li><p>The load buffer and store buffer respectively retain data or addresses coming from or going to memory, behaving similarly to reservation stations.</p>
+</li>
+<li><p>The floating-point registers are connected by a pair of buses from the functional units and one bus from the store buffer.</p>
+</li>
+<li><p>All results from functional units and memory are sent to the Common Data Bus (CDB), which passes through all components except the load buffer.</p>
+</li>
+<li><p>All reservation stations have a tag field used for pipeline control.</p>
+</li>
+</ul>
+<p>In the above processor, an instruction goes through the following three steps:</p>
+<p><strong>Issue</strong> (sometimes called dispatch):</p>
+<ul>
+<li><p>Fetch the next instruction from the front of the instruction queue (FIFO order to maintain correct data flow).</p>
+</li>
+<li><p>If the reservation station matching the instruction is empty, issue the instruction and its operands (if currently in registers) to that reservation station.</p>
+</li>
+<li><p>If no empty reservation station is available, a structural hazard occurs, and instruction issuance stops until a reservation station slot is freed.</p>
+</li>
+<li><p>If an operand is not in a register, track the functional unit that will produce the operand value.</p>
+</li>
+<li><p>This step implements register renaming, eliminating WAR and WAW hazards in registers.</p>
+</li>
+</ul>
+<p><strong>Execute</strong>:</p>
+<ul>
+<li><p>If one or more operands are unavailable, the reservation station monitors the CDB, waiting for the operands to be computed.</p>
+</li>
+<li><p>When an operand becomes available, it is placed into any reservation station waiting for it.</p>
+</li>
+<li><p>When all operands for an operation are available, the operation is executed in the corresponding functional unit.</p>
+</li>
+<li><p>By delaying instruction execution until all operands are available, RAW hazards are avoided.</p>
+</li>
+<li><p>Sometimes multiple instructions may be ready in the same clock cycle and require the same functional unit; the unit must then choose among them. For example, the floating-point unit selects randomly, while the load-store unit is more complex.</p>
+</li>
+<li><p>Load and store operations require a two-step execution process:</p>
+<ul>
+<li><p>Compute the effective address when the base register is available.</p>
+</li>
+<li><p>Then place it in the load or store buffer.</p>
+</li>
+<li><p>For loads, execution occurs immediately when the memory unit is available; for stores, execution waits until the value is sent to the memory unit.</p>
+</li>
+</ul>
+</li>
+<li><p>To preserve exception behavior, instructions are not allowed to execute until branches that precede them in program order have completed.</p>
+</li>
+<li><p>If the processor records the occurrence of an exception but does not raise it, the instruction executes without stalling until it enters the “write result” stage.</p>
+</li>
+</ul>
+<p><strong>Write Result</strong>:</p>
+<ul>
+<li><p>When a result is available, write it to the CDB, then to registers and any reservation stations (including the store buffer) waiting for that result. This operation is called broadcasting.</p>
+</li>
+<li><p>Store operations are buffered in the store buffer until the value is stored and the store address is available, at which point the result is written to an available memory unit.</p>
+</li>
+</ul>
+<p>Data structures used to detect and eliminate hazards are attached to reservation stations, the register file, and the load and store buffers.</p>
+<p>The retrieval of results from the bus by the CDB and reservation stations implements the forwarding (or bypassing) mechanism used in statically scheduled pipelines, but the dynamic scheduling method introduces an additional clock cycle delay.</p>
+<p>When analyzing with Tomasulo’s algorithm, we use the following tables:</p>
+<ul>
+<li><p><strong>Instruction Status Table</strong>: Used only to help us understand the algorithm; it is not actually part of the hardware.</p>
+</li>
+<li><p><strong>Reservation Station Table</strong>: Contains the status of each issued operation.</p>
+</li>
+<li><p><strong>Register Status Table</strong>: Contains the number of the reservation station whose result needs to be stored in the register.</p>
+</li>
+</ul>
+<p>Each reservation station has 7 fields:</p>
+<ul>
+<li><p><strong>Op</strong>: The operation to be performed on source operands S1 and S2.</p>
+</li>
+<li><p><strong>Qj, Qk</strong>: The reservation stations that will produce the corresponding source operands. A value of 0 indicates that the source operand is already available in Vj or Vk.</p>
+</li>
+<li><p><strong>Vj, Vk</strong>: The values of the source operands. Note that for each operand, only one of the Q field or V field is valid. For loads, the Vk field is used to hold the offset field.</p>
+</li>
+<li><p><strong>A</strong>: Holds information for memory address calculation for loads and stores. Initially, the immediate field of the instruction is stored here; after address calculation, the effective address is stored here.</p>
+</li>
+<li><p><strong>Busy</strong>: Indicates whether the reservation station and its corresponding functional unit are occupied.</p>
+</li>
+</ul>
+<p><strong>Advantages of Tomasulo’s Algorithm</strong>:</p>
+<ul>
+<li><strong>Distribution of hazard detection units</strong>: This advantage comes from the use of distributed reservation stations and the CDB. If multiple instructions are waiting for the same result and all other operands for each instruction are ready, broadcasting the result via the CDB allows the instructions to be released simultaneously.</li>
+<li>Eliminating stalls caused by WAW and WAR hazards: This advantage is achieved by renaming registers in the reservation station and storing available operands in the reservation station.</li>
+</ul>
+<p>Disadvantages of the Tomasulo Algorithm</p>
+<ul>
+<li><p>Complex implementation, requiring a lot of hardware</p>
+</li>
+<li><p>Performance is also limited by the CDB</p>
+</li>
+<li><p>If different addresses are accessed, loads and stores can be safely executed out of order. However, if the same address is accessed, one of the following situations occurs:</p>
+<ul>
+<li><p>If a load precedes a store in program order, swapping them results in a WAR hazard</p>
+</li>
+<li><p>If a store precedes a load in program order, swapping them results in a RAW hazard</p>
+</li>
+<li><p>Swapping two store instructions that access the same address results in a WAW hazard</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="3-5-Hardware-Based-Speculation"><a href="#3-5-Hardware-Based-Speculation" class="headerlink" title="3.5 Hardware-Based Speculation"></a>3.5 Hardware-Based Speculation</h2><p>The three key ideas of hardware speculation are:</p>
+<ul>
+<li><p>Dynamic branch prediction: used to select the instructions to be executed</p>
+</li>
+<li><p>Speculation: allows instructions before control dependencies to be executed (i.e., the ability to undo the effects of incorrectly speculated instruction sequences)</p>
+</li>
+<li><p>Dynamic scheduling: handles the scheduling of different basic blocks</p>
+</li>
+</ul>
+<p>Hardware speculation follows the predicted data flow to decide when to execute instructions. This method of executing programs is called data flow execution: operations are executed immediately when operands become available.</p>
+<p>An instruction is allowed to update the register file or memory only when it is no longer speculative. This step is called instruction commit.</p>
+<p>The key idea behind implementing speculation is to allow instructions to execute out of order but force them to commit in order to prevent any irreversible actions. Therefore, when using speculation techniques, the process of completing execution must be separated from instruction commit; additional hardware buffers are needed to retain the results of instructions that have been executed but not yet committed. This buffer is called the reorder buffer (ROB), which is logically a FIFO queue but physically a buffer in memory. Since the ROB is similar to the store buffer, the store buffer is later merged into the ROB.</p>
+<p>The following figure shows the structure of a processor that implements speculation and uses the Tomasulo algorithm:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/75.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Each item in the ROB contains four fields:</p>
+<ul>
+<li><p><strong>Instruction type</strong>: Indicates whether the instruction is a branch instruction (no target result), a store instruction (target is a memory address), or a register operation (ALU operation and load instruction, target is a register).</p>
+</li>
+<li><p><strong>Target field</strong>: Provides the register number (for ALU operations and load instructions) or memory address (for store instructions) where the instruction result should be written.</p>
+</li>
+<li><p><strong>Value field</strong>: Holds the value of the instruction result until the instruction is committed.</p>
+</li>
+<li><p><strong>Ready field</strong>: Indicates whether the instruction has completed execution and the value is ready.</p>
+</li>
+</ul>
+<p>Although the function of register renaming in the reservation station is now handled by the ROB, the reservation station still provides a buffer for operations from issue to execution. Since each instruction must have a position in the ROB before being committed, we use the ROB entry number to tag the result, and this tag must be trackable by the reservation station.</p>
+<p>Now, instruction execution is divided into four steps:</p>
+<p><strong>Issue</strong>:</p>
+<ul>
+<li><p>Fetch an instruction from the instruction queue.</p>
+</li>
+<li><p>If there is an empty reservation station and an empty ROB entry, issue the instruction.</p>
+</li>
+<li><p>If the operands are available in the registers or ROB, send them to the reservation station.</p>
+</li>
+<li><p>Update control entries to indicate that the buffer is in use.</p>
+</li>
+<li><p>The ROB entry number allocated for the result is also sent to the reservation station, so that when the result is placed on the CDB, this number can be used to tag the result.</p>
+</li>
+<li><p>If the reservation station or ROB is full, stop issuing instructions until a free entry becomes available.</p>
+</li>
+</ul>
+<p><strong>Execute</strong>:</p>
+<ul>
+<li><p>If one or more operands are unavailable, monitor the CDB and wait for the operands to be computed.</p>
+</li>
+<li><p>When all operands for an operation are available, execute the operation.</p>
+</li>
+<li><p>This stage may take multiple clock cycles.</p>
+</li>
+</ul>
+<p><strong>Write Result</strong>:</p>
+<ul>
+<li><p>When the result is available, write it (along with the ROB tag) to the CDB, then from the CDB to the ROB and to any reservation stations waiting for the result.</p>
+</li>
+<li><p>For store instructions, if the store value is available, write it to the value field of the ROB entry; if not, monitor the CDB until the value is broadcast.</p>
+</li>
+</ul>
+<p><strong>Commit</strong>: There are three cases:</p>
+<ul>
+<li><p><strong>Normal commit</strong> (when the instruction reaches the head of the ROB and the corresponding value is in the buffer): The processor updates the register with the instruction execution result and removes the instruction from the ROB.</p>
+</li>
+<li><p><strong>Commit store instruction</strong>: Similar to the previous case, but updates memory instead of registers.</p>
+</li>
+<li><p><strong>Mispredicted branch instruction</strong> (i.e., incorrect speculation): Clear the contents of the ROB and restart with the correct instruction after the branch (rollback). Incorrect predictions significantly impact processor performance, so careful consideration must be given to all aspects of branch handling, including prediction accuracy, misprediction detection latency, and misprediction recovery time.</p>
+</li>
+</ul>
+<p>The processor only identifies and handles exceptions when it is ready to commit. If a speculative instruction triggers an exception, the exception is recorded in the ROB. If a branch misprediction occurs and the instruction has not yet been executed, the exception is cleared along with the other contents of the ROB. However, if the instruction has already reached the head of the ROB, we know that the instruction is no longer speculative and the exception has genuinely occurred, so it should be handled as soon as possible. Therefore, the Tomasulo algorithm combined with the ROB achieves precise interrupt capability.</p>
+<p>Conclusion:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/36.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h2 id="3-6-Multiple-Issue"><a href="#3-6-Multiple-Issue" class="headerlink" title="3.6 Multiple Issue"></a>3.6 Multiple Issue</h2><p>To further improve performance, we aim to reduce the CPI to below 1, which means multiple instructions need to be issued within a single clock cycle. Therefore, this section discusses the design of multi-issue processors, which include the following types:</p>
+<ul>
+<li><p>Statically scheduled superscalar processors</p>
+<ul>
+<li>The number of instructions issued per clock cycle varies</li>
+<li>Assuming a maximum limit of n, such a processor is referred to as n-issue</li>
+<li>Can be implemented with static scheduling by the compiler or dynamic scheduling using the Tomasulo algorithm</li>
+<li>This approach is currently the most successful for general-purpose computing</li>
+</ul>
+</li>
+<li><p>VLIW (Very Long Instruction Word) processors</p>
+<ul>
+<li>A fixed number of instructions (4-16) are issued per clock cycle, formatted as a single large instruction or a fixed instruction packet with parallelism</li>
+<li>Parallelism among instructions within a packet is explicitly represented</li>
+<li>Statically scheduled by the compiler</li>
+<li>Successfully used in digital signal processing and multimedia applications</li>
+</ul>
+</li>
+<li><p>Dynamically scheduled superscalar processors</p>
+</li>
+</ul>
+<img src="https://note.noughtq.top/sys/ca/images/C3/79.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Summary: Five Basic Methods for Implementing Multi-Issue Processors</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/19.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Using-Static-Scheduling"><a href="#Using-Static-Scheduling" class="headerlink" title="Using Static Scheduling"></a>Using Static Scheduling</h3><p>Let us first consider a statically scheduled superscalar processor:</p>
+<p>Instructions are issued in order, and conflict detection is performed at the time of instruction issue. In the current instruction sequence, there are no data conflicts or close conflicts.</p>
+<p>The outgoing component detects structural and data conflicts, typically implemented in two stages:</p>
+<ul>
+<li><p>Stage 1: Perform conflict detection within the outgoing package and select instructions that can be issued first.</p>
+</li>
+<li><p>Stage 2: Check whether these selected instructions conflict with instructions currently being executed.</p>
+</li>
+</ul>
+<p>The RISC-V approach to superscalar implementation:</p>
+<ul>
+<li><p>Assume 2 instructions are issued per clock cycle (64 bits): 1 integer instruction + 1 floating-point instruction. This parallelism keeps the increase in hardware manageable (load, store, and branch instructions are all considered integer instructions).</p>
+</li>
+<li><p>Also assume that floating-point instructions require 2 clock cycles to execute.</p>
+</li>
+<li><p>Floating-point load and store instructions use integer hardware, which increases access conflicts for floating-point registers. A mitigation method is to increase the number of read&#x2F;write ports for floating-point registers.</p>
+</li>
+</ul>
+<hr>
+<p>Now consider VLIW:</p>
+<p>Multiple independent functional units are used, and multiple operations are packed into a very long instruction, or instructions within a packet satisfy the same constraints.</p>
+<p>The instruction word is divided into multiple fields, called operation slots, which can directly and independently control a functional unit.</p>
+<p>All processing and instruction scheduling are handled by the compiler.</p>
+<p>Since the advantages of VLIW increase with higher issue rates, we consider processors with wider issue widths.</p>
+<p>To keep functional units busy, sufficient parallelism in the code is required, which can be achieved through loop unrolling and code scheduling as previously introduced. If the unrolled code is straight-line code (no branches), local scheduling techniques applied to a single basic block can be used. If parallelism requires scheduling code across branches, more complex global scheduling algorithms must be employed.</p>
+<p>The VLIW model has some technical and logical issues:</p>
+<ul>
+<li><p>Increase in code size. Solutions include: software scheduling that enhances parallelism through extensive loop unrolling; adopting smarter encoding methods; compressing instructions in memory and decompressing them when loading into the cache.</p>
+</li>
+<li><p>Limitations of lockstep operation: Any stall in a functional unit pipeline causes the entire processor to stall, as all functional units must remain synchronized (in modern processors, functional units operate more independently, and the compiler is used to avoid hazards at issue time, while hardware checks allow out-of-sync execution of instructions).</p>
+</li>
+<li><p>Insufficient binary code compatibility, making migration between different implementations difficult.</p>
+</li>
+</ul>
+<h3 id="Using-Dynamic-Scheduling-and-Speculation"><a href="#Using-Dynamic-Scheduling-and-Speculation" class="headerlink" title="Using Dynamic Scheduling and Speculation"></a>Using Dynamic Scheduling and Speculation</h3><p>现在我们将动态调度、多发射和推测这三项技术结合起来，就可以得到一个和现代微处理器很像的微架构。为了便于后续讨论，我们仅考虑每时钟周期内发射两条指令的发射率。下图展示了带推测的多发射处理器的基本组织：</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/21.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>The difference from the previous organization chart is that certain lines are bolded to support multiple issue; the components remain unchanged.</p>
+</blockquote>
+<p>The key lies in allocating reservation stations and updating pipeline tables.</p>
+<ul>
+<li><p>Completing the above steps within half a clock cycle allows two instructions to be processed in one clock cycle, but this method is difficult to scale to more instruction issues.</p>
+</li>
+<li><p>Establishing the necessary logic to handle two or more instructions simultaneously (including any possible dependencies between them).</p>
+</li>
+</ul>
+<p>In dynamically scheduled superscalar processors, the issue stage is one of the most fundamental bottlenecks.</p>
+<p>We can derive the basic strategy for issuing n instructions per clock cycle:</p>
+<ul>
+<li><p>Allocate a reservation station and a reorder buffer entry for each instruction that may be in the next issue packet. This can be done before the instruction type is determined; specifically, n available ROB entries can be used to pre-allocate space sequentially for the instructions in the packet, ensuring there are enough available reservation stations to issue the entire packet.</p>
+</li>
+<li><p>Analyze the dependencies among all instructions in the issue packet.</p>
+</li>
+<li><p>If an instruction in the issue packet depends on a preceding instruction within the same packet, update the reservation station of the dependent instruction using the allocated ROB tag. Otherwise, update the reservation station of the instruction being issued using the existing reservation station and ROB.</p>
+</li>
+</ul>
+<p>The above process must be completed within a single clock cycle, making it quite complex.</p>
+<h2 id="3-7-Advanced-Techniques-for-Instruction-Delivery-and-Speculation"><a href="#3-7-Advanced-Techniques-for-Instruction-Delivery-and-Speculation" class="headerlink" title="3.7 Advanced Techniques for Instruction Delivery and Speculation"></a>3.7 Advanced Techniques for Instruction Delivery and Speculation</h2><h3 id="Increasing-Instruction-Fetch-Bandwidth"><a href="#Increasing-Instruction-Fetch-Bandwidth" class="headerlink" title="Increasing Instruction Fetch Bandwidth"></a>Increasing Instruction Fetch Bandwidth</h3><p>In a high-performance pipeline, especially in the case of multiple issue, branch prediction alone is not sufficient. It is also necessary to deliver a high-bandwidth instruction stream.</p>
+<p>A multiple-issue processor requires that the average number of instructions fetched per clock cycle is at least as large as the average throughput. Fetching instructions not only requires a sufficiently wide path in the instruction cache, but the most challenging aspect is handling branches. The following will introduce some methods for dealing with branches.</p>
+<h4 id="Branch-Target-Buffers"><a href="#Branch-Target-Buffers" class="headerlink" title="Branch-Target Buffers"></a>Branch-Target Buffers</h4><p>If an instruction is a branch instruction and we already know the next PC value, the branch penalty is reduced to zero. The branch prediction cache used to store the predicted address of the next instruction after a branch is called a branch-target buffer, and its general structure is as follows:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/25.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Since the branch-target buffer predicts the address of the next instruction and must send it out before decoding the instruction, we must know whether the fetched instruction is predicted to be a taken branch. If the PC value of the fetched instruction matches the address in the prediction buffer, then the corresponding predicted PC is used as the next PC.</p>
+<p>The following shows the steps of the branch-target buffer when processing instructions:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/26.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>The table below shows various scenarios during branch prediction:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C3/27.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Specialized-Branch-Predictors"><a href="#Specialized-Branch-Predictors" class="headerlink" title="Specialized Branch Predictors"></a>Specialized Branch Predictors</h3><p>The next challenge we face is predicting indirect jumps, where the target address changes at runtime.</p>
+<p>To overcome this issue, some designs use a small return address buffer that operates on the stack. This structure caches the most recent return addresses, pushing the return address onto the stack when a procedure is called and popping it when returning. If the buffer is large enough, it can perfectly predict return addresses.</p>
+<hr>
+<p>To meet the demands of multi-issue processors, many designers choose to implement integrated instruction fetch units as separate autonomous units that supply instructions to the pipeline. This unit integrates the following functions:</p>
+<ul>
+<li><p>Integrated branch prediction: The branch predictor is part of the instruction fetch unit and continuously predicts branches to drive the IF stage of the pipeline.</p>
+</li>
+<li><p>Integrated prefetching: To deliver multiple instructions in a single clock cycle, the instruction fetch unit may need to fetch instructions in advance. This unit automatically manages instruction prefetching, integrating it with branch prediction.</p>
+</li>
+<li><p>Instruction memory access and buffering: The instruction fetch unit uses prefetching to hide the cost of cache block crossing (?). Additionally, this unit provides buffers to supply instructions to the issue stage.</p>
+</li>
+</ul>
+<h3 id="Implementation-Issues-and-Extensions-of-Speculation"><a href="#Implementation-Issues-and-Extensions-of-Speculation" class="headerlink" title="Implementation Issues and Extensions of Speculation"></a>Implementation Issues and Extensions of Speculation</h3><h4 id="Speculation-Support-Register-Renaming-v-s-Reorder-Buffers"><a href="#Speculation-Support-Register-Renaming-v-s-Reorder-Buffers" class="headerlink" title="Speculation Support: Register Renaming v.s. Reorder Buffers"></a>Speculation Support: Register Renaming v.s. Reorder Buffers</h4><p>An alternative to ROB is to use a larger set of register files combined with register renaming technology, which is also based on the Tomasulo algorithm. In the Tomasulo algorithm, at any point during execution, the values of architecturally visible registers are contained within the register file and reservation stations. If speculation techniques are used, register values may also temporarily reside in the ROB.</p>
+<p>During instruction issue, the renaming process maps the names of architectural registers to physical register numbers, allocating a new unused register as the target. Through this method, WAW and WAR hazards can be avoided, and speculative recovery can be handled because the physical register holding the instruction’s target does not become an architectural register until the instruction commits. The renaming map is a simple data structure that provides the current physical register number corresponding to a given architectural register, a function performed by the register status table in the Tomasulo algorithm.</p>
+<p>Compared to the ROB method, the advantage of the renaming method is that it slightly simplifies instruction commit, as it records the non-speculative mapping between architectural register numbers and physical register numbers and releases the physical registers that stored the old values of architectural registers. However, register renaming makes releasing registers more complex—a physical register corresponds to an architectural register until the architectural register is overwritten, which causes the renaming table to point elsewhere. Therefore, if a physical register is not used as a source and is not assigned to a corresponding architectural register, it needs to be reclaimed and reallocated. A simpler approach is to have the processor wait for other instructions writing to the same architectural register to commit, a method used by most recent superscalar processors.</p>
+<blockquote>
+<p>The issue logic needs to retain enough physical registers for a complete issue packet.</p>
+</blockquote>
+<blockquote>
+<p>The issue logic needs to determine the dependencies within the issue packet. If no dependencies exist, the register renaming structure is used to determine the physical registers, saving the results of current or future instruction dependencies. When there are no dependencies within the issue packet, the results from previous issue packets and the register renaming table will have the correct register numbers.</p>
+</blockquote>
+<blockquote>
+<p>If an instruction depends on another instruction within the same packet that precedes it, a pre-reserved register needs to be used to update the information of the issued instruction.</p>
+</blockquote>
+<h4 id="The-Challenge-of-More-Issues-per-Clock"><a href="#The-Challenge-of-More-Issues-per-Clock" class="headerlink" title="The Challenge of More Issues per Clock"></a>The Challenge of More Issues per Clock</h4><p>Only when precise branch prediction and speculation are adopted will we consider increasing the issue rate; otherwise, it becomes difficult to scale the issue rate due to the need to resolve branch issues. Increasing the issue rate also makes the issue stage and the commit stage (which is essentially the dual of the issue stage) more complex.</p>
+<h4 id="How-Much-to-Speculate"><a href="#How-Much-to-Speculate" class="headerlink" title="How Much to Speculate"></a>How Much to Speculate</h4><p>One major benefit of speculation is the ability to hide events that cause pipeline stalls, such as cache misses. However, the downside of speculation is that it consumes time and energy, and recovering from incorrect speculation can degrade performance. Additionally, to achieve a higher instruction execution rate through speculation, the processor must have additional resources, which require more chip area and power. Finally, if speculation causes an exception to occur (one that would not have occurred without speculation), it can lead to significant performance loss.</p>
+<p>To maintain the advantages of speculation, most speculative pipelines only allow low-cost exception events to be handled in speculative mode. If a high-cost exception event occurs, the processor will wait until the instruction causing the event is no longer speculative before handling it. Although this may reduce performance for some programs, it avoids significant performance loss in others.</p>
+<h4 id="Speculating-Through-Multiple-Branches"><a href="#Speculating-Through-Multiple-Branches" class="headerlink" title="Speculating Through Multiple Branches"></a>Speculating Through Multiple Branches</h4><p>Speculating on multiple branches simultaneously can bring benefits in the following situations:</p>
+<ul>
+<li>Very high branch frequency</li>
+<li>Significant branch clustering</li>
+<li>Long latency of functional units</li>
+</ul>
+<h4 id="Challenge-of-Energy-Efficiency"><a href="#Challenge-of-Energy-Efficiency" class="headerlink" title="Challenge of Energy Efficiency"></a>Challenge of Energy Efficiency</h4><p>It is speculated that if the reduced execution time can outweigh the increase in average power consumption it brings, then the total energy consumption will decrease.</p>
+<h4 id="Address-Aliasing-Prediction"><a href="#Address-Aliasing-Prediction" class="headerlink" title="Address Aliasing Prediction"></a>Address Aliasing Prediction</h4><p>Address aliasing prediction is a technique used to predict whether two store instructions, or a store instruction and a load instruction, access the same address. If they access different addresses, the two can be safely swapped; otherwise, the instructions must access memory addresses in order (which may require waiting for some time).</p>
+<p>Since we do not need to predict the specific address value, only whether the two values conflict, accurate prediction can be achieved with a small predictor.</p>
+<p>Address aliasing prediction is also a simple and restricted form of value prediction. It attempts to predict the value generated by an instruction. If accurate enough, it can eliminate data flow constraints to achieve a higher ILP rate.</p>
+<h2 id="3-8-Cross-Cutting-Issues"><a href="#3-8-Cross-Cutting-Issues" class="headerlink" title="3.8 Cross-Cutting Issues"></a>3.8 Cross-Cutting Issues</h2><h3 id="Hardware-v-s-Software-Speculation"><a href="#Hardware-v-s-Software-Speculation" class="headerlink" title="Hardware v.s. Software Speculation"></a>Hardware v.s. Software Speculation</h3><ul>
+<li><p>To extend speculation, it must have the ability to resolve memory access ambiguities. In hardware-based methods, this capability is difficult to achieve at compile time; however, through hardware, it can be dynamically realized at runtime, allowing load instructions to be moved ahead of store instructions. If this method is used improperly, the recovery overhead may outweigh the benefits.</p>
+</li>
+<li><p>For most integer programs, hardware-based speculation performs better when control flow is unpredictable and when hardware-based branch prediction completes before software-based branch prediction.</p>
+</li>
+<li><p>Hardware-based speculation can maintain a fully precise exception model, even for speculative instructions. Recent software-based methods can also achieve this.</p>
+</li>
+<li><p>Compiler-based methods have the ability to observe longer code sequences, potentially achieving better code scheduling than purely hardware-based implementations.</p>
+</li>
+<li><p>Hardware-based speculation without dynamic scheduling does not require different code sequences to achieve good performance across different implementations of the same architecture.</p>
+</li>
+<li><p>The main drawback of hardware-based speculation is its complexity, requiring additional hardware resources.</p>
+</li>
+</ul>
+<h3 id="Speculative-Execution-and-the-Memory-System"><a href="#Speculative-Execution-and-the-Memory-System" class="headerlink" title="Speculative Execution and the Memory System"></a>Speculative Execution and the Memory System</h3><p>Registers that support speculative execution and conditional instructions may generate illegal addresses, thereby affecting processor performance—something that does not occur in processors without speculative execution. Therefore, the memory system must identify speculatively executed and conditionally executed instructions and suppress the corresponding exceptions. Moreover, we must not allow such instructions to cause cache stalls or invalidations, so the processor must be paired with a non-blocking cache.</p>
+<h2 id="3-9-Multithreading-Exploiting-Thread-Level-Parallelism-to-Improve-Uniprocessor-Throughput"><a href="#3-9-Multithreading-Exploiting-Thread-Level-Parallelism-to-Improve-Uniprocessor-Throughput" class="headerlink" title="3.9 Multithreading: Exploiting Thread-Level Parallelism to Improve Uniprocessor Throughput"></a>3.9 Multithreading: Exploiting Thread-Level Parallelism to Improve Uniprocessor Throughput</h2><blockquote>
+<p>This mainly introduces multithreading on a single processor.</p>
+</blockquote>
+<p>Multithreading is a technique that leverages thread-level parallelism (TLP) to improve throughput by hiding parallelism. It is actually a cross-domain technology, related to pipelining, superscalar processing, GPUs, and multiprocessors.</p>
+<p>A thread is similar to a process, with its own state and program counter (PC), but multiple threads share the same address space of a process, allowing them to easily access each other’s data. Thus, multithreading enables a single processor to hide pipeline and memory latency by quickly switching between threads without performing a process switch.</p>
+<p>The following introduces some major hardware multithreading methods:</p>
+<hr>
+<p>Fine-grained multithreading:</p>
+<ul>
+<li>Switches between threads every clock cycle, interleaving the execution of instructions from multiple threads.</li>
+<li>Typically uses a round-robin approach, skipping any stalled threads.</li>
+<li>Advantages: It can hide throughput losses caused by both short and long stalls, as instructions from other threads can be executed when one thread stalls.</li>
+<li>Disadvantages: It slows down the execution of a single thread because even if a thread is ready to execute without stalling, its instructions are delayed by instructions from other threads.</li>
+</ul>
+<p>Coarse-grained multithreading:</p>
+<ul>
+<li>An alternative to fine-grained multithreading.</li>
+<li>Switches to another thread only when a thread encounters a high-cost stall, such as a level 2 or level 3 cache miss.</li>
+<li>Advantages: It avoids the overhead of frequent thread switching and hides long-latency events without slowing down the execution of any single thread.</li>
+<li>Disadvantages: Its ability to overcome throughput loss is limited, especially for shorter stalls; due to pipeline startup costs, there may be idle time in the pipeline when a thread stalls and switches to a new thread.</li>
+</ul>
+<p>Simultaneous multithreading (SMT):</p>
+<ul>
+<li>The most common implementation.</li>
+<li>A variant of fine-grained multithreading that naturally arises when implemented on a multi-issue, dynamically scheduled processor.</li>
+<li>SMT uses thread-level parallelism to hide long-latency events in the processor, thereby increasing the utilization of functional units.</li>
+<li>Key point: The essence of SMT lies in register renaming and dynamic scheduling, allowing multiple instructions from independent threads to be executed without considering dependencies between them; dependency resolution is handled by dynamic scheduling capabilities.</li>
+<li>SMT allows the processor to execute instructions from multiple different threads in the same clock cycle.</li>
+</ul>
+<h1 id="Chapter-4-Data-Level-Parallelism-in-Vector-SIMD-and-GPU-Architectures"><a href="#Chapter-4-Data-Level-Parallelism-in-Vector-SIMD-and-GPU-Architectures" class="headerlink" title="Chapter 4 Data-Level Parallelism in Vector, SIMD, and GPU Architectures"></a>Chapter 4 Data-Level Parallelism in Vector, SIMD, and GPU Architectures</h1>
   </div>
 
   
@@ -892,10 +1528,10 @@
   <div class="container post-prev-next" data-pagefind-ignore>
     <a class="next"></a>
     
-    <a href="/2026/03/02/Course/Object_Oriented_Programing/" class="prev">
+    <a href="/2026/03/02/Course/Database_System/" class="prev">
       <div class="text">
         <p class="label">Previous</p>
-        <h3 class="title">Object-Oriented Programing</h3>
+        <h3 class="title">Database System</h3>
       </div>
     </a>
     
