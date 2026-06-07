@@ -22,7 +22,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Computer_Architecture.jpg">
 <meta property="article:published_time" content="2026-03-01T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-05-16T07:00:28.102Z">
+<meta property="article:modified_time" content="2026-06-07T08:28:36.630Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Computer_Architecture.jpg">
@@ -1511,7 +1511,928 @@
 <li>Key point: The essence of SMT lies in register renaming and dynamic scheduling, allowing multiple instructions from independent threads to be executed without considering dependencies between them; dependency resolution is handled by dynamic scheduling capabilities.</li>
 <li>SMT allows the processor to execute instructions from multiple different threads in the same clock cycle.</li>
 </ul>
-<h1 id="Chapter-4-Data-Level-Parallelism-in-Vector-SIMD-and-GPU-Architectures"><a href="#Chapter-4-Data-Level-Parallelism-in-Vector-SIMD-and-GPU-Architectures" class="headerlink" title="Chapter 4 Data-Level Parallelism in Vector, SIMD, and GPU Architectures"></a>Chapter 4 Data-Level Parallelism in Vector, SIMD, and GPU Architectures</h1>
+<h1 id="Chapter-4-Data-Level-Parallelism-in-Vector-SIMD-and-GPU-Architectures"><a href="#Chapter-4-Data-Level-Parallelism-in-Vector-SIMD-and-GPU-Architectures" class="headerlink" title="Chapter 4 Data-Level Parallelism in Vector, SIMD, and GPU Architectures"></a>Chapter 4 Data-Level Parallelism in Vector, SIMD, and GPU Architectures</h1><p>In this chapter, we will explore some common techniques for data-level parallelism. Among them, the most well-known is SIMD (Single Instruction, Multiple Data), which is widely used in scientific computing for matrix operations, media-oriented image and audio processing, and machine learning algorithms. Compared to MIMD, SIMD is more energy-efficient, making it suitable for personal mobile devices and servers. However, the biggest advantage of SIMD is that programmers can still think in a sequential manner while the underlying hardware accelerates computations through parallelism.</p>
+<p>This chapter mainly covers three major topics, all of which are variants of SIMD:</p>
+<ul>
+<li>Vector architecture  </li>
+<li>Multimedia SIMD instruction set extensions  </li>
+<li>Graphic processing units (GPUs)</li>
+</ul>
+<p>The latter two are closely related to vector architecture, so we will first study the principles and implementation of vector architecture.</p>
+<h2 id="4-1-Vector-Architecture"><a href="#4-1-Vector-Architecture" class="headerlink" title="4.1 Vector Architecture"></a>4.1 Vector Architecture</h2><p>The general principle of vector architecture can be summarized as follows: it retrieves sets of data elements scattered in memory, places them in a large sequential register file, performs operations on the data within the register file, and finally scatters the results back into memory.</p>
+<ul>
+<li><p>A single instruction operates on multiple vector data, resulting in multiple register-to-register operations on independent data elements.</p>
+</li>
+<li><p>Acting as compiler-controlled buffers, these register files can hide memory latency and make efficient use of memory bandwidth.</p>
+</li>
+<li><p>The power wall has led architects to value architectures that can achieve high performance without incurring the high costs of out-of-order superscalar processors. Vector architecture meets this requirement—by simply using vector instructions on a simple scalar processor, performance can be improved.</p>
+</li>
+</ul>
+<p>Classification of vector architectures</p>
+<ul>
+<li><p>Memory-memory vector processor: All vector operations are performed between memory locations.</p>
+</li>
+<li><p>Vector-register processor: All vector operations (except loads and stores) are performed within vector registers. (The vector architectures introduced later belong to this category.)</p>
+</li>
+</ul>
+<hr>
+<p>One characteristic of vector processors is that elements within a vector are rarely correlated during operations. However, incorrect vector processing can lead to correlation problems and frequent function switches. In vector pipelines, we need to consider how to handle vectors to improve pipeline efficiency. Below are some solutions:</p>
+<ul>
+<li><p>Horizontal processing method: Vector calculations are performed row by row from left to right.</p>
+</li>
+<li><p>Vertical processing method: Vector calculations are performed column by column from top to bottom.</p>
+</li>
+<li><p>Vertical and horizontal processing method (group processing method): Combines the previous two methods.</p>
+</li>
+</ul>
+<p>The following example compares the effects of these three methods—assuming we need to compute D &#x3D; A * (B + C), where A, B, C, and D are vectors of length N.</p>
+<ul>
+<li><p>Horizontal processing method</p>
+<ul>
+<li><p>Calculation process: d1 &lt;- a1 * (b1 + c1) &#x2F;&#x2F; d2 &lt;- a2 * (b2 + c2) … dN &lt;- aN * (bN + cN)</p>
+</li>
+<li><p>A loop program is constructed to handle: ki &lt;- bi + ci &#x2F;&#x2F; di &lt;- ai * ki</p>
+</li>
+<li><p>Data dependencies: N times, function switches: 2N times</p>
+</li>
+<li><p>Issue: When computing each part, RAW dependencies occur, resulting in low pipeline efficiency. If a static multi-functional pipeline is used, the pipeline must switch frequently, and its throughput becomes smaller than that of serial execution. Therefore, this method is not suitable for vector processors.</p>
+</li>
+</ul>
+</li>
+<li><p>Vertical processing method</p>
+<ul>
+<li><p>Calculation process: K &lt;- B + C &#x2F;&#x2F; D &lt;- A * K</p>
+</li>
+<li><p>Data dependencies: 1 time, function switches: 2 times</p>
+</li>
+<li><p>Requires a memory-to-memory processor structure: The source and destination vectors of vector instructions must be stored in memory, and the immediate results of operations must also be sent back to memory.</p>
+</li>
+</ul>
+</li>
+<li><p>Group processing method</p>
+<ul>
+<li><p>Divides the vector into multiple groups, processes them vertically, and then processes each group sequentially.</p>
+</li>
+<li><p>Let N &#x3D; S * n + r, where N is the vector length, S is the number of groups, n is the group length, and r is the remainder (if treated as a complete group, the number of groups is S + 1).</p>
+</li>
+<li><p>Calculation process: d_{1-n} &lt;- a_{1-n} * (b_{1-n} + c_{1-n}) &#x2F;&#x2F; d_{n+1-2n} &lt;- a_{n+1-2n} * (b_{n+1-2n} + c_{n+1-2n}) … d_{S<em>n+1-N} &lt;- a_{S</em>n+1-N} * (b_{S<em>n+1-N} + c_{S</em>n+1-N})</p>
+</li>
+<li><p>Data dependencies: S+1 times, function switches: 2(S+1) times</p>
+</li>
+<li><p>Requires a register-to-register processor structure: Fast-access vector registers are set up to store source vectors, destination vectors, and intermediate results, connecting the input and output ends of the arithmetic unit to the vector registers to form a register-to-register type operation pipeline.</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>Vector pipeline processing structures vary by machine. Below, using the CRAY-1 as an example, some structural features of register-to-register vector pipeline processing machines are introduced.</p>
+<img src="https://note.noughtq.top/sys/ca/images/C4/42.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>The above diagram can be simplified and represented as follows:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C4/43.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>The characteristics of the CRAY-1 vector processor include:</p>
+<ul>
+<li><p>Each vector register Vi has a dedicated bus connecting to six vector functional units.</p>
+</li>
+<li><p>Each vector functional unit also has a bus that returns the operation result to the vector register bus.</p>
+</li>
+<li><p>As long as there are no Vi conflicts or functional conflicts, each Vi and functional unit can work in parallel, greatly accelerating the processing of vector instructions.</p>
+<ul>
+<li><p>Vi conflict: The source or result vector of each vector instruction uses the same Vi for parallel operation.</p>
+<ul>
+<li><p>Read-write data dependency: V0 &lt;- V1 + V2, V3 &lt;- V0 * V4</p>
+</li>
+<li><p>Read data dependency: V0 &lt;- V1 + V2, V3 &lt;- V1 * V4</p>
+</li>
+</ul>
+</li>
+<li><p>Functional conflict: Each vector instruction operating in parallel must use the same functional unit.</p>
+<ul>
+<li><p>Example (both require the multiplication function): V3 &lt;- V1 * V2, V5 &lt;- V4 * V6</p>
+</li>
+<li><p>The second instruction begins execution only after the last part of the first instruction has been completed and the floating-point multiplication function is released.</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>The following methods can improve the performance of vector processors:</p>
+<ul>
+<li><p>Establish multiple functional units and make them work in parallel: These units can operate in parallel and in a pipelined manner, thus forming multiple parallel operation pipelines.</p>
+</li>
+<li><p>Use vector chaining technology to accelerate the execution of a series of vector instructions: Chaining involves two related instructions (RAW). When there is no conflict between the functional components and the source vectors, the functional components can be chained for pipelined processing, thereby achieving faster execution. Its essence is the result of introducing the pipeline concept into the vector execution process.</p>
+</li>
+<li><p>Adopt recycling mining technology to accelerate loop processing.</p>
+</li>
+<li><p>Segmented vector processing: When the vector length exceeds the length of the vector register, the long vector must be divided into multiple fixed-length segments, which are then processed in a loop, with each loop handling only one segment. This method is controlled by system hardware and software and is transparent to the programmer.</p>
+</li>
+<li><p>Use a multiprocessor system to further enhance performance.</p>
+</li>
+</ul>
+<h3 id="RV64V-Extension"><a href="#RV64V-Extension" class="headerlink" title="RV64V Extension"></a>RV64V Extension</h3><blockquote>
+<p>Here, “RV64V” refers to the RISC-V base instructions plus the vector instruction extension.</p>
+</blockquote>
+<p>Vector registers:</p>
+<ul>
+<li><p>RV64V has 32 vector registers, each 64 bits in size, storing one vector.</p>
+</li>
+<li><p>The vector register file must provide enough ports to supply the vector functional units; these ports allow a high degree of overlap between vector operations on different vector registers.</p>
+</li>
+<li><p>There are at least 16 read ports and 8 write ports, connected to the inputs and outputs of the functional units via a crossbar switch.</p>
+</li>
+<li><p>One method to increase register file bandwidth is to use multiple banks.</p>
+</li>
+</ul>
+<p>Vector functional units:</p>
+<ul>
+<li><p>All units are fully pipelined and can start a new instruction every clock cycle.</p>
+</li>
+<li><p>The control unit detects hazards, including structural hazards in functional units and data hazards in register access.</p>
+</li>
+<li><p>As shown in the diagram above, only five functional units are provided here, but in this section, we focus only on the floating-point unit.</p>
+</li>
+</ul>
+<p>Vector load&#x2F;store unit:</p>
+<ul>
+<li><p>These units are also fully pipelined, ensuring a bandwidth of one word per clock cycle after the initial latency.</p>
+</li>
+<li><p>They can also handle scalar loads and stores.</p>
+</li>
+</ul>
+<p>A set of scalar registers:</p>
+<ul>
+<li><p>These primarily provide data and computed addresses.</p>
+</li>
+<li><p>In RV64G, there are 31 general-purpose registers and 32 floating-point registers.</p>
+</li>
+</ul>
+<p>The reason RV64V adopts such dynamic register typing is because</p>
+<ul>
+<li><p>If a traditional vector architecture were to support such a diverse combination of data types, it would require a large number of instructions, resulting in an instruction list spanning several pages.</p>
+</li>
+<li><p>Programs can disable unused vector registers, thereby allocating all vector memory to the vector registers for storing long vectors. The downside of this approach is that a larger state leads to slower context switch times. However, a beneficial side effect is that programs can disable unused registers, eliminating the need to save and restore them during context switches.</p>
+</li>
+<li><p>Implicit conversion of operands of different sizes can be achieved through register configuration, eliminating the need for explicit conversion via additional instructions.</p>
+</li>
+</ul>
+<p>Some vectors may be very long, requiring more than one vector register. In such cases, the following registers are used:</p>
+<ul>
+<li>vl: Vector length register, used when the vector length is not equal to mvl.</li>
+<li>vctype: Vector type register, which records the register type.</li>
+<li>pi: Predicate register, used for loops containing IF statements.</li>
+</ul>
+<p>Through these vector instructions, the system can perform vector operations in multiple ways, including computing multiple elements simultaneously. This flexibility allows vector designs to use slow but wide execution units, achieving higher performance at lower power consumption. Additionally, the independence of elements in the vector instruction set enables functional unit scaling without the need for expensive dependency checks, as required in superscalar processors.</p>
+<p>When a compiler generates a sequence of vector instructions, the code runs in vector mode for a significant amount of time, and such code is considered vectorized. Loop code can be vectorized when there are no dependencies between iterations, a condition known as loop-carried dependencies.</p>
+<p>Another difference between RV64G and RV64V is the frequency of pipeline interlocks. Due to data dependencies, RV64G instructions experience many stalls. However, in vector processors, each vector instruction only stalls for the first element, after which subsequent elements flow smoothly through the pipeline. This type of element-dependent operation is called chaining.</p>
+<h3 id="Vector-Execution-Time"><a href="#Vector-Execution-Time" class="headerlink" title="Vector Execution Time"></a>Vector Execution Time</h3><p>The execution time of a vector operation sequence depends on the following factors:</p>
+<ul>
+<li>The length of the operand vectors  </li>
+<li>Structural hazards between operations  </li>
+<li>Data hazards</li>
+</ul>
+<p>All modern vector computers have vector functional units with multiple parallel pipelines (called lanes), capable of producing two or more results per clock cycle. However, some functional units are not fully pipelined. For the sake of discussion:  </p>
+<ul>
+<li>Our RV64V implementation has only one lane, with an initiation rate of one element per clock cycle for a single instruction. Therefore, the execution time (in clock cycles) of a single vector instruction is approximately equal to the vector length.  </li>
+<li>Convoy: A group of vector instructions that can be executed together.  <ul>
+<li>These instructions must not contain any structural hazards; if such hazards exist, they must be serialized and executed in different convoys.  </li>
+<li>We also assume that instructions within a convoy must complete execution before other instructions begin.  </li>
+<li>Chaining allows RAW dependency hazards within the same convoy, as vector operations can begin execution as soon as source operands become available—the result from the first functional unit in the chain is forwarded to the second functional unit. In practice, we implement the concept of chaining by allowing the processor to read and write specific vector registers simultaneously.</li>
+</ul>
+</li>
+<li>Chime: The time required to execute one convoy.  <ul>
+<li>Therefore, executing m convoys takes m chimes; if the vector length is n, the total number of clock cycles is m × n.  </li>
+<li>Since this calculation ignores certain processor-specific overheads (many of which depend on vector length) and the limitation of initiating multiple vector instructions in a single clock cycle, this approximate measurement is more accurate for long vectors.  </li>
+<li>Additionally, the most significant overhead ignored by this method is the vector start-up time, which is the delay before the pipeline is fully filled and depends on the pipeline latency of the vector functional units.</li>
+</ul>
+</li>
+</ul>
+<h3 id="Optimizations"><a href="#Optimizations" class="headerlink" title="Optimizations"></a>Optimizations</h3><p>Below are some optimization methods for improving performance or enabling more types of programs to run on vector architectures:</p>
+<ul>
+<li><p>Multiple lanes: Allow the vector processor to process multiple elements of a vector in a single clock cycle.</p>
+</li>
+<li><p>Vector-length registers: Handle cases where the vector length does not equal the maximum vector length (which is most cases).</p>
+</li>
+<li><p>Predicate registers: Efficiently handle conditional statements, enabling more code to be vectorized.</p>
+</li>
+<li><p>Memory banks: Provide sufficient memory bandwidth for the vector processor.</p>
+</li>
+<li><p>Stride: Handle multidimensional matrices.</p>
+</li>
+<li><p>Gather-scatter: Handle sparse matrices.</p>
+</li>
+<li><p>Programming vector architecture.</p>
+</li>
+</ul>
+<h4 id="Multiple-Lanes"><a href="#Multiple-Lanes" class="headerlink" title="Multiple Lanes"></a>Multiple Lanes</h4><p>A key advantage of vector instruction sets is that they allow software to convey a large amount of parallel work to hardware through a single, relatively short instruction (which contains multiple independent operations and has the same encoding length as traditional scalar instructions). The parallel semantics of vector instructions make it possible to implement the execution of these element-wise operations using highly pipelined or parallel functional units. The diagram below illustrates how multiple parallel functional units can improve the performance of a vector addition instruction (right diagram; the left diagram shows only a single pipeline):</p>
+<img src="https://note.noughtq.top/sys/ca/images/C4/11.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>A property of the RV64V instruction set is that all vector arithmetic instructions only allow operations between element N of one vector register and element N of another vector register, thereby simplifying the design of parallel vector units—these units are structured as multiple parallel lanes, and increasing the number of lanes can enhance the peak throughput of the vector unit.</p>
+<p>To fully leverage the advantages of multiple lanes, both applications and architectures must support long vectors; otherwise, execution proceeds too quickly, easily exhausting instruction bandwidth, requiring ILP to supply enough vector instructions.</p>
+<p>Each lane contains a portion of the vector register file and one execution pipeline from each vector functional unit.</p>
+<p>Each vector functional unit executes vector instructions at a rate of processing one element group per clock cycle in each lane that uses multiple pipelines (a group of elements that move together through the pipeline).</p>
+<p>The first lane holds the first element (element 0) of all vector registers, and so on. This allocation allows the arithmetic pipelines within a lane to complete computations without communicating with other lanes, thereby reducing the cost of wiring and additional register file ports.</p>
+<p>Furthermore, the multi-lane design can improve vector performance with only a small increase in control complexity and without modifying existing machine code; it also allows designers to trade off die area, clock rate, voltage, and power without sacrificing peak performance.</p>
+<h4 id="Vector-Length-Registers"><a href="#Vector-Length-Registers" class="headerlink" title="Vector-Length Registers"></a>Vector-Length Registers</h4><p>Add a vector length register <code>vl</code>, which controls the length of any vector operation, with its value not exceeding <code>mvl</code>. This parameter means that the length of the vector register can be increased later without modifying the instruction set.</p>
+<p>However, if <code>n</code> is unknown at compile time and its value may exceed <code>mvl</code>, then strip mining technology is needed. It can generate code where the vector operation length does not exceed <code>mvl</code>.</p>
+<p>Specifically, one loop handles any number of iterations that are multiples of <code>mvl</code>, while another loop handles the remaining iterations, with the number being less than <code>mvl</code>.</p>
+<p>RISC-V provides a better solution: the <code>setvl</code> instruction writes a value less than <code>mvl</code> and the loop variable <code>n</code> into <code>vl</code> (or another register).</p>
+<ul>
+<li><p>If the number of loop iterations exceeds <code>n</code>, the loop can compute up to <code>mvl</code> values at once in the fastest case, so <code>setvl</code> sets <code>vl</code> to <code>mvl</code>.</p>
+</li>
+<li><p>If <code>n</code> is less than <code>mvl</code>, only the last <code>n</code> elements should be computed in the final iteration of the loop, so <code>setvl</code> sets <code>vl</code> to <code>n</code>.</p>
+</li>
+<li><p><code>setvl</code> also writes to another scalar register to assist with subsequent loop management.</p>
+</li>
+</ul>
+<h4 id="Predicate-Registers"><a href="#Predicate-Registers" class="headerlink" title="Predicate Registers"></a>Predicate Registers</h4><p>If a loop in a program contains an IF statement, it cannot be executed in vector mode (as described above) because the IF statement introduces control dependencies. Consider the following code:</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="number">64</span>; ++i)</span><br><span class="line">    <span class="keyword">if</span> (X[i] != <span class="number">0</span>)</span><br><span class="line">        X[i] -= Y[i];</span><br></pre></td></tr></table></figure>
+
+<p>This loop cannot be vectorized; however, if the inner loop can be executed when the iteration satisfies <code>X[i] != 0</code>, then the subtraction operation can be vectorized.</p>
+<p>We refer to this extended capability as vector-mask control, while compiler designers call it IF-conversion. In RV64V, predicate registers store masks and provide conditional execution for each element operation in vector instructions. These registers use Boolean vectors to control the execution of vector instructions. When predicate register p0 is set, all vector instructions only operate on vector elements whose corresponding value in the predicate register is 1, while elements with a corresponding value of 0 remain unchanged. Similar to vector registers, predicate registers can be enabled and disabled. When enabled, their values are initialized to 1, meaning subsequent vector instructions will operate on all elements.</p>
+<p>Although introducing additional registers incurs extra overhead, it eliminates branches and associated control dependencies, making conditional instruction execution faster (even if the registers sometimes perform unnecessary work).</p>
+<h4 id="Memory-Banks"><a href="#Memory-Banks" class="headerlink" title="Memory Banks"></a>Memory Banks</h4><p>The behavior of vector load&#x2F;store units is much more complex than that of arithmetic functional units—their initiation rate is not necessarily one clock cycle, because memory partition stalls can reduce effective throughput; and the startup penalty is much higher than that of typical functional units. To maintain the theoretical initiation rate, the memory system must be able to produce or receive large amounts of data by distributing accesses across multiple independent memory partitions.</p>
+<p>Many vector computers support multiple loads and stores within a single clock cycle, and the memory partition cycle time is often several times the processor cycle time. To support multiple simultaneous accesses, the memory system requires multiple partitions and the ability to independently control partition addresses.</p>
+<p>Most vector processors support the ability to load or store word data out of order, which requires support for independent partition addressing—simple memory interleaving cannot achieve this.</p>
+<p>Most vector computers support multiple processors sharing the same memory system, so each processor will generate its own separate address stream.</p>
+<h4 id="Stride"><a href="#Stride" class="headerlink" title="Stride"></a>Stride</h4><p>The positions of adjacent elements in a vector in memory are not necessarily sequential. Consider the following matrix multiplication code:</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="number">100</span>; ++i)</span><br><span class="line">  <span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; <span class="number">100</span>; ++j) </span><br><span class="line">  &#123;</span><br><span class="line">    A[i][j] = <span class="number">0.0</span>;</span><br><span class="line">    <span class="keyword">for</span> (k = <span class="number">0</span>; k &lt; <span class="number">100</span>; ++k) </span><br><span class="line">      A[i][j] += B[i][k] * D[k][j];</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>We can vectorize the multiplication between each row of B and each column of D, using k as the index variable to perform strip mining on the inner loop. However, when memory is allocated for arrays, they are linearized, meaning that elements in the same row or column are not necessarily adjacent in memory. Taking the above C code as an example, since C uses row-major order, the elements of D accessed during iteration are spaced 800 bytes apart (100 elements per row * 8 bytes). Therefore, we need a technique that can access vector elements that are not adjacent in memory.</p>
+<p>Stride: The distance between elements to be gathered into a single vector register.</p>
+<ul>
+<li>In the above example, the stride of matrix D is 100 double-precision words, while the stride of B is 1 double-precision word; if column-major order were used, the two would be swapped.</li>
+</ul>
+<p>When a vector is loaded into a vector register, it appears to have logically adjacent elements. Thus, vector processors can handle non-unit strides (stride &gt; 1) through vector load and store operations with stride capability. This ability to access non-sequential memory locations and reshape them into a compact structure is a major advantage of vector architectures.</p>
+<p>Since the stride may be unknown at compile time, just like the vector length, we can place the vector stride in a general-purpose register. The RV64V instruction <code>vlds</code> (load vector with stride) then loads the vector into a vector register; for storage, there is a corresponding <code>vsts</code> (store vector with stride) instruction.</p>
+<p>When multiple accesses compete within a single partition, a memory partition conflict occurs, causing one access to stall. A partition conflict is considered to occur when the following relationship holds (LCM stands for least common multiple):</p>
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle scriptlevel="0" displaystyle="true"><mfrac><mtext>Numbers of banks</mtext><mtext>LCM(Stride, Number of banks)</mtext></mfrac></mstyle><mo>&lt;</mo><mtext>Bank busy time</mtext></mrow><annotation encoding="application/x-tex">\dfrac{\text{Numbers of banks}}{\text{LCM(Stride, Number of banks)}} &lt; \text{Bank busy time}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.3074em;vertical-align:-0.936em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">LCM(Stride, Number of banks)</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">Numbers of banks</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.936em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">Bank busy time</span></span></span></span></span>
+
+<h4 id="Gather-Scatter"><a href="#Gather-Scatter" class="headerlink" title="Gather-Scatter"></a>Gather-Scatter</h4><p>In sparse matrices, vector elements are typically stored in some compact form and require indirect access. Suppose there is a simplified sparse structure, with the corresponding code as follows:</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; n; ++i)</span><br><span class="line">    A[K[i]] += C[M[i]];</span><br></pre></td></tr></table></figure>
+
+<p>This code implements sparse vector summation on arrays A and C, using index vectors K and M to specify the non-zero elements in A and C. Here, A and C must have the same number (n) of non-zero elements, and K and M must also be of the same size.</p>
+<p>The basic mechanism for supporting sparse matrices is the use of gather-scatter operations with index vectors. The goal of these operations is to support the movement of sparse matrices between compressed and normal representations.</p>
+<ul>
+<li><p>The gather operation takes an index vector and retrieves a vector of elements from addresses obtained by adding the base address to the offsets given in the index vector. The result is a dense vector in a vector register.</p>
+</li>
+<li><p>After performing operations on the elements of the dense vector, the sparse vector can be stored in expanded form using the scatter operation, while employing the same index vector.</p>
+</li>
+<li><p>The corresponding instructions provided by RV64V are vldi (load vector indexed or gather) and vsti (store vector indexed or scatter).</p>
+</li>
+<li><p>Although indexed loads and stores can be pipelined, they are slower than their non-indexed counterparts because memory partitions cannot be determined at the start of the instruction, and the register file must also support communication between vector unit lanes to enable gather and scatter operations.</p>
+</li>
+<li><p>Each element in gather and scatter operations has an independent address, so they cannot be processed in groups and may cause multiple conflicts in the memory system. Therefore, even in systems with caches, individual accesses can result in significant latency.</p>
+</li>
+</ul>
+<h4 id="Programming-Vector-Architecture"><a href="#Programming-Vector-Architecture" class="headerlink" title="Programming Vector Architecture"></a>Programming Vector Architecture</h4><p>One advantage of the vector architecture is that the compiler can inform the programmer at compile time whether a piece of code can be vectorized, often providing hints for code that cannot be vectorized. This allows domain experts to know how to improve performance by modifying the code or by telling the compiler that the code is fine. It is this dialogue between the compiler and the programmer that simplifies programming on vector computers.</p>
+<p>However, the main factor affecting whether a program runs in vector mode is the program itself: whether loops have true data dependencies, or whether they can be restructured to avoid such dependencies. The choice of algorithm and the way it is coded also influence this factor.</p>
+<h2 id="4-2-SIMD-Instruction-Set-Extensions-for-Multimedia"><a href="#4-2-SIMD-Instruction-Set-Extensions-for-Multimedia" class="headerlink" title="4.2 SIMD Instruction Set Extensions for Multimedia"></a>4.2 SIMD Instruction Set Extensions for Multimedia</h2><p>SIMD multimedia extensions originated from a simple discovery: many media applications process data types that are narrower than the 32-bit data types that processors were originally optimized for.</p>
+<p>Similar to vector instructions, SIMD instructions specify the same operation on vector data; the difference is that SIMD tends to specify fewer operands, thus using a smaller register file.</p>
+<p>Additionally, SIMD extensions ignore the following three things:</p>
+<ul>
+<li><p>Vector length registers: Because multimedia SIMD extensions fix the number of data operands, this has led to hundreds of instructions (such as MMX, SSE, and AVX extensions in the x86 architecture).</p>
+</li>
+<li><p>Stride or gather&#x2F;scatter data transfer instructions: So far, multimedia SIMD has not provided the more precise addressing modes found in vector architectures, namely stride access and gather-scatter access.</p>
+</li>
+<li><p>Mask (predicate) registers: Although this is changing, multimedia SIMD typically does not provide mask registers to support element-wise conditional execution.</p>
+</li>
+</ul>
+<p>These omissions make it difficult for compilers to generate SIMD code and increase the difficulty of writing programs in SIMD assembly language.</p>
+<p>Given the above drawbacks of multimedia SIMD extensions, why are they still so popular? The reasons are:</p>
+<ul>
+<li><p>The initial cost of adding them to standard arithmetic units is low, and they are easy to implement.</p>
+</li>
+<li><p>Compared to vector architectures, they require very little additional processor state, which is critical for context switch time.</p>
+</li>
+<li><p>Vector architectures require a lot of memory bandwidth, which many computers cannot provide.</p>
+</li>
+<li><p>SIMD does not have to deal with issues arising from virtual memory.</p>
+</li>
+<li><p>It is easy to introduce instructions that support new media standards, such as instructions for performing permutations or instructions that consume more or fewer operands than vectors can produce.</p>
+</li>
+</ul>
+<p>Given the ad hoc nature of multimedia SIMD extensions, the simplest way to use these instructions is to use library functions or write assembly language code. Today’s advanced compilers can automatically generate SIMD instructions, but programmers must ensure that all data in memory is aligned with the width of the SIMD unit, and avoid letting the compiler generate scalar instructions for vectorizable code.</p>
+<h3 id="Roofline-Visual-Performance-Model"><a href="#Roofline-Visual-Performance-Model" class="headerlink" title="Roofline Visual Performance Model"></a>Roofline Visual Performance Model</h3><p>An intuitive way to visualize the potential floating-point performance of different SIMD architecture variants is the Roofline model. It uses a two-dimensional graph to represent the relationship between floating-point performance, memory performance, and arithmetic intensity.</p>
+<p>Arithmetic intensity refers to the ratio of the number of floating-point operations performed per byte of memory accessed. It can be calculated as “the total number of floating-point operations in a program &#x2F; the number of data bytes transferred to main memory during program execution.” The following figure illustrates the relative arithmetic intensity in different scenarios:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C4/21.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>Peak floating-point performance can be determined by hardware specifications.</p>
+<p>Many kernels in this case study cannot fit into the on-chip cache, so peak memory performance is defined by the memory system behind the cache, which can be obtained by running the Stream benchmark.</p>
+<p>The following figure compares the performance of two processors using the roofline model:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C4/22.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>We can use the following formula to describe the curve in the roofline model:</p>
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>Atttainable GFLOPs/s</mtext><mo>=</mo><mi>min</mi><mo>⁡</mo><mo stretchy="false">(</mo><mtext>Peak Memory BW</mtext><mo>×</mo><mtext>Arithmetic Intensity</mtext><mo separator="true">,</mo><mtext>Peak Floating-Point Perf.</mtext><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\text{Atttainable GFLOPs/s} =\min(\text{Peak Memory BW} \times \text{Arithmetic Intensity}, \text{Peak Floating-Point Perf.})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">Atttainable GFLOPs/s</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">min</span><span class="mopen">(</span><span class="mord text"><span class="mord">Peak Memory BW</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">Arithmetic Intensity</span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord text"><span class="mord">Peak Floating-Point Perf.</span></span><span class="mclose">)</span></span></span></span>
+
+<p>Consider the convergence point of the diagonal and horizontal lines in the model:</p>
+<ul>
+<li><p>If it is located far to the right, only a few kernels with high arithmetic intensity can achieve the computer’s maximum performance.</p>
+</li>
+<li><p>If it is located far to the left, almost all kernels can achieve maximum performance.</p>
+</li>
+</ul>
+<p>Compared to other SIMD processors, vector processors have both higher memory bandwidth and a convergence point that is further to the left.</p>
+<h2 id="4-3-Detecting-and-Enhancing-Loop-Level-Parallelism"><a href="#4-3-Detecting-and-Enhancing-Loop-Level-Parallelism" class="headerlink" title="4.3 Detecting and Enhancing Loop- Level Parallelism"></a>4.3 Detecting and Enhancing Loop- Level Parallelism</h2><p>The analysis of loop-level parallelism focuses on whether data accesses in subsequent iterations depend on data values produced in previous iterations. Such dependencies are called loop-carried dependencies.</p>
+<p>Because finding loop-level parallelism involves identifying structures such as loops, array references, and induction variable computations, compilers can perform this analysis more easily at (or near) the source level than at the machine code level.</p>
+<p>Our analysis must begin by identifying all loop-carried dependencies. This dependency information is inexact, in the sense that it tells us that such a dependency may exist.</p>
+<p>Typically, data dependency analysis can only determine that one reference may depend on another; determining that two references must point to exactly the same address requires more complex analysis.</p>
+<p>Loop-carried dependencies often form recurrences. A recurrence occurs when the definition of a variable is based on the value of that variable from a previous iteration (usually the immediately preceding one).</p>
+<h3 id="Finding-Dependences"><a href="#Finding-Dependences" class="headerlink" title="Finding Dependences"></a>Finding Dependences</h3><p>Obviously, identifying dependencies in a program is crucial for determining which loops may contain parallelism and for eliminating name dependencies. The complexity of dependence analysis also arises from the presence of arrays and pointers in languages like C&#x2F;C++, or the pass-by-reference parameter mechanism in Fortran. Since scalar variables explicitly reference a name, analysis is usually relatively straightforward; however, pointers and reference parameters lead to aliasing issues, introducing complexity and uncertainty into the analysis.</p>
+<p>Almost all compiler dependence analysis algorithms are based on the assumption that “array indices are affine.” In short, a one-dimensional array index is called affine if it can be expressed in the form a * i + b (where a and b are constants, and i is the loop index variable). For multi-dimensional arrays, if each dimension’s index is affine, then the multi-dimensional index is also affine. A typical example of non-affine access is sparse array access like x[y[i]].</p>
+<p>Therefore, determining whether two accesses to the same array within the same loop have a dependence is equivalent to determining whether two affine functions can yield the same result at different index values within the loop bounds. For example: Suppose we store an array element with index value a * i + b, and later load data from the same array with index value c * i + d (where i is the for-loop variable, incrementing from m to n). A dependence exists when the following two conditions are met:</p>
+<ul>
+<li><p>There are two iteration indices, j and k, both within the bounds of the for loop, i.e., m &lt;&#x3D; j &lt;&#x3D; n, m &lt;&#x3D; k &lt;&#x3D; n</p>
+</li>
+<li><p>The loop stores data to the array element indexed by a * j + b, and later retrieves it from the same array element when indexed by c * k + d, i.e., a * j + b &#x3D;&#x3D; c * k + d</p>
+</li>
+</ul>
+<p>In general, we cannot determine at compile time whether a dependence exists. For example, the specific values of variables a, b, c, and d may be unknown (they could be elements from other arrays), making it impossible to determine whether a dependence holds. Additionally, dependence testing can be computationally expensive but still decidable at compile time, such as when access operations depend on the iteration indices of multiple nested loops. However, in most programs, subscript expressions are usually simple, with a, b, c, and d being constants. For such cases, reasonable compile-time dependence detection methods can be designed.</p>
+<p>One simple and sufficient detection method is the Greatest Common Divisor (GCD) test, which can prove the absence of dependence. Its principle is based on the observation: if a loop-carried dependence exists, then GCD(c, a) must divide (d - b). In general, the GCD test is sufficient to guarantee that no dependence exists. However, there are cases where the GCD test passes, but no actual dependence exists. This occurs because the GCD test does not consider loop bounds.</p>
+<p>In general, determining whether a dependence truly exists is an NP-complete problem. However, in practice, many common cases can be analyzed precisely at low cost. Recent research suggests that a hierarchical approach using a series of exact tests with increasing generality and cost can ensure both accuracy and efficiency. (An exact test refers to a method that can precisely determine whether a dependence exists.)</p>
+<p>Beyond detecting the existence of dependencies, the compiler also needs to classify dependency types. This classification allows the compiler to identify name dependencies and eliminate them at compile time through renaming and copying.</p>
+<p>For detecting loop-level parallelism, dependence analysis is the most fundamental tool. Whether compiling programs efficiently for vector computers, SIMD computers, or multiprocessor systems, this analysis is crucial. The main limitation of dependence analysis is that it only applies to specific scenarios—array access operations with affine index functions within a single loop nest. Therefore, there are many cases where array-oriented dependence analysis cannot provide the necessary information. For example, analyzing pointer access behavior is much more difficult than analyzing array indices (which is one reason why many scientific applications targeting parallel computing still prefer Fortran over C&#x2F;C++). Similarly, analyzing references across procedure calls is extremely challenging. Thus, while analyzing code written in serial languages remains important, we also need programming models like OpenMP and CUDA that support explicit parallel loop programming.</p>
+<h3 id="Eliminating-Dependent-Computations"><a href="#Eliminating-Dependent-Computations" class="headerlink" title="Eliminating Dependent Computations"></a>Eliminating Dependent Computations</h3><p>Earlier, we mentioned that one of the most important forms of dependent computation is recurrence, and the dot product is a good example:</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = <span class="number">9999</span>; i &gt;= <span class="number">0</span>; --i)</span><br><span class="line">sum += x[i] * y[i];</span><br></pre></td></tr></table></figure>
+
+<p>This loop cannot be parallelized because there is a loop-carried dependency on <code>sum</code>. However, we can transform this loop into a set of loops, where one loop within the set can be fully parallelized, while the remaining loops can only be partially parallelized. The fully parallelizable loop looks like this:</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = <span class="number">9999</span>; i &gt;= <span class="number">0</span>; --i)</span><br><span class="line">sum[i] = x[i] * y[i];</span><br></pre></td></tr></table></figure>
+
+<p>Notice that the summation has been expanded from a scalar to a vector (this transformation is called scalar expansion), and this transformation allows the new loop to be fully parallelized. However, after completing this operation, we need to perform a reduction step, which sums the elements of the vector, as shown below:</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = <span class="number">9999</span>; i &gt;= <span class="number">0</span>; --i)</span><br><span class="line">finalsum += sum[i];</span><br></pre></td></tr></table></figure>
+
+<p>Although this loop is not a parallel structure, it has a special structure known as reduction. In vector and SIMD architectures, dedicated hardware is sometimes used to accelerate reduction operations, making the reduction step much faster than scalar mode. The implementation principle is similar to the technical approach used in multi-processor environments. While the general transformation applies to any number of processors, for simplicity, let’s assume we have 10 processors. In the first step of the summation reduction, each processor performs the following operation (where <code>p</code> represents the processor number from 0 to 9):</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> (i = <span class="number">999</span>; i &gt;= <span class="number">0</span>; --i)</span><br><span class="line">finalsum[p] += sum[i + <span class="number">1000</span> * p];</span><br></pre></td></tr></table></figure>
+
+<p>This loop, where each of the 10 processors accumulates 1000 elements, is fully parallelizable. Then, a simple scalar loop can aggregate the final 10 partial sums.</p>
+<p>It is important to note: the aforementioned transformation relies on the associative property of addition. While mathematical operations satisfy associativity over infinite range and precision, computer arithmetic does not—integer operations are limited by finite numerical ranges, and floating-point operations are constrained by both range and precision. Therefore, using such restructuring techniques can occasionally lead to incorrect results (though the probability is extremely low). For this reason, most compilers require explicitly enabling optimizations that rely on associativity.</p>
+<h2 id="4-4-Cross-Cutting-Issues"><a href="#4-4-Cross-Cutting-Issues" class="headerlink" title="4.4 Cross-Cutting Issues"></a>4.4 Cross-Cutting Issues</h2><h3 id="Energy-and-DLP"><a href="#Energy-and-DLP" class="headerlink" title="Energy and DLP"></a>Energy and DLP</h3><p>Assuming sufficient DLP, if we halve the clock frequency and double the execution resources, the processor’s performance remains unchanged. If we can simultaneously lower the voltage while reducing the clock frequency, we can actually reduce the energy consumption and power required for computation while maintaining peak performance. Therefore, GPUs often operate at lower clock frequencies than system processors, which rely on high clock speeds to improve performance.</p>
+<p>Compared to out-of-order execution processors, DLP processors have simpler control logic and can issue a large number of operations per clock cycle: for example, the control signals for all lanes in a vector processor are completely identical, eliminating the need for logic circuits that determine multi-instruction issue or speculative execution. They also significantly reduce the workload of instruction fetching and decoding. Additionally, vector architectures can more easily shut down unused portions of the chip—each vector instruction explicitly declares all hardware resources it will occupy in the upcoming cycles at the time of issuance.</p>
+<h3 id="Banked-Memory-and-Graphics-Memory"><a href="#Banked-Memory-and-Graphics-Memory" class="headerlink" title="Banked Memory and Graphics Memory"></a>Banked Memory and Graphics Memory</h3><p>The vector architecture requires sufficient memory bandwidth to support unit stride, non-unit stride, and gather-scatter access patterns. To achieve the highest memory performance, high-end GPUs from AMD and NVIDIA use stacked DRAM technology (also known as High Bandwidth Memory, or HBM), which packages memory chips and processing chips together in the same module. The ultra-wide data bus provides high bandwidth, while the co-packaging of memory and processing chips reduces latency and power consumption.</p>
+<p>Considering all potential memory demands from computational tasks and graphics acceleration tasks, the memory system may encounter a large number of unrelated requests, which can degrade memory performance. To address this, the GPU’s memory controller maintains traffic queues for different memory partitions until sufficient traffic accumulates, at which point it opens a row and transfers all requested data at once. This delay improves bandwidth but increases latency, so the controller must ensure that no processing unit “starves” while waiting for data; otherwise, adjacent processing units may become idle.</p>
+<h3 id="Strided-Accesses-and-TLB-Misses"><a href="#Strided-Accesses-and-TLB-Misses" class="headerlink" title="Strided Accesses and TLB Misses"></a>Strided Accesses and TLB Misses</h3><p>The interaction between the TLB of virtual memory in vector architectures or GPUs and strided access is a problem. Depending on the organization of the TLB and the size of the array being accessed in memory, it is possible that every access to an element in the array results in a TLB miss. The same type of conflict can also occur in the cache, but the performance impact may be smaller.</p>
+<h1 id="Chapter-5-Thread-Level-Parallelism"><a href="#Chapter-5-Thread-Level-Parallelism" class="headerlink" title="Chapter 5 Thread-Level Parallelism"></a>Chapter 5 Thread-Level Parallelism</h1><h2 id="5-1-Introduction"><a href="#5-1-Introduction" class="headerlink" title="5.1 Introduction"></a>5.1 Introduction</h2><p>This chapter primarily explores thread-level parallelism (TLP). TLP utilizes MIMD (multiple instructions, multiple data).</p>
+<p>As mentioned earlier, due to the slowdown in ILP technological advancements, the development of uniprocessors is gradually coming to an end. Consequently, the importance of multiprocessors is increasing—they consist of a set of tightly coupled processors controlled by the operating system, sharing memory through a common address space (not necessarily a single physical memory). Multiprocessors achieve TLP through two different software models:</p>
+<ul>
+<li>Parallel processing: A set of tightly coupled threads collaborating on a single task.</li>
+<li>Request-level parallelism: Execution of multiple relatively independent processes from one or more users. A single application running on multiple processors can utilize request-level parallelism, such as a database responding to queries, or through multiple independently running applications (the latter often referred to as multiprogramming).</li>
+</ul>
+<p>Multiprocessors include both single-chip systems with multiple cores, known as multicore, and computers composed of multiple chips, where each chip is typically a multicore unit.</p>
+<p>Later, we will also discuss multithreading—a technique that supports interleaved execution of multiple threads on a single multiple-issue processor. Many multicore processors also include support for multithreading.</p>
+<h3 id="Multiprocessor-Architecture"><a href="#Multiprocessor-Architecture" class="headerlink" title="Multiprocessor Architecture"></a>Multiprocessor Architecture</h3><p>To fully utilize an MIMD multiprocessor with n processors, at least n threads or processes are typically required for execution. Independent threads within a single process are usually explicitly specified by the programmer or dynamically created by the operating system based on multiple independent requests. At the other extreme, a thread may consist of only a few dozen iterations of a loop—generated by a parallel compiler exploiting data parallelism within the loop.</p>
+<p>Although the amount of computation assigned to a thread (referred to as grain size) is crucial for efficiently exploiting TLP, the fundamental difference from ILP lies in the fact that TLP is identified by software systems or programmers at a high level of abstraction, consisting of code segments ranging from hundreds to millions of instructions that can be executed in parallel.</p>
+<p>Threads can also be utilized for DLP, but their overhead is typically higher than that of SIMD processors or GPUs. It is essential to ensure that the grain size is large enough to efficiently exploit parallelism.</p>
+<p>For existing shared-memory multiprocessors, they can be divided into two main categories based on their memory organization:</p>
+<p>Symmetric (shared-memory) multiprocessors (SMP) (or centralized shared-memory multiprocessors)</p>
+<ul>
+<li><p>Feature a small to moderate number of cores, typically 32 or fewer</p>
+</li>
+<li><p>In such multiprocessors with a limited number of cores, these processors can share a single centralized memory that all processors have equal access to, hence the term “symmetric”</p>
+</li>
+<li><p>Most current multicore processors fall under SMP</p>
+</li>
+<li><p>SMP is sometimes referred to as uniform memory access (UMA) multiprocessors. All processors uniformly share physical memory, with equal access time to any memory word, and each processor may have private caches or private memory.</p>
+</li>
+<li><p>Some multicore processors have non-uniform access to the outermost cache, a structure known as nonuniform cache access (NUCA), so even with a single main memory, they are not true SMPs</p>
+</li>
+</ul>
+<p>Distributed shared memory (DSM)</p>
+<ul>
+<li><p>In multiprocessor systems composed of multiple multicore chips, each multicore chip typically has its own memory unit, so the memory in such systems is organized in a distributed rather than centralized manner</p>
+</li>
+<li><p>Many distributed memory designs enable fast access to local memory, while remote memory access is significantly slower</p>
+</li>
+<li><p>In such architectures, programmers and software systems must explicitly distinguish between local and remote memory access operations, but typically do not need to focus on the specific distribution among remote storage nodes</p>
+</li>
+<li><p>To support a larger number of processors, memory must be organized in a distributed rather than centralized fashion; otherwise, the memory system would need to meet the bandwidth demands of more processors at the cost of increased access latency</p>
+</li>
+<li><p>Due to these issues, SMP gradually loses its advantages as the number of processors increases, so the vast majority of large-scale multiprocessor systems adopt distributed memory organization</p>
+</li>
+<li><p>DSM multiprocessors are also known as nonuniform memory access (NUMA) architectures because data access time depends on the physical location of the data word in memory. All CPUs share a unified address space, using load and store instructions to access remote memory, which is slower than accessing local memory, and processors in NUMA systems can use caches.</p>
+</li>
+<li><p>The main disadvantage of DSM is that the data communication mechanism between processors becomes more complex, and more effort is required at the software level to fully leverage the advantages of increased memory bandwidth.</p>
+</li>
+</ul>
+<blockquote>
+<p>NUMA can be further divided into:<br>NC-NUMA: No cache, thus unable to hide the time required to access remote memory<br>CC-NUMA: Has a coherent cache</p>
+</blockquote>
+<p>In both SMP and DSM architectures, communication between threads is achieved through a shared address space. This means that as long as the appropriate access permissions are in place, any processor can address any memory location. The shared memory in SMP and DSM essentially refers to the sharing of the address space.</p>
+<h3 id="Challenges-of-Parallel-Processing"><a href="#Challenges-of-Parallel-Processing" class="headerlink" title="Challenges of Parallel Processing"></a>Challenges of Parallel Processing</h3><p>Multiprocessors have a wide range of applications, including:</p>
+<ul>
+<li><p>Running independent tasks that require almost no communication</p>
+</li>
+<li><p>Or executing parallel programs that require inter-thread collaboration to complete</p>
+</li>
+</ul>
+<p>To address the challenges posed by these tasks, a comprehensive approach is typically required:</p>
+<ul>
+<li><p>Carefully selecting algorithms and optimizing implementations</p>
+</li>
+<li><p>Adapting to the underlying programming language and system</p>
+</li>
+<li><p>Coordinating the operating system and its support functions</p>
+</li>
+<li><p>Adjusting the architecture and hardware implementation</p>
+</li>
+</ul>
+<p>Although one of these aspects may often become the primary bottleneck, when the processor scale becomes very large, we need to synchronously optimize all layers of software and hardware. Specifically, we mainly encounter the following two challenges:</p>
+<ul>
+<li><p>Limited parallelism in programs (corresponding to the first application above)</p>
+</li>
+<li><p>Relatively high communication overhead, or the high latency of remote access in parallel processors (corresponding to the second application above). The specific duration depends on the communication mechanism, the type of interconnection network, and the scale of the multiprocessor</p>
+</li>
+</ul>
+<blockquote>
+<p>Both of the above issues can be explained by Amdahl’s Law.</p>
+</blockquote>
+<p>The corresponding solutions are:</p>
+<ul>
+<li><p>For the issue of insufficient application parallelism, the focus should be on the software level: on one hand, adopting new algorithms that provide better parallel performance; on the other hand, relying on the software system to maximize the effective execution time of the processor in its full configuration</p>
+</li>
+<li><p>To mitigate the impact of high remote latency, collaboration between architects and programmers is required: for example, reducing the number of remote accesses through hardware mechanisms (such as caching shared data) or software methods (such as restructuring data structures to localize access); or attempting to mask latency using multithreading techniques or prefetching strategies</p>
+</li>
+</ul>
+<h2 id="5-2-Centralized-Shared-Memory-Architectures"><a href="#5-2-Centralized-Shared-Memory-Architectures" class="headerlink" title="5.2 Centralized Shared-Memory Architectures"></a>5.2 Centralized Shared-Memory Architectures</h2><p>Using large, multi-level caches can significantly reduce a processor’s demand for memory bandwidth, a discovery that has driven the development of centralized shared-memory multiprocessors.</p>
+<p>Early processors were all single-core designs, typically occupying an entire motherboard, with memory located on a shared bus.</p>
+<p>With the advent of high-performance processors, the memory demands of processors exceeded the capacity of conventional buses. As a result, modern microprocessors connect memory directly to a single chip—sometimes referred to as a backside bus or memory bus, to distinguish it from the bus used for I&#x2F;O.</p>
+<ul>
+<li><p>Whether performing I&#x2F;O operations or handling accesses from other chips, accessing a chip’s local memory must go through the chip that “owns” that memory.</p>
+</li>
+<li><p>Therefore, this type of memory access is asymmetric: local memory access is fast, while remote memory access is slower.</p>
+</li>
+<li><p>In multi-core architectures, all cores on a single chip share that memory, but asymmetric access patterns often exist between different cores through their respective memories.</p>
+</li>
+</ul>
+<p>Symmetric shared-memory machines typically support caching of both private and shared data, where:</p>
+<ul>
+<li><p>Private data is used by only one processor. When private data is cached, its storage location migrates to the cache, reducing average access time and memory bandwidth requirements.</p>
+</li>
+<li><p>Shared data can be accessed by multiple processors. When caching shared data, its value may be replicated across multiple caches. In addition to reducing access latency and memory bandwidth demands, this replication can alleviate contention issues that arise when multiple processors simultaneously read the same shared data item. However, caching shared data also introduces a new challenge—cache coherence.</p>
+</li>
+</ul>
+<h3 id="Multiprocessor-Cache-Coherence"><a href="#Multiprocessor-Cache-Coherence" class="headerlink" title="Multiprocessor Cache Coherence"></a>Multiprocessor Cache Coherence</h3><p>Cache Coherence Problem: This issue arises because two different processors build their views of memory through their respective caches, so these processors may ultimately see different values for the same memory location. The problem stems from the coexistence of a global state defined by main memory and local states defined by independent caches private to each processor core.</p>
+<p>An informal way to put it is: if a memory system returns the most recently written value for any data item when it is read, we can say the memory system is coherent. While intuitive and easy to understand, this definition is vague and overly simplistic—the actual situation is far more complex. Moreover, this simple definition actually encompasses two aspects of memory system behavior:</p>
+<ul>
+<li><p>Coherence: Specifies which values a read operation can return.</p>
+</li>
+<li><p>Consistency: Determines when the value of a write operation can be returned by a read operation.</p>
+</li>
+</ul>
+<p>A strict definition of coherence is: a memory system is said to be coherent when the following conditions are met:</p>
+<ul>
+<li><p>A write by processor P to location X, followed immediately by a read by P from X, with no other processor writing to X between the write and the read, always returns the value written by P. This property preserves program order and holds even in a single processor.</p>
+</li>
+<li><p>When a read by a processor from location X occurs after a write by another processor to X, provided there is sufficient time between the read and write and no other write to X occurs between the two accesses, the read returns the written value. This property defines the core meaning of memory coherence: if a processor can consistently read stale data, the memory is clearly in an inconsistent state.</p>
+</li>
+<li><p>Write serialization: Writes to the same location are serialized. That is, any two writes to the same location by two processors are seen in the same order by all processors. For example, if values 1 and 2 are written sequentially to a location, no processor can read 2 before 1.</p>
+</li>
+</ul>
+<p>Although these three properties are sufficient to ensure coherence, consistency is equally crucial. For instance, we cannot require that a read from X immediately obtain the (latest) value written to X by another processor, because the written data may not have even left the original processor yet. Consistency is defined by the memory consistency model, which will be discussed later.</p>
+<p>Coherence and consistency complement each other:</p>
+<ul>
+<li><p>Coherence governs the behavior of read and write operations to the same memory address.</p>
+</li>
+<li><p>Consistency defines the behavior of read and write operations involving different memory addresses.</p>
+</li>
+</ul>
+<p>For now, we make the following two basic assumptions:</p>
+<ul>
+<li><p>A write operation is not considered complete (and subsequent writes are not allowed to proceed) until all processors are aware of its result.</p>
+</li>
+<li><p>A processor must not reorder any write operation relative to other memory accesses. This means that if a processor writes to address A and then to address B, any processor that observes the new value of B must also have obtained the new value of A.</p>
+</li>
+</ul>
+<p>These assumptions allow processors to reorder read operations but force them to complete writes in program order. These assumptions will remain in effect until the introduction of the “memory consistency model.”</p>
+<h3 id="Basic-Schemes-for-Enforcing-Coherence"><a href="#Basic-Schemes-for-Enforcing-Coherence" class="headerlink" title="Basic Schemes for Enforcing Coherence"></a>Basic Schemes for Enforcing Coherence</h3><p>In programs running on multiprocessors, multiple copies of the same data often exist simultaneously in various levels of cache. In a coherent multiprocessor, the cache provides both migration and replication of shared data.</p>
+<ul>
+<li><p>Migration: Data items can be transparently moved to the local cache and used. This reduces both the latency of accessing remotely allocated shared data and the bandwidth pressure on the shared memory.</p>
+</li>
+<li><p>Replication: Effectively reduces access latency and resource contention when reading shared data.</p>
+</li>
+</ul>
+<p>Thus, achieving efficient migration and replication is crucial for improving the performance of shared data access. Therefore, multiprocessors introduce hardware-level protocols to maintain cache coherence. These protocols are called cache coherence protocols, and their core implementation lies in tracking the sharing state of data blocks. The state of each cache block is maintained through associated status bits (similar to the valid and dirty bits in a uniprocessor cache). Based on different implementation techniques, these protocols can be divided into two categories:</p>
+<p>Directory-based:</p>
+<ul>
+<li><p>The sharing state of a specific physical memory block (which processor has a copy of a particular memory block in its cache) is stored in a location called the directory.</p>
+</li>
+<li><p>There are two distinct directory-based cache coherence schemes:</p>
+</li>
+<li><p>In SMP, a centralized directory associated with memory or another single serialization point (such as the outermost cache of a multi-core chip) can be used.</p>
+</li>
+<li><p>In DSM, since a single directory hinders performance and struggles to meet the memory scaling requirements of multi-core architectures, a distributed directory is required, though it is more complex to implement.</p>
+</li>
+</ul>
+<p>Snooping:</p>
+<ul>
+<li><p>Each cache holding a copy of a physical memory block can track the sharing state of that block.</p>
+</li>
+<li><p>In SMP, the caches of individual cores typically communicate via a broadcast medium (such as the bus between the core’s own cache and the shared cache&#x2F;memory), and all cache controllers continuously monitor or snoop the medium to determine if they have a copy of the requested data block on the bus or in exchange access.</p>
+</li>
+<li><p>Snooping techniques are also applicable to coherence protocols in multi-chip multiprocessors.</p>
+</li>
+</ul>
+<p>Snooping protocols are widely popular in multiprocessor systems that use microprocessors (single-core) connected to a single shared memory via a bus. The bus provides a convenient broadcast medium for implementing snooping protocols. However, multi-core architectures have changed this landscape, as all cores on a multi-core chip share a certain level of cache. Consequently, some designs have shifted to directory protocols due to their lower overhead.</p>
+<p>We will first focus on snooping protocols and discuss directory protocols in detail when we cover DSM architectures.</p>
+<h3 id="Snooping-Coherence-Protocols"><a href="#Snooping-Coherence-Protocols" class="headerlink" title="Snooping Coherence Protocols"></a>Snooping Coherence Protocols</h3><p>To maintain cache coherence, there are two methods:</p>
+<p><strong>Write Invalidate Protocol</strong>: Ensures that a processor has exclusive access to a data item before writing to it.</p>
+<ul>
+<li>Exclusive access guarantees that when a write operation is performed on a shared cache line, all copies of that cache line in other caches are invalidated.</li>
+<li>When other processors subsequently read the data, a cache miss occurs, requiring them to fetch the updated data from memory or from a cache holding a valid copy (resulting in longer read latency). This reduces bandwidth consumption caused by repeated writes on the bus.</li>
+<li>If two processors attempt to write to the same data simultaneously, one will succeed, causing the other’s data copy to be invalidated. The other processor must obtain a new copy of the data containing the latest updated value to complete its write operation.</li>
+<li>Thus, this protocol ensures write serialization.</li>
+<li>This is currently the most mainstream protocol.</li>
+</ul>
+<p><strong>Write Update &#x2F; Write Broadcast Protocol</strong>: Whenever a processor writes to a shared cache line, it broadcasts the new value to update all copies of that cache line in other caches.</p>
+<ul>
+<li>Since the write update protocol must broadcast write operations to all shared cache lines, it consumes more bandwidth.</li>
+</ul>
+<p>Therefore, almost all modern multiprocessor systems choose to implement the write invalidate protocol, and we will focus only on this protocol moving forward.</p>
+<h4 id="Basic-Implementation-Techniques"><a href="#Basic-Implementation-Techniques" class="headerlink" title="Basic Implementation Techniques"></a>Basic Implementation Techniques</h4><p>We also need to locate data items when a cache miss occurs:</p>
+<p>In a write-through cache, finding the current value of a data item is relatively simple because all written data is immediately sent to memory, where the latest value of the data item can always be obtained.</p>
+<p>Summary: Various scenarios of read&#x2F;write operations in a snooping cache</p>
+<p>For a write-back cache, determining the latest data value is more difficult because the latest value of a data item may exist in a private cache rather than in a shared cache or main memory.</p>
+<p>However, we can apply the same snooping mechanism to cache misses and write operations: each processor snoops on all addresses transmitted on the shared bus; when a processor finds that it holds a dirty copy of the target cache block, it returns that cache block as the response to the read request and terminates the access to main memory (or the L3 cache). The complexity of this method lies in the need to obtain the target block from another processor’s private cache (L1 or L2), which typically takes longer than accessing the L3 cache.</p>
+<p>Since write-back caches have lower memory bandwidth requirements, they can support the collaboration of more high-speed processors. For this reason, all multi-core processors adopt a write-back strategy in the outermost cache.</p>
+<p>Next, we will explore consistency implementation schemes based on write-back caches.</p>
+<ul>
+<li><p>The conventional cache tags can be used to implement the snooping mechanism, and the valid bit of each block makes invalidation operations easy to implement.</p>
+</li>
+<li><p>Handling read misses triggered by invalidation or other events is also straightforward, as they rely solely on the snooping function.</p>
+</li>
+<li><p>For write operations, we need to know whether there are other cached copies of the block. If not, in a write-back cache, there is no need to place this write operation on the bus. Not sending a write request reduces write time and saves bandwidth.</p>
+</li>
+<li><p>To track whether a cache block is shared, we can add an additional state bit for each cache block, enabling us to determine whether a write operation needs to generate an invalidation signal.</p>
+</li>
+<li><p>When writing to a block in a shared state, the cache generates an invalidation command on the bus and marks the block as exclusive. After that, the core no longer sends any invalidation requests for this block.</p>
+</li>
+<li><p>The core holding the only copy of a cache block is typically referred to as the owner of that cache block.</p>
+</li>
+<li><p>When an invalidation instruction is sent, the owner’s cache block state changes from shared to non-shared (or exclusive). If another processor later requests this cache block, its state must be set back to shared.</p>
+</li>
+<li><p>Since our snooping cache can also detect any invalidation, it can know when an exclusive cache block is requested by another processor and restore the state to shared.</p>
+</li>
+<li><p>Each bus transaction must check the cache address tags, which may interfere with the processor’s cache access. To reduce this interference, we have the following measures:</p>
+</li>
+<li><p>Duplicate the tags and direct snooping accesses to the tag copies.</p>
+</li>
+<li><p>Use a directory at the shared L3 cache. This directory can indicate whether a given block is shared and which cores may have copies. With directory information, invalidation operations can target only those caches that hold copies of the cache block. This requires that the L3 always retain copies of any data items in L1 or L2, a property known as inclusion.</p>
+</li>
+</ul>
+<h4 id="A-Simple-Protocol"><a href="#A-Simple-Protocol" class="headerlink" title="A Simple Protocol"></a>A Simple Protocol</h4><p>We generally implement a snooping coherence protocol by integrating a finite state controller into each core. This controller responds to requests from the in-core processor and the bus (or other broadcast medium), changing the state of selected cache blocks while using the bus to access data or invalidate it. Logically, each cache block can be considered to have its own independent controller, meaning that snooping operations or cache requests for different cache blocks can be processed independently. In practice, a single controller allows multiple operations on different cache blocks to be executed in an interleaved manner.</p>
+<p>We define the protocol to include three states:</p>
+<ul>
+<li><p><strong>Invalid</strong>: The data in the cache line is invalid.</p>
+</li>
+<li><p><strong>Shared</strong>: Indicates that the block in the private cache may be shared by multiple cores.</p>
+</li>
+<li><p><strong>Modified</strong>: Indicates that the block has been updated in the private cache; this state also implies that the block is exclusive. At this point, the corresponding data in memory and any copies of the data in other caches are invalid (since they do not contain the most recent data).</p>
+</li>
+</ul>
+<p>When an invalidation request or write-invalidate appears on the bus, all cores that have a copy of the cache block in their private caches set it to invalid. In the case of a write-invalidate for a write-back cache, if the block exists only in one private cache and is in an exclusive state, that cache must also perform a write-back operation; otherwise, the data can be read directly from the shared cache or main memory.</p>
+<p>The figure below shows the finite state transition diagram for a single private cache block using a write-invalidate protocol and a write-back cache (the left diagram shows CPU requests, and the right diagram shows bus requests):</p>
+<img src="https://note.noughtq.top/sys/ca/images/C5/5.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>Merging the two state transition diagrams together yields the following state diagram:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C5/6.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>Any valid cache block is either in a shared state across one or more private caches or strictly in an exclusive state within a single cache.</p>
+</li>
+<li><p>Any transition to the exclusive state (which is necessary for a processor to write to the block) requires an invalidate or write-invalidate signal on the bus, causing all local caches to set the block to an invalid state.</p>
+</li>
+<li><p>Additionally, if another local cache previously held the block in an exclusive state (making it dirty), that cache performs a write-back operation, providing the data block containing the target address.</p>
+</li>
+<li><p>Finally, when a read miss occurs on the bus for a block in the exclusive state, the local cache holding the exclusive copy changes its state to shared.</p>
+</li>
+</ul>
+<p>Another characteristic of this protocol is that a memory block in the shared state always remains up-to-date in the external shared cache (L2 or L3, or memory if no shared cache exists). This feature significantly simplifies the implementation.</p>
+<p>Although this simple cache protocol executes correctly, it overlooks many complexities. Most importantly, it assumes that all operations are atomic—meaning each operation can complete without interference from others—which is not the case in reality. Non-atomic operations introduce the possibility of protocol deadlock, where the system enters a state from which it cannot proceed. We will discuss these scenarios later.</p>
+<h3 id="Extensions-to-the-Basic-Coherence-Protols"><a href="#Extensions-to-the-Basic-Coherence-Protols" class="headerlink" title="Extensions to the Basic Coherence Protols"></a>Extensions to the Basic Coherence Protols</h3><p>The consistency protocol described earlier is a simple three-state protocol, commonly referred to by the initials of its states, hence known as the MSI (Modified, Shared, Invalid) protocol. We can extend this basic protocol by adding additional states and transactions to optimize specific behaviors, thereby (potentially) improving performance. Among the most common extensions are:</p>
+<p>MESI protocol: Adds an exclusive state, resulting in four states: Modified, Exclusive, Shared, and Invalid.</p>
+<ul>
+<li><p>The exclusive state indicates that the cache block exists only in a single cache and has not been modified.</p>
+</li>
+<li><p>If a block is in the exclusive state, writing to it does not require generating an invalidation signal, thus optimizing scenarios where the same cache first reads and then writes to the data block.</p>
+</li>
+<li><p>Of course, when a read miss occurs for a block in the exclusive state, the block must be transitioned to the shared state to maintain consistency.</p>
+</li>
+<li><p>The advantage of adding the exclusive state is that when the same core writes again to a data block in the exclusive state, it neither needs to acquire bus access nor generate an invalidation signal, because the system knows that the data block exists only in this local cache; the processor only needs to change its state to modified to complete the update.</p>
+</li>
+<li><p>This state extension can be easily implemented by encoding the consistency state bit as an exclusive state bit and using a dirty bit to indicate modification.</p>
+</li>
+</ul>
+<p>Below is the state diagram of the MESI protocol (jxh version):</p>
+<img src="https://note.noughtq.top/sys/ca/images/C5/38.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>MOESI protocol: Based on the MESI protocol, it adds an “owned” state, indicating that the relevant cache block is held by this cache and the copy in main memory is outdated.</p>
+<ul>
+<li><p>In the MSI and MESI protocols, when attempting to share a cache block in the modified state, the state of the block in both the original cache and the new shared cache transitions to the shared state, and it must be written back to main memory.</p>
+</li>
+<li><p>In the MOESI protocol, the modified state of the original cache can directly transition to the owned state without immediately writing to memory. Other new caches sharing the block remain in the shared state; the owned state held only by the original cache indicates that the main memory copy is invalid and designates the cache as the owner.</p>
+</li>
+<li><p>When a miss occurs, the owner must provide the data block (since main memory is not updated); if it is evicted, it must be written back to main memory.</p>
+</li>
+</ul>
+<h3 id="Limitations-in-SMPs-and-Snooping-Protocols"><a href="#Limitations-in-SMPs-and-Snooping-Protocols" class="headerlink" title="Limitations in SMPs and Snooping Protocols"></a>Limitations in SMPs and Snooping Protocols</h3><p>As the number of processors in a multiprocessor system increases, or as the memory demand per processor grows, any centralized resource in the system can become a bottleneck. For multi-core processors, even a small number of cores can cause a single shared bus to become a performance bottleneck. Therefore, multi-core designs have shifted toward higher-bandwidth interconnection schemes and the use of multiple independent memories to support a larger number of cores.</p>
+<p>The bandwidth of snooping caches can also be a limitation, as each cache must check every miss, and increasing interconnect bandwidth only shifts the problem to the caches. Below are some techniques to increase snooping bandwidth:</p>
+<ul>
+<li><p>Replicating tag bits to double bandwidth.</p>
+</li>
+<li><p>If multi-core processors share the outermost cache, a distributed cache can be used—each processor manages a portion of the memory region and handles snoop requests for the corresponding address space.</p>
+<ul>
+<li>Since the L3 cache serves to filter snoop requests, it must be inclusive.</li>
+</ul>
+</li>
+<li><p>A directory can be set up at the outermost shared cache level (e.g., L3).</p>
+<ul>
+<li><p>Similarly, the L3 cache must remain inclusive.</p>
+</li>
+<li><p>With the introduction of a directory structure, there is no need to broadcast to all L2 caches; instead, only the specific L2 caches that may hold copies of the data block, as indicated by the directory, need to be queried.</p>
+</li>
+<li><p>Similar to the previous method, the associated directory entries can also be stored in a distributed manner.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="Implementing-Snooping-Cache-Coherence"><a href="#Implementing-Snooping-Cache-Coherence" class="headerlink" title="Implementing Snooping Cache Coherence"></a>Implementing Snooping Cache Coherence</h3><p>In a single-bus multi-core processor, the following methods can be used to make these steps substantially atomic:</p>
+<ul>
+<li><p>First (before changing the cache state), arbitrate for the bus leading to the shared cache or memory, and do not release the bus until all operations are completed.</p>
+</li>
+<li><p>Use a single line to indicate that all necessary invalidation requests have been received and are being processed.</p>
+</li>
+<li><p>Upon receiving this signal, the processor that generated the invalidation signal can release the bus, knowing that all required operations will be completed before any activity related to the next invalidation is processed.</p>
+</li>
+</ul>
+<p>In a system without a single centralized bus, other methods are used to achieve atomicity of cache invalidation operations. Specifically, it must be ensured that when two processors attempt to write to the same data block simultaneously (a situation called a race), a strict order is followed: one write operation is fully processed and completed before the other write operation can begin execution. Which write operation wins the race is not important; the key is that there is only one winner, and its consistency operation completes first.</p>
+<p>In a multi-core architecture using a multi-bus design, as long as each memory block is associated with only one independent bus, access requests to the same data block can be serialized through that shared bus, thereby eliminating race conditions. This feature, combined with the ability to restart the cache invalidation process for the losing party in a race, constitutes a key element of snooping-based cache coherence that can be implemented without a single bus.</p>
+<p>In practical designs, a mix of snooping protocols and directory protocols can be used.</p>
+<h2 id="5-3-Distributed-Shared-Memory-and-Directory-Based-Coherence"><a href="#5-3-Distributed-Shared-Memory-and-Directory-Based-Coherence" class="headerlink" title="5.3 Distributed Shared-Memory and Directory-Based Coherence"></a>5.3 Distributed Shared-Memory and Directory-Based Coherence</h2><p>The previously introduced snooping protocol requires communication with all other caches every time a cache invalidation occurs. This characteristic of not using a centralized data structure to track cache states is both an advantage of the snooping approach (low implementation cost) and its fatal weakness, as it results in poor scalability.</p>
+<p>In recent years, the development of multi-core processors has forced all designers to adopt distributed memory to meet the bandwidth demands of each processor. This memory organization can improve memory bandwidth and interconnect bandwidth by separating local memory traffic from remote memory traffic, thereby reducing the bandwidth requirements on the memory system and interconnect network. However, if the broadcast operations required for cache invalidation in coherence protocols cannot be eliminated, the benefits of distributed memory will be extremely limited.</p>
+<p>Additionally, we have mentioned an alternative to the snooping protocol—the directory protocol.</p>
+<ul>
+<li><p>The directory records the state information of each potentially cached block, including which caches (or cache groups) hold copies of the block and whether the data is dirty (modified).</p>
+</li>
+<li><p>In multi-core processors with a shared last-level cache (L3), implementing the directory mechanism is very simple: it only requires maintaining a bit vector for each L3 cache block, with a length equal to the number of cores. This bit vector identifies which private L2 caches may hold a copy of the corresponding block in the L3 cache, so invalidation requests only need to be sent to these specific caches. When the L3 adopts an inclusive design, this mechanism works perfectly on a single multi-core chip.</p>
+</li>
+<li><p>In multi-core systems, a solution using a single directory is not scalable, even if it avoids broadcast operations. Therefore, we must set up distributed directories, but the distribution must ensure that the coherence protocol can locate the directory information for any cached memory block. An obvious solution is to distribute the directories along with the memory units—just as different memory requests point to different memory locations, different coherence requests can access different distributed directories. If the information is maintained in a partitioned last-level cache, such as the L3 cache, the directory information can be distributed across cache partitions, effectively improving bandwidth utilization.</p>
+</li>
+<li><p>Distributed directories have the following characteristic: the shared state of a block is always located at a single known location. This property, combined with information about the cache blocks held by nodes, allows the coherence protocol to avoid broadcast operations.</p>
+</li>
+<li><p>The simplest directory implementation associates an entry in the directory for each memory block. In this case, the total amount of information is proportional to the product of the number of memory blocks and the number of nodes. For multiprocessors with no more than a few hundred processors (each possibly multi-core), this overhead is acceptable with a reasonable block size.</p>
+</li>
+</ul>
+<p>For larger-scale multiprocessor systems, methods that efficiently scale the directory structure are needed, but we do not need to consider this scenario.</p>
+<h3 id="Directory-Based-Cache-Coherence-Protocols"><a href="#Directory-Based-Cache-Coherence-Protocols" class="headerlink" title="Directory-Based Cache Coherence Protocols"></a>Directory-Based Cache Coherence Protocols</h3><p>The directory protocol must implement two core operations: handling read misses and processing writes to shared and clean cache blocks.</p>
+<p>To achieve these functions, the directory needs to track the state of each cache block. Specifically, the following states exist:</p>
+<ul>
+<li><p>Shared: One or more nodes have cached the data block, and the value in memory remains synchronized with all cached copies.</p>
+</li>
+<li><p>Uncached: No node holds a copy of the cache block.</p>
+</li>
+<li><p>Modified: Only one node holds a copy of the data block and has performed a write operation, rendering the corresponding copy in memory invalid. In this case, the processor is referred to as the owner of the data block.</p>
+</li>
+</ul>
+<p>In addition to tracking states, it is also necessary to record which nodes have copies of the memory block, as these copies need to be invalidated during a write. The simplest way to implement this is to maintain a bit vector for each memory block. When the memory block is in the shared state, each bit in the vector indicates whether the corresponding processor chip holds a copy of the block. When the memory block is in the exclusive state, this bit vector can also be used to track its owner.</p>
+<p>For efficiency, the state of each cache block is also recorded separately in the various levels of cache.</p>
+<p>Although the specific operations during state transitions differ slightly, the state machine states and transition mechanisms in each cache are entirely consistent with the previously used snooping-based cache scheme.</p>
+<p>However, there are significant differences in the invalidation of data items and the location of exclusive copies: both operations require communication between the requesting node and the directory, as well as between the directory and one or more remote nodes. In the snooping protocol, these two steps are accomplished by broadcasting to all nodes simultaneously.</p>
+<p>The following diagram illustrates the various types of messages exchanged between nodes:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C5/19.png" style="max-width: 80%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>A local node is the node that initiates the request, while a home node is the node that stores the memory location and directory entry corresponding to the target address.</p>
+</li>
+<li><p>The physical address space adopts a static distribution scheme, so it is always possible to determine which node holds the memory and directory information for a specific physical address (e.g., high-order bits can represent the node number, while low-order bits indicate the offset within that node’s memory).</p>
+</li>
+<li><p>Even when the home node is also the local node, the directory must still be accessed because data copies may exist in a third-party node called a remote node.</p>
+<ul>
+<li><p>A remote node is a node that holds a copy of a cache block (regardless of whether the copy is in an exclusive or shared state).</p>
+</li>
+<li><p>The remote node may be the same as the local node or the home node. In such cases, inter-processor messages can be replaced by intra-processor messages, while other mechanisms remain unchanged.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="An-Example-Directory-Protocol"><a href="#An-Example-Directory-Protocol" class="headerlink" title="An Example Directory Protocol"></a>An Example Directory Protocol</h3><p>The following diagram shows the state transition diagram of a single cache block in a directory-based system:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C5/20.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>This state transition diagram is largely consistent with the snooping-based approach: the states and triggering conditions are nearly identical.</p>
+</li>
+<li><p>The difference is that in the snooping mechanism, write-invalidation operations are broadcast via a bus (or other network), whereas here, we use a directory controller to selectively send data fetch and invalidation operations.</p>
+</li>
+<li><p>Any cache block must be in an exclusive state when being written, and all shared blocks must maintain the latest value in memory.</p>
+</li>
+<li><p>In most multi-core processors, the outermost cache is shared by all cores, and an internal directory or snooping mechanism is used to maintain cache coherence among the private caches of each core on the same chip. Therefore, by simply connecting to the outermost shared cache, the on-chip multi-core coherence mechanism can be extended to larger processors. This also alleviates contention issues between processors and coherence requests while avoiding duplication of tag bits.</p>
+</li>
+</ul>
+<p>In directory-based protocols, messages sent to the directory trigger two different types of operations: updating the directory state and sending additional messages to satisfy the request. The state in the directory represents the three standard states of a memory block; however, unlike the snooping scheme, the directory state here reflects the overall status of all cache copies rather than the state of a single block.</p>
+<p>To track the set of nodes holding copies of a cache block, we use a bit vector called Sharers. Directory requests need to update the sharers and perform invalidation operations by reading this set.</p>
+<p>The following diagram shows the operations taken by the directory node upon receiving a message (the state diagram structure is consistent with the one above):</p>
+<img src="https://note.noughtq.top/sys/ca/images/C5/21.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>This directory handles three different types of requests: read miss, write miss, and data write-back.</p>
+<p>To understand the mechanisms of these directory operations, we will analyze step by step the requests received and the operations performed in each state.</p>
+<p>When a block is in the uncached state, the copy in memory is the current valid value, so the following types of requests may occur:</p>
+<ul>
+<li><p>Read miss: The requesting node obtains the requested data from memory, and this requester becomes the only sharing node; at this point, the state of the data block is set to the shared state.</p>
+</li>
+<li><p>Write miss: The requesting node receives the value and becomes the sharing node; the data block is set to the exclusive state to indicate that its only valid copy is cached; the Sharers field identifies its owner.</p>
+</li>
+</ul>
+<p>When a block is in the shared state, the memory value is up to date, so the following requests may occur:</p>
+<ul>
+<li><p>Read miss: The requested data is sent from memory to the requesting node, and the requesting node is added to the Sharers.</p>
+</li>
+<li><p>Write miss: The value is sent to the requesting node; invalidation messages are sent to all nodes in the Sharers, and the Sharers are updated to include only the identifier of the requesting node; at this point, the state of the block is set to the exclusive state.</p>
+</li>
+</ul>
+<p>When a block is in the exclusive state, the current value of the block is held in the cache of the node identified by the Sharers (owner), so the following directory requests exist:</p>
+<ul>
+<li><p>Read miss: A data fetch message is sent to the owner, which transitions the state of the block in the owner’s cache to the shared state and prompts the owner to send the data to the directory. The data is written to memory at the directory and then sent back to the requesting processor. The identity of the requesting node is added to the Sharers, which still includes the identity of the original owner processor (since it still holds a readable copy).</p>
+</li>
+<li><p>Data write-back: Since the owner is replacing the block, it must be written back. This operation updates the memory copy to the latest state (the home directory essentially becomes the new owner), at which point the block transitions to the uncached state and the Sharers are cleared.</p>
+</li>
+<li><p>Write miss: The block will belong to a new owner. A message is sent to the original owner to invalidate the block in its cache and transfer the value to the directory; the directory then forwards the value to the requesting node, making it the new owner. The Sharers are updated to the information of the new owner, and the exclusive state of the block remains unchanged.</p>
+</li>
+</ul>
+<h2 id="5-4-Synchronization"><a href="#5-4-Synchronization" class="headerlink" title="5.4 Synchronization"></a>5.4 Synchronization</h2><p>Why is synchronization needed? Because it is necessary to know when different processes can safely use shared data.</p>
+<p>Synchronization mechanisms are typically built from user-level software routines that rely on hardware-provided synchronization instructions. For smaller-scale multiprocessor systems or low-contention scenarios, the key hardware capability is to provide an uninterruptible instruction or instruction sequence that can atomically retrieve and modify a value. Based on this capability, software synchronization mechanisms can be constructed. This section focuses on the implementation principles of two synchronization operations: locking and unlocking. Through these two operations, both mutual exclusion control can be achieved, and a foundation can be laid for more complex synchronization mechanisms.</p>
+<h3 id="Basic-Hardware-Primitives"><a href="#Basic-Hardware-Primitives" class="headerlink" title="Basic Hardware Primitives"></a>Basic Hardware Primitives</h3><p>In a multiprocessor system, the key capability required to implement synchronization is a set of hardware primitives that can atomically read and modify a memory location. Without this capability, the cost of building basic synchronization primitives would be extremely high and would increase with the number of processors. In fact, there are multiple alternative basic hardware primitives, all of which provide the ability to atomically read and write a location. However, architects generally do not expect users to directly use these basic hardware primitives; instead, they expect system programmers to use them to build synchronization libraries. Let us start with one of these hardware primitives and demonstrate how it can be used to construct some basic synchronization operations.</p>
+<p>The hardware primitive we will introduce is atomic exchange, which swaps the value in a register with the value in memory.</p>
+<ul>
+<li><p>Suppose we need to build a simple lock: 0 indicates the lock is free, and 1 indicates the lock is held.</p>
+</li>
+<li><p>A processor attempts to acquire the lock by executing an exchange instruction: it swaps a register containing 1; the register’s memory address corresponds to the lock. If another processor already holds the lock, the exchange instruction returns 1; otherwise, when it returns 0, the memory location’s value is simultaneously updated to 1, preventing other competing exchange operations from also obtaining 0.</p>
+</li>
+<li><p>For example, when two processors simultaneously attempt to execute an exchange instruction, this contention is resolved: one processor will inevitably complete the exchange first and return 0, while the second processor’s exchange will return 1.</p>
+</li>
+<li><p>The key to using the exchange primitive for synchronization lies in its atomicity: the entire exchange process is indivisible, and two concurrent exchanges are serialized through write serialization.</p>
+</li>
+</ul>
+<p>There are also other atomic primitives for synchronization, but they all share a key feature: they read and update a memory value in a way that allows determining whether two operations are executed atomically. Below are some of these atomic primitives:</p>
+<ul>
+<li><p>Test-and-set: Tests a value and sets a new value if the test passes. We can define an operation that checks whether a value is 0 and sets it to 1, used similarly to the atomic exchange operation.</p>
+</li>
+<li><p>Fetch-and-increment: Returns the value of a memory location and atomically increments it. By using 0 to indicate that the synchronization variable is not held, we can use this instruction similarly to the exchange operation.</p>
+</li>
+</ul>
+<p>Implementing a single atomic memory operation presents challenges because it requires completing both a memory read and write within an uninterruptible instruction. This requirement complicates consistency implementation—hardware must not allow any other operation to be inserted between the read and write, and must also avoid deadlock situations.</p>
+<p>Another type of hardware primitive uses a pair of instructions, where the return value of the second instruction indicates whether the pair was executed atomically. If the pair appears as though all other processors’ operations occurred either entirely before or after them, then the pair is effectively atomic. This is the approach adopted by the MIPS and RISC-V architectures.</p>
+<p>In RISC-V, this pair includes a special load operation (called load reserved) lr and a special store operation (called store conditional) sc.</p>
+<ul>
+<li><p>Load reserved loads the memory content specified by rs1 into the rd register and creates a reservation on that memory address.</p>
+</li>
+<li><p>Store conditional stores the value in rs2 to the memory address specified by rs1.</p>
+</li>
+<li><p>If another write operation invalidates the reservation on that memory location during this period, the store conditional fails and writes a non-zero value to rd.</p>
+</li>
+<li><p>If successful, it writes 0 to rd.</p>
+</li>
+<li><p>If a context switch occurs between the two instructions, the store conditional also fails.</p>
+</li>
+<li><p>We can use this pair to construct other synchronization primitives.</p>
+</li>
+<li><p>The reserved register tracks the address specified by the lr instruction.</p>
+</li>
+<li><p>If an interrupt occurs, or if the cache block corresponding to the address in the link register is invalidated (e.g., by another sc instruction), the link register is cleared.</p>
+</li>
+<li><p>The sc instruction only checks whether its address matches the reserved register’s address: if it matches, it succeeds; otherwise, it fails.</p>
+</li>
+<li><p>Since the store conditional will fail after any repeated store attempt to the load reserved address or any exception, the instructions inserted between these two must be chosen carefully. Therefore, only register-to-register operations should be safely allowed; otherwise, deadlock may occur.</p>
+</li>
+<li><p>Additionally, to reduce the probability of store conditional failures caused by unrelated events or competing processors, the number of instructions between load reserved and store conditional should be kept as small as possible.</p>
+</li>
+</ul>
+<h3 id="Implementing-Locks-Using-Coherence"><a href="#Implementing-Locks-Using-Coherence" class="headerlink" title="Implementing Locks Using Coherence"></a>Implementing Locks Using Coherence</h3><p>Once atomic operations are available, the consistency mechanism of multiprocessors can be used to implement spin locks. The processor continuously attempts to acquire such locks, looping until successful. Programmers use spin locks when they expect the lock to be held for a short time and want the locking process to have low latency when the lock becomes available. However, spin locks cause the processor to occupy resources while looping in a waiting state, making them unsuitable in certain scenarios.</p>
+<p>Without a cache coherence mechanism, the simplest implementation is to store the lock in memory.</p>
+<ul>
+<li><p>The processor can continuously attempt to acquire the lock through atomic operations and check whether the swap operation returns a lock in an idle state.</p>
+</li>
+<li><p>When releasing the lock, the processor only needs to store the value 0 at that address to unlock it.</p>
+</li>
+</ul>
+<p>The code sequence for a spin lock is as follows:</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">        addi x2,R0,#1</span><br><span class="line">lockit: EXCH x2,0(x1)    ; atomic exchange</span><br><span class="line">        bnez x2,lockit   ; already locked?</span><br></pre></td></tr></table></figure>
+
+<p>If a multiprocessor supports cache coherence, locks can be cached through this mechanism to maintain lock consistency. A caching lock has the following advantages:</p>
+<p>It allows the “spinning” process (i.e., repeatedly testing and acquiring the lock in a tight loop) to be performed on a local cached copy, without needing to access global memory each time an attempt is made to acquire the lock.</p>
+<ul>
+<li><p>The previous spin lock process needs to be modified so that it spins by performing read operations on the local copy of the lock until it successfully sees that the lock is available.</p>
+</li>
+<li><p>The process attempts to acquire the lock by performing a swap operation; the processor first reads the lock to test its state.</p>
+</li>
+<li><p>The processor continues reading and testing until the read value indicates that the lock is unlocked.</p>
+</li>
+<li><p>The processor then competes with all other similarly “spinning” processes to see which one can lock the variable first.</p>
+</li>
+<li><p>All processes use a swap instruction: this instruction reads the old value and stores 1 into the lock variable; the sole winner sees 0, while the losers see the 1 placed by the winner.</p>
+</li>
+<li><p>The winning processor executes the code following the lock, and upon completion, stores 0 into the lock variable to release the lock, then a new competition begins.</p>
+</li>
+<li><p>The following is the code for executing this spin lock (note: 0 indicates unlocked, 1 indicates locked):</p>
+</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">lockit: ld x2,0(x1)         ; load of lock</span><br><span class="line">        bnez x2,lockit      ; not available-spin</span><br><span class="line">        addi x2,R0,#1       ; load locked value</span><br><span class="line">        EXCH x2,0(x1)       ; swap</span><br><span class="line">        bnez x2,lockit      ; branch if lock wasn’t 0</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>The processor that recently used the lock is likely to use it again in the short term. At this point, the lock may still remain in the processor’s cache, significantly reducing the time required to acquire the lock.</li>
+</ul>
+<p>The following table illustrates the interaction between the processor and the bus&#x2F;directory when multiple processes compete to lock a variable using atomic exchange instructions:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C5/22.png" style="max-width: 80%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>When the processor holding the lock writes 0 to the lock, all copies in other caches are invalidated and must fetch the new value to update their local copies.</p>
+</li>
+<li><p>One of the caches will be the first to obtain the unlocked state value (0) and successfully acquire the lock through an exchange operation. Then, when the cache invalidation requests from other processors receive a response, they will find that the variable is already locked, so they can only continue testing and remain in a spinning state.</p>
+</li>
+</ul>
+<h3 id="Barrier-Synchronization"><a href="#Barrier-Synchronization" class="headerlink" title="Barrier Synchronization"></a>Barrier Synchronization</h3><p>Barrier forces processes to wait until all processes have reached the barrier before releasing them to continue execution. Its implementation is mainly based on:</p>
+<ul>
+<li>Shared counter</li>
+<li>Spin waiting to release signals</li>
+</ul>
+<p>Below is a piece of code related to the implementation of a barrier:</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="built_in">lock</span>(counterlock);                    <span class="comment">// ensure update atomic</span></span><br><span class="line">    <span class="keyword">if</span> (count == <span class="number">0</span>) release = <span class="number">0</span>;          <span class="comment">// first--&gt;reset release</span></span><br><span class="line">        ++count;                          <span class="comment">// count arrivals</span></span><br><span class="line">    <span class="keyword">if</span> (count == total)&#123;                  <span class="comment">// all arrived</span></span><br><span class="line">        count = <span class="number">0</span>;                        <span class="comment">// reset counter</span></span><br><span class="line">        release = <span class="number">1</span>;                      <span class="comment">// release processes</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">unlock</span>(counterlock);                  <span class="comment">// release lock</span></span><br><span class="line">    <span class="built_in">spin</span>(release == <span class="number">1</span>) ;                  <span class="comment">// wait for arrivals</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>This code has a problem: in the barrier, the slower processes may be trapped by the fastest process. Therefore, the following improvements have been made:</p>
+<ul>
+<li><p>Counting after leaving the barrier: Use an additional shared counter to count the processes in the barrier. Prevent any process from re-entering the barrier before all processes have left the previous instance. However, this method introduces additional latency and is therefore not recommended.</p>
+</li>
+<li><p>Sense-reversing barrier: This method solves the problem of processes being trapped, but the performance is still not high. The implementation code is as follows:</p>
+</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    Lock_sense = !Lock_sense;             <span class="comment">// toggle Local_sense</span></span><br><span class="line">    <span class="built_in">lock</span>(counterlock);                    <span class="comment">// ensure update atomic</span></span><br><span class="line">    <span class="keyword">if</span> (count == <span class="number">0</span>) release = <span class="number">0</span>;          <span class="comment">// first--&gt;reset release</span></span><br><span class="line">        ++count;                          <span class="comment">// count arrivals</span></span><br><span class="line">    <span class="keyword">if</span> (count == total)&#123;                  <span class="comment">// all arrived</span></span><br><span class="line">        count = <span class="number">0</span>;                        <span class="comment">// reset counter</span></span><br><span class="line">        release = Lock_sense;             <span class="comment">// release processes</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">unlock</span>(counterlock);                  <span class="comment">// release lock</span></span><br><span class="line">    <span class="built_in">spin</span>(release == Lock_sense) ;         <span class="comment">// wait for signal</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>To improve barrier performance, we can adopt a software optimization—the combining tree barrier: using a predetermined n-ary tree structure, processes synchronize at child nodes and then report to the parent node, until the root node releases all processes. This reduces contention at a single synchronization point.</p>
+<h2 id="5-5-Models-of-Memory-Consistency"><a href="#5-5-Models-of-Memory-Consistency" class="headerlink" title="5.5 Models of Memory Consistency"></a>5.5 Models of Memory Consistency</h2><p>Determining the degree of memory consistency is a rather complex issue.</p>
+<p>The most intuitive model of memory consistency is called sequential consistency. It requires that the result of any execution is the same as if the memory access operations issued by each processor maintain their program order, and the access operations between different processors can be interleaved arbitrarily. This model eliminates the possibility of certain non-intuitive executions in the previous example, because all assignment operations must be completed before the IF statement begins execution.</p>
+<p>The simplest way to achieve sequential consistency is to require the processor to delay the completion of any memory access until all invalidation operations triggered by that access are finished. Of course, an equally effective method is to delay the next memory access until the previous one is completed. It is important to remember that memory consistency involves operations on different variables: the two accesses that must be executed in order actually target different memory locations. In the example above, the reading of A or B (A &#x3D;&#x3D; 0 or B &#x3D;&#x3D; 0) must be delayed until the previous write operation (B &#x3D; 1 or A &#x3D; 1) is completed. Under the sequential consistency model, a write operation cannot simply be placed in the write buffer and then immediately followed by a read.</p>
+<p>Although sequential consistency provides a simple programming paradigm, it can reduce potential performance, especially in multi-core systems with a large number of processors and high interconnect latency.</p>
+<p>To achieve better performance, there are two approaches:</p>
+<ul>
+<li><p>Retain sequential consistency but use latency-hiding techniques.</p>
+</li>
+<li><p>Use a memory consistency model with fewer restrictions that allows hardware to accelerate execution. This may change the programmer’s perception of multiprocessors, so before exploring these relaxed models, we need to understand the programmer’s expected needs.</p>
+</li>
+</ul>
+<h3 id="The-Programmer’s-View"><a href="#The-Programmer’s-View" class="headerlink" title="The Programmer’s View"></a>The Programmer’s View</h3><p>Although the sequential consistency model has performance disadvantages, from a programmer’s perspective, it offers the advantage of simplicity. We hope to develop a programming model that is both easy to explain and allows for high-performance implementation.</p>
+<p>One programming model that achieves efficient execution assumes that programs are synchronized.</p>
+<ul>
+<li>A program is considered synchronized if all accesses to shared data are ordered through synchronization operations.</li>
+<li>A data reference is said to be ordered by synchronization operations if and only if, in all possible executions, a write operation by one processor to a variable and an access (read or write) by another processor to the same variable are separated by a pair of synchronization operations—the first performed by the writing processor after the write, and the second by the accessing processor before the access.</li>
+<li>A situation where a variable may be updated without being ordered by synchronization is called a data race, because the execution result depends on the relative speeds of the processors; similar to races in hardware design, the outcome is unpredictable. This also gives synchronized programs another name: data-race-free.</li>
+</ul>
+<p>It is widely believed that most programs are synchronizable. This is because if accesses are not handled through synchronization, the program’s behavior becomes unpredictable—differences in execution speed determine which processor wins the data race, thereby affecting the final program result. Even under sequential consistency, reasoning about such programs is extremely difficult.</p>
+<p>Programmers could attempt to ensure sequentiality by constructing their own synchronization mechanisms, but this is extremely complex, error-prone, and may lack architectural support—meaning these mechanisms could fail in future multiprocessor iterations. Therefore, the vast majority of programmers choose to use proven synchronization libraries optimized for multiprocessors and synchronization types.</p>
+<p>Additionally, using standard synchronization primitives ensures that even if the underlying architecture implements a memory consistency model more relaxed than sequential consistency, correctly synchronized programs will behave as if the hardware implements sequential consistency.</p>
+<h3 id="Relaxed-Consistency-Models"><a href="#Relaxed-Consistency-Models" class="headerlink" title="Relaxed Consistency Models"></a>Relaxed Consistency Models</h3><p>The core idea of the relaxed consistency model is to allow read and write operations to complete out of order, but enforce ordering through synchronization operations, so that the behavior of synchronized programs appears as if the processor has sequential consistency. Depending on which read-write orders are relaxed, there are various classifications of relaxed consistency models. We define ordering relationships using a set of rules in the form of X -&gt; Y, indicating that operation X must complete before operation Y begins. Sequential consistency requires maintaining all four possible orders: R -&gt; W, R -&gt; R, W -&gt; R, W -&gt; W. Relaxed models are defined by relaxing subsets of these four orders:</p>
+<ul>
+<li><p>Relaxing only the W -&gt; R order results in a model known as total store ordering or processor consistency. Since this model preserves the order of write operations, many programs that follow sequential consistency can adopt this model without additional synchronization operations.</p>
+</li>
+<li><p>Relaxing both W -&gt; R and W -&gt; W orders results in a model known as partial store order.</p>
+</li>
+<li><p>Relaxing all four orders leads to a series of models, including weak ordering, the PowerPC consistency model, release consistency, and the RISC-V consistency model.</p>
+</li>
+</ul>
+<p>By relaxing these ordering constraints, processors can achieve significant performance advantages, which is why RISC-V, ARMv8, and the C++&#x2F;C language standards have chosen relaxed consistency as their memory model.</p>
+<p>Release consistency distinguishes between two types of synchronization operations:</p>
+<ul>
+<li><p>Acquire operations (marked as <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>S</mi><mi>A</mi></msub></mrow><annotation encoding="application/x-tex">S_A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0576em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">A</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>) used to gain access to shared variables.</p>
+</li>
+<li><p>Release operations (marked as <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>S</mi><mi>R</mi></msub></mrow><annotation encoding="application/x-tex">S_R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0576em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>) used to release objects to allow other processors to gain access.</p>
+</li>
+</ul>
+<p>In synchronized programs, acquire operations must precede the use of shared data, while release operations must occur after all updates to shared data and before the next acquire operation. This characteristic allows us to moderately relax ordering requirements—ensuring that read and write operations occurring before an acquire do not need to complete before that acquire, and read and write operations occurring after a release do not need to wait for that release to complete.</p>
+<p>The following diagram illustrates the ordering constraints of various consistency models for general accesses and synchronization accesses:</p>
+<img src="https://note.noughtq.top/sys/ca/images/C5/26.png" style="max-width: 80%; display: block; margin: 0 auto;">
+
+<p>Releasing coherence provides one of the most relaxed and easily verifiable models, ensuring that synchronization programs observe sequentially consistent execution results. Although most synchronization operations are either acquire or release, some operations combine both acquire and release semantics, resulting in ordering effects equivalent to weak ordering. While synchronization operations always guarantee that previous write operations have completed, we sometimes need to ensure the completion of write operations without relying on specific synchronization operations. In such cases, an explicit instruction—called FENCE in RISC-V—is required to ensure that all previous instructions in the thread have completed execution, including all memory writes and the completion of related invalidation operations.</p>
+<h2 id="5-6-Cross-Cutting-Issues"><a href="#5-6-Cross-Cutting-Issues" class="headerlink" title="5.6 Cross-Cutting Issues"></a>5.6 Cross-Cutting Issues</h2><p>Since multiprocessors redefine many system characteristics (such as the importance of performance evaluation, memory latency, and scalability), they introduce design issues that span the entire technology domain, affecting both hardware and software. This section will provide several examples centered around the problem of memory coherence.</p>
+<h3 id="Compiler-Optimization-and-the-Consistency-Model"><a href="#Compiler-Optimization-and-the-Consistency-Model" class="headerlink" title="Compiler Optimization and the Consistency Model"></a>Compiler Optimization and the Consistency Model</h3><p>Another reason for defining a memory consistency model is to clarify the scope of legal compiler optimizations on shared data.</p>
+<ul>
+<li><p>In explicitly parallel programs, unless synchronization points are clearly defined and the program is synchronized, the compiler cannot swap read and write operations on two different shared data items, as such transformations may affect program semantics. This restriction even hinders relatively simple optimizations (such as register allocation for shared data), as this process typically involves swapping reads and writes.</p>
+</li>
+<li><p>In implicitly parallelized programs (such as code written in High Performance Fortran (HPF)), this issue does not arise because the program must be synchronized and synchronization points are known.</p>
+</li>
+</ul>
+<p>From both research and practical perspectives, whether a more relaxed coherence model can bring significant advantages to compilers remains an open question, and the lack of a unified model is likely to delay the deployment of compilers.</p>
+<h3 id="Using-Speculation-to-Hide-Latency-in-Strict-Consistency-Model"><a href="#Using-Speculation-to-Hide-Latency-in-Strict-Consistency-Model" class="headerlink" title="Using Speculation to Hide Latency in Strict Consistency Model"></a>Using Speculation to Hide Latency in Strict Consistency Model</h3><p>The speculation techniques discussed in Chapter 3 can be used to hide memory latency. They can also be employed to mask the latency caused by strict coherence models, thereby gaining the advantages of a relaxed memory model. The core idea is that the processor dynamically reorders memory accesses through out-of-order execution, allowing instructions to execute in a non-sequential order. This out-of-order memory access may violate the principle of sequential consistency, thereby affecting program execution results. This issue can be avoided by leveraging the delayed commit feature of processors that support speculative execution: assuming the cache coherence protocol operates based on an invalidation mechanism, if the processor receives an invalidation notification for a memory address before the corresponding memory reference operation is committed, it triggers a speculative recovery mechanism to roll back the computation and restart execution from the invalidated memory reference.</p>
+<p>If the processor’s reordering of memory requests leads to an execution order that could produce results different from those seen under sequential consistency, the processor will re-execute. The key to this approach is that the processor only needs to ensure that the final result is the same as if all accesses were completed in order, by detecting situations where discrepancies might occur. The advantage of this scheme is that speculative restarts are rarely triggered, only when unsynchronized accesses actually cause a race condition.</p>
+<p>Some argue that combining sequential or processor consistency with speculative execution is the preferred coherence model. The reasoning is as follows:</p>
+<ul>
+<li><p>Aggressive implementations of sequential or processor consistency can yield greater advantages than relaxed models.</p>
+</li>
+<li><p>It requires only minimal additional cost on processors that already support speculative execution.</p>
+</li>
+<li><p>It allows programmers to reason based on the simpler programming model of sequential or processor consistency.</p>
+</li>
+</ul>
+<h3 id="Inclusion-and-Its-Implementation"><a href="#Inclusion-and-Its-Implementation" class="headerlink" title="Inclusion and Its Implementation"></a>Inclusion and Its Implementation</h3><p>All multiprocessors use a multi-level cache hierarchy to reduce the demand on global interconnects and the latency caused by cache misses. If the cache has a multilevel inclusion property (i.e., each level of the cache hierarchy is a subset of the level farther from the processor), then a multi-level structure can be employed. This reduces contention between coherence traffic and processor traffic when snooping and processors must compete for the cache. Many processors with multi-level caches enforce the inclusion property. This restriction is also known as the subset property, because each cache is a subset of the cache below it in the hierarchy.</p>
+<p>Consider a two-level example: any miss in L1 either hits in L2 or causes a miss in L2, resulting in data being brought into both L1 and L2. Similarly, any invalidation that hits in L2 must be sent to L1. The question is: what happens when the block sizes of L1 and L2 differ?</p>
+<p>Choosing different block sizes is quite reasonable, as L2 is much larger and its latency accounts for a larger portion of the miss penalty, so using a larger block size—one block in L2 represents multiple blocks in L1, and a miss in L2 results in the replacement of data equivalent to multiple L1 blocks. For example, if the block size of L2 is four times that of L1, a miss in L2 will replace data equivalent to four L1 blocks.</p>
+<p>To maintain inclusion under varying block sizes, when a replacement operation occurs at a lower level, we must probe the higher levels of the hierarchy to ensure that the replaced data is invalid in the higher-level caches; different associativity settings introduce challenges.</p>
+
   </div>
 
   
@@ -1526,14 +2447,7 @@
   
 
   <div class="container post-prev-next" data-pagefind-ignore>
-    
-    <a href="/2026/03/02/Course/Object_Oriented_Programing/" class="next">
-      <div class="text">
-        <p class="label">Next</p>
-        <h3 class="title">Object-Oriented Programing</h3>
-      </div>
-    </a>
-    
+    <a class="next"></a>
     
     <a href="/2026/03/02/Course/Database_System/" class="prev">
       <div class="text">
