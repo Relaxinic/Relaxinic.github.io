@@ -3,9 +3,10 @@
   flex-direction: column;
   justify-content: center;
   gap: 28px;
-  padding-top: 100px;
-  padding-bottom: 100px;
+  width: 100%;
+  padding: 0;
   white-space: pre-wrap;
+  transform: translateY(var(--hero-text-offset-y));
 }
 @supports (animation-timeline: scroll()) {
   .hero.exit-while-scroll {
@@ -48,16 +49,18 @@
   }
 }
 .hero .title {
-  font-size: 30px;
-  color: rgb(213, 225, 255);
+  font-family: "Rapid", sans-serif;
+  font-size: 20px;
+  color: rgb(239, 244, 255);
   font-weight: 400;
   margin: 0;
   margin-left: 6px;
   transition: font-size 0.5s;
 }
 .hero .description {
-  font-size: 105px;
-  color: rgb(0, 37, 132);
+  font-family: "Rapid", sans-serif;
+  font-size: 45px;
+  color: rgb(255, 255, 255);
   font-weight: 700;
   margin: 0;
   line-height: 0.55;
@@ -70,7 +73,13 @@
 }
 
 .index-bg {
+  --hero-text-offset-y: 0px;
   position: relative;
+  min-height: calc(100vh - 56px);
+  min-height: calc(100svh - 56px);
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
 }
 
 .index-bg::before {
@@ -84,4 +93,9 @@
 .index-bg > .container {
   position: relative;
   z-index: 1;
+  box-sizing: border-box;
+  min-height: calc(100vh - 56px);
+  min-height: calc(100svh - 56px);
+  display: flex;
+  align-items: center;
 }
