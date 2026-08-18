@@ -6,7 +6,7 @@
   width: 100%;
   padding: 0;
   white-space: pre-wrap;
-  transform: translateY(var(--hero-text-offset-y));
+  transform: translate(var(--hero-text-offset-x), var(--hero-text-offset-y));
 }
 @supports (animation-timeline: scroll()) {
   .hero.exit-while-scroll {
@@ -51,7 +51,7 @@
 .hero .title {
   font-family: "Rapid", sans-serif;
   font-size: 20px;
-  color: rgb(239, 244, 255);
+  color: rgb(225, 246, 251);
   font-weight: 400;
   margin: 0;
   margin-left: 6px;
@@ -60,7 +60,7 @@
 .hero .description {
   font-family: "Rapid", sans-serif;
   font-size: 45px;
-  color: rgb(255, 255, 255);
+  color: rgb(215, 253, 255);
   font-weight: 700;
   margin: 0;
   line-height: 0.55;
@@ -73,7 +73,8 @@
 }
 
 .index-bg {
-  --hero-text-offset-y: 0px;
+  --hero-text-offset-x: -20px;
+  --hero-text-offset-y: -30px;
   position: relative;
   min-height: calc(100vh - 56px);
   min-height: calc(100svh - 56px);
