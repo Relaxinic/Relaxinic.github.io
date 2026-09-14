@@ -22,7 +22,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Computer_Network.jpeg">
 <meta property="article:published_time" content="2026-09-13T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-09-14T03:40:09.350Z">
+<meta property="article:modified_time" content="2026-09-14T13:20:15.660Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Computer_Network.jpeg">
@@ -268,7 +268,223 @@
   Part of these notes draws inspiration from the excellent Computer Network notes written by <a href="https://note.noughtq.top/web/cn/review" target="_blank">NoughtQ</a>. I am also grateful to Professor Jinsong Han for his teaching and guidance in the course, which helped shape the understanding reflected in these notes.
 </htc-callout>
 
-<h1 id="Chapter-1-Overview"><a href="#Chapter-1-Overview" class="headerlink" title="Chapter 1 Overview"></a>Chapter 1 Overview</h1>
+<h1 id="Chapter-1-Overview"><a href="#Chapter-1-Overview" class="headerlink" title="Chapter 1 Overview"></a>Chapter 1 Overview</h1><h2 id="1-1-Internet"><a href="#1-1-Internet" class="headerlink" title="1.1 Internet"></a>1.1 Internet</h2><p><strong>Network</strong>: formed by interconnecting several links and nodes.</p>
+<p><strong>Internet</strong>: formed by interconnecting several networks through routers, a network of networks.</p>
+<p>The Internet is the largest internet in the world. The Internet has developed into a multi-level interconnected network based on Internet Service Providers (ISPs).</p>
+<h2 id="1-2-Network-instance"><a href="#1-2-Network-instance" class="headerlink" title="1.2 Network instance"></a>1.2 Network instance</h2><h3 id="Network-edge"><a href="#Network-edge" class="headerlink" title="Network edge"></a>Network edge</h3><p>End systems: computers and other devices located at the edge of the Internet and connected to the Internet.</p>
+<p>End systems are composed of various hosts: clients (desktop computers, mobile computers, and various other smart terminal devices) and servers.</p>
+<p>Functions of hosts: to contain (i.e., run) applications, generate information and send data to the access network, and receive data from the network and provide it to applications.</p>
+<p><strong>Access network</strong></p>
+<ul>
+<li><p>Goal: to connect hosts to edge routers.</p>
+</li>
+<li><p>Edge routers are the first routers on the path from an end-system host to any other remote end system. Various heterogeneous networks access through edge routers.</p>
+</li>
+<li><p>Connection forms between end systems and edge routers:</p>
+<ul>
+<li><p>Wired network access technologies: fiber to the home FTTH, Ethernet, coaxial cable, twisted-pair DSL, and the ancient dial-up Internet access.</p>
+</li>
+<li><p>Wireless network access technologies: WiFi, 4G&#x2F;5G, and satellite wide-area coverage.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="Network-core"><a href="#Network-core" class="headerlink" title="Network core"></a>Network core</h3><p>A mesh network composed of packet-switching devices and communication links of interconnected end systems</p>
+<p>Composed of packet switches (routers, link-layer switches) and communication links (fiber optics, copper cables, radio, laser links)</p>
+<p>Two major functions:</p>
+<ul>
+<li><p>Routing (Global operations): determining the path used by data packets from source to destination. Requires routing protocols and routing algorithms, and produces a routing table.</p>
+</li>
+<li><p>Forwarding (Local operation): a router or switch forwards received data packets onward (i.e., moves them to a certain output interface of the device). Determining the output interface&#x2F;link to forward to: based on the destination address in the packet header received from the “input interface,” look up the local routing table to determine the “output interface.”</p>
+</li>
+</ul>
+<h2 id="1-3-Circuit-switching-packet-switching-and-message-switching"><a href="#1-3-Circuit-switching-packet-switching-and-message-switching" class="headerlink" title="1.3 Circuit switching, packet switching, and message switching"></a>1.3 Circuit switching, packet switching, and message switching</h2><h3 id="Circuit-switching"><a href="#Circuit-switching" class="headerlink" title="Circuit switching"></a>Circuit switching</h3><p>Data transmission between computers is bursty in nature. When circuit switching is used to transmit computer data, the transmission efficiency of the line is generally very low, and the time actually used on the line to transmit data is often less than 10% or even 1%.</p>
+<blockquote>
+<p>Establish connection (allocate communication resources) - Call (continuously occupy communication resources) - Release connection (return communication resources)</p>
+</blockquote>
+<h3 id="Packet-switching"><a href="#Packet-switching" class="headerlink" title="Packet switching"></a>Packet switching</h3><p>Sender: construct and send packets</p>
+<p>Switching nodes: cache and forward packets</p>
+<p>Receiver: receive packets and restore the message</p>
+<p>Advantages:</p>
+<ul>
+<li><p>There is no process of establishing a connection and releasing a connection</p>
+</li>
+<li><p>During packet transmission, communication links are occupied segment by segment, resulting in higher communication line utilization</p>
+</li>
+<li><p>Switching nodes can independently select a forwarding route for each packet, giving the network very good survivability</p>
+</li>
+</ul>
+<p>Disadvantages:</p>
+<ul>
+<li><p>The packet header brings additional transmission overhead</p>
+</li>
+<li><p>Store-and-forward processing of packets by switching nodes causes a certain delay</p>
+</li>
+<li><p>It cannot ensure that all end-to-end communication resources are available during communication, and network congestion may occur when traffic is heavy</p>
+</li>
+<li><p>Packets may experience problems such as out-of-order delivery and loss</p>
+</li>
+</ul>
+<h3 id="Message-switching"><a href="#Message-switching" class="headerlink" title="Message switching"></a>Message switching</h3><p>The predecessor of packet switching. The entire message is sent, rather than being split into several packets for transmission. A switching node can only look up the forwarding table after receiving the entire message, and then forward the entire message to the next node. Therefore, compared with packet switching, the forwarding delay is much longer, and the cache space required by the switching node is also much larger.</p>
+<img src="https://note.noughtq.top/web/cn/images/9.png" style="max-width: 60%; display: block; margin: 0 auto;">
+
+<p>If a large amount of data needs to be transmitted continuously, and the data transmission time is much greater than the time required to establish a connection, then using circuit switching can achieve relatively high transmission efficiency; however, computer data transmission is often bursty, so when circuit switching is used, the utilization rate of the communication line will be very low.</p>
+<p>Neither message switching nor packet switching requires establishing a connection in advance (that is, preallocating communication resources), so when transmitting bursty computer data, they can improve the utilization rate of the communication line.</p>
+<p>Dividing a message into several smaller packets for packet switching results in lower delay than performing message switching on the entire message, and it can also avoid an overly long message occupying the link for a long time, which is beneficial to error control and also provides greater flexibility.</p>
+<h2 id="1-4-Definition-and-Classification"><a href="#1-4-Definition-and-Classification" class="headerlink" title="1.4 Definition and Classification"></a>1.4 Definition and Classification</h2><p>A computer network is mainly composed of some general-purpose, programmable hardware interconnected together, and this hardware is not specifically designed to achieve a particular purpose (for example, transmitting data or video signals). This programmable hardware can be used to transmit many different types of data and can support a wide range of and ever-growing applications.</p>
+<blockquote>
+<p>Programmable hardware: not limited to computers, but also includes smart hardware such as smartphones, sensors with network capabilities, and smart home appliances; these hardware devices must contain a CPU.<br>Various applications: various applications implemented based on data transmission, including various applications that may appear in the future.</p>
+</blockquote>
+<p>Classification:</p>
+<ul>
+<li><p>Switching method: circuit &#x2F; message &#x2F; packet switching (see the previous section)</p>
+</li>
+<li><p>Users: public network: the Internet; private network: military, railway, electric power, banking</p>
+</li>
+<li><p>Transmission medium: wired network &#x2F; wireless network</p>
+</li>
+</ul>
+<p>Coverage range:</p>
+<ul>
+<li><p>Wide Area Network (WAN): tens to thousands of kilometers</p>
+</li>
+<li><p>Metropolitan Area Network (MAN): 5-50 km</p>
+</li>
+<li><p>Local Area Network (LAN): ~1 km</p>
+</li>
+<li><p>Personal Area Network (PAN): 10 m</p>
+</li>
+</ul>
+<p>Topology: bus &#x2F; star &#x2F; ring &#x2F; mesh</p>
+<h2 id="1-5-Performance-Metrics"><a href="#1-5-Performance-Metrics" class="headerlink" title="1.5 Performance Metrics"></a>1.5 Performance Metrics</h2><p>Rate: The transmission rate of data (i.e., how many bits are transmitted per second), also known as data rate or bit rate.</p>
+<ul>
+<li><p>The basic unit is bits per second (bit&#x2F;s, which can be abbreviated as b&#x2F;s, and is sometimes also written as bps (bit per second)).</p>
+</li>
+<li><p>Commonly used units (note the unit conversions):</p>
+<ul>
+<li><p>Kilobits per second (kb&#x2F;s or kbps) &#x3D; 10^3 bps</p>
+</li>
+<li><p>Megabits per second (Mb&#x2F;s or Mbps) &#x3D; 10^6 bps</p>
+</li>
+<li><p>Gigabits per second (Gb&#x2F;s or Gbps) &#x3D; 10^9 bps</p>
+</li>
+<li><p>Terabits per second (Tb&#x2F;s or Tbps) &#x3D; 10^12 bps</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>Bandwidth: refers to the capability of a network’s communication line to transmit data, that is, the maximum data rate that can pass from one point in the network to another per unit time.</p>
+<ul>
+<li><p>Unit: same as “rate”</p>
+</li>
+<li><p>Data transmission rate &#x3D; min[host interface rate, line bandwidth, switch or router interface rate] (short-board effect)</p>
+</li>
+</ul>
+<p>Throughput: the actual amount of data passing through a network or interface per unit time. It is often used to measure an actual network in order to determine exactly how much data has passed through the network. It is limited by network bandwidth.</p>
+<p>Delay&#x2F;latency: the time consumed for data to be transmitted from one end of the network to the other, also called delay or latency.</p>
+<ul>
+<li><p>Data may consist of one or more packets, or even a single bit.</p>
+</li>
+<li><p>Transmission latency (also called transmission delay) &#x3D; packet length (b) &#x2F; transmission rate (b&#x2F;s) (for the transmission rate formula, see the “bandwidth” section)</p>
+</li>
+<li><p>Propagation latency &#x3D; channel length (m) &#x2F; signal propagation rate (m&#x2F;s)</p>
+</li>
+<li><p>Queueing latency and processing latency are inconvenient to calculate.</p>
+</li>
+<li><p>Total latency is the sum of the above four latencies.</p>
+</li>
+</ul>
+<img src="https://note.noughtq.top/web/cn/images/17.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>Bandwidth-delay product &#x3D; propagation delay * bandwidth, also called the length of the link in bits, which is very helpful for us to understand the minimum frame length of Ethernet later.</p>
+<p>Round-trip time (RTT): the total time elapsed from when the sender starts sending a data packet to when the sender receives the corresponding acknowledgment packet sent back by the receiver.</p>
+<p>Utilization</p>
+<ul>
+<li><p>Link utilization: the percentage of time a link is utilized (that is, data is passing through it); the utilization of a completely idle link is zero.</p>
+</li>
+<li><p>Network utilization: the weighted average of the link utilizations of all links in the network.</p>
+</li>
+<li><p>According to queueing theory, when the utilization of a link increases, the delay caused by that link increases rapidly.</p>
+</li>
+<li><p>When the network traffic is relatively low, the resulting delay is not large, but as network traffic continues to increase, the queueing delay of packets in switching nodes (routers or switches) will increase accordingly, so the delay caused by the network will increase.</p>
+</li>
+<li><p>Let <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">D_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> denote the delay when the network is idle, and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi></mrow><annotation encoding="application/x-tex">D</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span></span></span></span> denote the current delay of the network. Then, under ideal assumptions, the relationship among <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo separator="true">,</mo><msub><mi>D</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">D, D_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>, and network utilization <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>U</mi></mrow><annotation encoding="application/x-tex">U</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">U</span></span></span></span> can be expressed by the following formula:</p>
+</li>
+</ul>
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mfrac><msub><mi>D</mi><mn>0</mn></msub><mrow><mn>1</mn><mo>−</mo><mi>U</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">D = \frac{D_0}{1 - U}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.2918em;vertical-align:-0.4033em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8884em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mbin mtight">−</span><span class="mord mathnormal mtight" style="margin-right:0.10903em;">U</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.4101em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3173em;"><span style="top:-2.357em;margin-left:-0.0278em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.4033em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span>
+
+<ul>
+<li>Some large ISPs often control channel utilization to no more than 50%; if it exceeds that, they expand capacity by increasing the bandwidth of the line.</li>
+</ul>
+<img src="https://note.noughtq.top/web/cn/images/20.png" style="max-width: 30%; display: block; margin: 0 auto;">
+
+<p>Packet loss rate: The ratio of the number of packets lost during transmission to the total number of packets within a certain time range.</p>
+<ul>
+<li><p>Divided into interface &#x2F; node &#x2F; link &#x2F; path &#x2F; network packet loss rate.</p>
+</li>
+<li><p>Packet loss mainly occurs in the following two situations:</p>
+<ul>
+<li><p>A packet has a bit error during transmission and is discarded after a node switch (such as a router) or the destination host in the transmission path detects the bit error.</p>
+</li>
+<li><p>A node switch actively discards packets according to a discard policy.</p>
+</li>
+</ul>
+</li>
+<li><p>The packet loss rate can reflect the congestion situation of the network: when there is no congestion, the path packet loss rate is 0; when there is mild congestion, the path packet loss rate is 1% ~ 4%; when there is severe congestion, the path packet loss rate is 5% ~ 15%.</p>
+</li>
+</ul>
+<h2 id="1-6-Architecture"><a href="#1-6-Architecture" class="headerlink" title="1.6 Architecture"></a>1.6 Architecture</h2><p>Two communication modes:</p>
+<ul>
+<li><p>Connectionless service: No need to establish a connection in advance</p>
+</li>
+<li><p>Connection-oriented service: Also called virtual circuit service; a virtual circuit must be established before communication</p>
+</li>
+</ul>
+<p>The OSI (open system interconnection) model allows the network layer to support two modes: connectionless (IP) + connection-oriented (X.25 and other protocols)</p>
+<p>In the TCP&#x2F;IP model, the network layer (IP layer) is connectionless, and connection-oriented functionality is implemented by the transport layer (TCP)</p>
+<p>The TCP&#x2F;IP architecture is shown in the figure:</p>
+<img src="https://note.noughtq.top/web/cn/images/22.png" style="max-width: 50%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/web/cn/images/23.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>Entity: Addresses the problem of implementing specific network applications through the interaction of application processes.</p>
+<p>Peer entities: Entities at the same layer on both communicating sides.</p>
+<img src="https://note.noughtq.top/web/cn/images/24.png" style="max-width: 30%; display: block; margin: 0 auto;">
+
+<p>Protocol: A set of rules that controls two peer entities in performing “logical communication” in the “horizontal direction.”</p>
+<ul>
+<li><p>Three elements of a protocol:</p>
+<ul>
+<li><p>Syntax: Defines the format of the information exchanged.</p>
+</li>
+<li><p>Semantics: Defines the operations to be completed by both communicating sides.</p>
+</li>
+<li><p>Synchronization: Defines the timing relationship between both communicating sides.</p>
+</li>
+</ul>
+</li>
+<li><p>The data packets transmitted between peer layers are called the protocol data unit (PDU) of that layer.</p>
+</li>
+</ul>
+<p>Service:</p>
+<img src="https://note.noughtq.top/web/cn/images/25.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>Protocols are “horizontal,” while services are “vertical.”</p>
+</li>
+<li><p>An entity can see the services provided by the lower layer, but does not know the specific protocol that implements the service; the lower-layer protocol is “transparent” to the upper-layer entity.</p>
+</li>
+<li><p>The logical interface through which entities in two adjacent layers in the same system exchange information is called a service access point (SAP), and it is used to distinguish different types of services.</p>
+</li>
+<li><p>The “type” field of a frame, the “protocol” field of an IP datagram, and the “port number” field of a TCP segment or UDP user datagram are all SAPs.</p>
+</li>
+<li><p>For the upper layer to use the services provided by the lower layer, it must exchange some commands with the lower layer, and these commands are called service primitives.</p>
+</li>
+<li><p>The data packets exchanged between layers within the same system are called service data units (SDUs).</p>
+</li>
+<li><p>Six core service primitives (taking connection-oriented services as an example)</p>
+<img src="https://note.noughtq.top/web/cn/images/338.png" style="max-width: 50%; display: block; margin: 0 auto;"></li>
+</ul>
+<h1 id="Chapter-2-Physical-Layer"><a href="#Chapter-2-Physical-Layer" class="headerlink" title="Chapter 2 Physical Layer"></a>Chapter 2 Physical Layer</h1>
   </div>
 
   
