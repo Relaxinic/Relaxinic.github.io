@@ -22,7 +22,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Operating_System.jpeg">
 <meta property="article:published_time" content="2026-09-13T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-09-14T03:46:49.574Z">
+<meta property="article:modified_time" content="2026-09-20T12:51:36.328Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Operating_System.jpeg">
@@ -268,7 +268,297 @@
   Part of these notes draws inspiration from the excellent Operating System notes written by <a href="https://note.noughtq.top/sys/os/" target="_blank">NoughtQ</a>. I am also grateful to Professor Lishou Dan for his teaching and guidance in the course, which helped shape the understanding reflected in these notes.
 </htc-callout>
 
-<h1 id="Chapter-1-Overview"><a href="#Chapter-1-Overview" class="headerlink" title="Chapter 1 Overview"></a>Chapter 1 Overview</h1>
+<h1 id="Chapter-1-Introduction"><a href="#Chapter-1-Introduction" class="headerlink" title="Chapter 1 Introduction"></a>Chapter 1 Introduction</h1><h2 id="1-1-What-Operating-System-Do"><a href="#1-1-What-Operating-System-Do" class="headerlink" title="1.1 What Operating System Do"></a>1.1 What Operating System Do</h2><p>A complete computer system consists of the following parts:</p>
+<img src="https://note.noughtq.top/sys/os/images/C1/1.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>Operating system: controls the hardware and coordinates its use among different application programs and among different users.</p>
+<p>We adopt a relatively widely accepted definition: an operating system is a program that is always running on the computer, and this program is usually called the kernel. In addition, there are two other types of programs:</p>
+<ul>
+<li><p>System program: related to the operating system, but not a necessary component of the kernel.</p>
+</li>
+<li><p>Application program: includes all programs unrelated to system operation.</p>
+</li>
+</ul>
+<p>For mobile operating systems, in addition to the kernel, there is also something called middleware, which is a set of software frameworks that provide additional services to application developers.</p>
+<p>In summary, we consider the operating system to include an always-running kernel, middleware frameworks, and system programs. In addition, the focus of the later discussion is still on the kernel.</p>
+<blockquote>
+<p>When a computer is powered on or restarted, the bootstrap program is loaded. The bootstrap program is stored in ROM or EPROM, which are usually called firmware. It initializes various aspects of the system, loads the operating system kernel, and starts executing it.</p>
+</blockquote>
+<h2 id="1-2-Computer-System-Organization"><a href="#1-2-Computer-System-Organization" class="headerlink" title="1.2 Computer-System Organization"></a>1.2 Computer-System Organization</h2><p>A modern general-purpose computer system consists of one or more CPUs and some device controllers (each with a local buffer) connected through a common bus, providing access to components and shared memory.</p>
+<img src="https://note.noughtq.top/sys/os/images/C1/2.png" style="max-width: 60%; display: block; margin: 0 auto;">
+
+<p>The following will introduce three key aspects that keep a system running: interrupts, storage structures, and I&#x2F;O structures.</p>
+<h3 id="Interrupts"><a href="#Interrupts" class="headerlink" title="Interrupts"></a>Interrupts</h3><p>Hardware can trigger an interrupt at any time by sending a signal to the CPU (usually via the system bus). When the CPU is interrupted, it stops what it is currently doing and immediately switches to executing the task at a fixed location (generally the starting address of an interrupt service routine). The timeline of an interrupt is as follows:</p>
+<img src="https://note.noughtq.top/sys/os/images/C1/3.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>The interrupt service routine will call a specific interrupt handler. Since interrupts need to be handled quickly, a table of pointers (addresses) to interrupt routines is used. This table is generally stored in the low-address area of memory and is called the interrupt vector. Its address is then indexed by a unique number, which is provided with the interrupt request, to provide the address of the interrupt service routine for the interrupting device.</p>
+<p>The interrupt architecture must also save the information at the time of the interrupt, and these pieces of information need to be restored after the interrupt routine is completed. If the interrupt routine needs to change the processor state, it must save the current state (by saving the values in the registers and the program counter), and later restore that state before returning. In addition, while handling another interrupt, incoming interrupts are disabled to prevent lost interrupts.</p>
+<blockquote>
+<p>A trap is an interrupt generated by software, arising from an error during program execution or from an explicit user request (called a system call).</p>
+</blockquote>
+<p>The basic interrupt mechanism works as follows:</p>
+<ul>
+<li><p>When the CPU detects that the controller has signaled on the interrupt-request line, it reads the interrupt number and jumps to the interrupt-handler routine by using that interrupt number as an index into the interrupt vector.</p>
+</li>
+<li><p>During execution, the interrupt-handler routine saves any state that will be changed, determines the cause of the interrupt, performs the necessary processing, restores the state, and executes the return_from_interrupt instruction, causing the CPU to return to the execution state from before the interrupt.</p>
+</li>
+</ul>
+<img src="https://note.noughtq.top/sys/os/images/C1/4.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>In addition to the simple mechanisms described above, modern operating systems have more sophisticated interrupt-handling features provided by the CPU and interrupt-controller hardware:</p>
+<ul>
+<li><p>Deferring interrupt handling during critical processing</p>
+</li>
+<li><p>Multiple levels of interrupts, so that the operating system can distinguish between high-priority and low-priority interrupts (interrupt priority levels) and respond with an appropriate degree of urgency</p>
+</li>
+</ul>
+<p>In summary, modern operating systems widely use interrupt mechanisms to handle asynchronous events. Device controllers and hardware faults trigger interrupts. Because interrupts are used extremely frequently in time-sensitive processing, efficient interrupt handling is crucial to ensuring system performance.</p>
+<hr>
+<p><strong>Interrupt Types</strong></p>
+<ul>
+<li><p>External Interrupts</p>
+<ul>
+<li><p>Maskable interrupt: An interrupt requested to the processor via the INTR line, mainly from external devices such as hard drives, printers, network cards, etc. This type of interrupt does not affect system operation and can be handled at any time, or even not handled at all.</p>
+</li>
+<li><p>Non-maskable interrupt: An interrupt requested to the CPU via the NMI line. Sources: power failure, hardware circuit faults, etc. “Non-maskable” means it cannot be masked.</p>
+</li>
+</ul>
+</li>
+<li><p>Internal Interrupts</p>
+<ul>
+<li><p>Trap: An intentional, pre-arranged exceptional event. The CPU will invoke a specific program to handle it accordingly, and after handling is complete, return to the instruction following the trap instruction.</p>
+</li>
+<li><p>Fault: A type of unexpected event detected by the CPU when the instruction causing the fault has been executed but has not yet finished executing. When an error occurs, it is handed over to the fault handler for processing. If the error can be corrected, the CPU re-executes the instruction; if it cannot be handled, an error is reported. A common fault is a page fault.</p>
+</li>
+<li><p>Abort: A fatal error occurs during instruction execution that cannot be repaired, and the program cannot continue running and can only be terminated. This is usually caused by some hardware error.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="Storage-Structure"><a href="#Storage-Structure" class="headerlink" title="Storage Structure"></a>Storage Structure</h3><img src="https://note.noughtq.top/sys/os/images/C1/5.png" style="max-width: 60%; display: block; margin: 0 auto;">
+
+<h3 id="I-O-Structure"><a href="#I-O-Structure" class="headerlink" title="I&#x2F;O Structure"></a>I&#x2F;O Structure</h3><p>Two I&#x2F;O methods:</p>
+<ul>
+<li><p>After I&#x2F;O is started, control is returned to the user program only when the I&#x2F;O is complete (synchronous). The wait instruction keeps the CPU idle until the next interrupt. Wait loop (memory access contention). At most one outstanding I&#x2F;O request at a time, and simultaneous I&#x2F;O processing is not allowed.</p>
+</li>
+<li><p>After I&#x2F;O is started, control can be returned to the user program without waiting for the I&#x2F;O to complete (asynchronous). System call: issues a request to the operating system, allowing the user to wait for I&#x2F;O completion. The device-status table contains an entry for each I&#x2F;O device, indicating its type, address, and status.</p>
+</li>
+</ul>
+<p>The interrupt-driven I&#x2F;O loop introduced earlier is OK for small-scale data, but for large-volume data movement such as NVS (nonvolatile storage) I&#x2F;O, it incurs significant overhead. The solution is to use DMA (direct memory access). After setting up the buffer, pointer, and counter, the device controller can transfer an entire block of data directly between the device and main memory without CPU intervention. Only one interrupt is generated per data block (previously, one interrupt was generated per byte) to notify the device driver that the operation is complete. While the device controller performs these operations, the CPU can do other work.</p>
+<h2 id="1-3-Computer-System-Architecture"><a href="#1-3-Computer-System-Architecture" class="headerlink" title="1.3 Computer-System Architecture"></a>1.3 Computer-System Architecture</h2><p>Depending on the number and organization of processors, several common types of computer system architectures are introduced below.</p>
+<blockquote>
+<p>CPU: Hardware that executes instructions<br>Processor: A physical chip containing a single or multiple CPUs<br>Core: The basic computational unit of a CPU<br>Multicore: Containing multiple computational cores on the same CPU</p>
+</blockquote>
+<h3 id="Single-Processor-Systems"><a href="#Single-Processor-Systems" class="headerlink" title="Single-Processor Systems"></a>Single-Processor Systems</h3><p>Previously, most computer systems had only one processor, which also contained only a single-core CPU, and the core within it was the component that executed instructions and was used for local data storage. In addition to being able to execute general-purpose instruction sets, the core could also execute some special-purpose instruction sets, which came from device-specific processors (with limited instruction sets that do not run processes), including those of disks, keyboards, and graphics controllers, among others.</p>
+<h3 id="Multiprocessor-Systems"><a href="#Multiprocessor-Systems" class="headerlink" title="Multiprocessor Systems"></a>Multiprocessor Systems</h3><p>Multiprocessor systems now dominate the entire field of computing. Traditionally, such systems contain two or more processors, each containing a single-core CPU. These processors share the computer bus and sometimes also share a clock, memory, and peripheral devices. The main advantage of this kind of system is increased throughput, that is, completing more work in a shorter time. It is worth noting that N processors do not bring an N-fold speedup, because there is additional overhead when multiple processors jointly complete a task.</p>
+<p>The most common multiprocessor system is SMP (symmetric multiprocessing), in which each peer CPU processor executes all tasks, including operating system functions and user processes. The figure below shows an SMP architecture containing 2 processors:</p>
+<img src="https://note.noughtq.top/sys/os/images/C1/7.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The advantage of this architecture is that multiple processes can run simultaneously, meaning that if there are N CPUs, N processes can run without a significant drop in performance. The drawback is that because the CPUs are separate, there can be a situation where one CPU is idle while another CPU is running at full load, resulting in inefficiency. The solution is to reduce the workload disparity among processors by sharing processes and resources (such as memory).</p>
+<p>The current definition of multiprocessor systems also includes multicore systems, which are more efficient than multi-chip designs using only single cores, because communication speed within a chip is higher than between chips, and they are more energy-efficient. The figure below shows a dual-core design on a single chip, and it can be seen that a two-level cache structure is used here.</p>
+<img src="https://note.noughtq.top/sys/os/images/C1/8.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Adding too many CPUs to a multiprocessor system will make contention on the system bus become a bottleneck, and performance will instead decline. An improvement is to equip each CPU (or group of CPUs) with its own local memory, accessed through a fast small local bus. These CPUs are connected through a shared system interconnect, so that all CPUs can share one physical address space. This approach is called NUMA (non-uniform memory access), and its architecture diagram is as follows:</p>
+<img src="https://note.noughtq.top/sys/os/images/C1/9.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>The advantage of this architecture is that when a CPU accesses local memory, it is not only fast but also does not cause contention in the system interconnect. Therefore, as the number of processors increases, NUMA systems can become more efficient (which is why NUMA is becoming increasingly popular in servers and HPC). But its drawback is that CPUs must access remote memory through the system interconnect, and the extra time consumed harms performance. Fortunately, the operating system can minimize this loss caused by NUMA through careful CPU scheduling and memory management.</p>
+<h3 id="Distributed-System-Clustered-System"><a href="#Distributed-System-Clustered-System" class="headerlink" title="Distributed System &amp; Clustered System"></a>Distributed System &amp; Clustered System</h3><p><a href="https://www.geeksforgeeks.org/computer-networks/distributed-system-vs-clustered-system/" target="_blank">Reference</a></p>
+<h2 id="1-4-Operating-System-Operations"><a href="#1-4-Operating-System-Operations" class="headerlink" title="1.4 Operating-System Operations"></a>1.4 Operating-System Operations</h2><h3 id="Multiprogramming-and-Multitasking"><a href="#Multiprogramming-and-Multitasking" class="headerlink" title="Multiprogramming and Multitasking"></a>Multiprogramming and Multitasking</h3><p>An important characteristic of an operating system is the ability to run multiple programs; in addition, users usually want to run multiple programs at once—the technique for achieving this goal is multiprogramming. It improves CPU utilization by organizing jobs (including code and data) so that the CPU and I&#x2F;O devices are always working. In a multiprogramming system, a program that is executing is called a process.</p>
+<ul>
+<li><p>The operating system keeps several processes in memory at the same time, selects one of them, and begins executing it.</p>
+</li>
+<li><p>A process may need to wait for certain tasks to complete, such as I&#x2F;O operations, at which point the CPU can switch to another process and execute it.</p>
+</li>
+<li><p>Eventually, the first process finishes waiting and regains CPU resources.</p>
+</li>
+</ul>
+<p>Multitasking is a logical extension of multiprogramming. In a multitasking system, the CPU executes multiple processes by switching among different processes. This switching occurs extremely frequently, thereby providing users with fast response times and enabling interactive computing. To ensure a reasonable response time (&lt; 1s), a common approach is to use virtual memory, allowing users to run programs larger than actual physical memory. In addition, it abstracts main memory into a large, uniform array of storage, separating the logical memory seen by users from physical memory, so there is no need to worry about actual memory capacity limitations.</p>
+<p>Having multiple processes in memory at the same time requires some form of memory management. In addition, if multiple processes are ready to run at the same time, the system must choose the next process to run. Making this decision is CPU scheduling. Finally, running multiple processes at the same time requires limiting their ability to affect one another at all stages of the operating system, including process scheduling, disk storage, and memory management.</p>
+<h3 id="Dual-Mode-and-Multimode-Operation"><a href="#Dual-Mode-and-Multimode-Operation" class="headerlink" title="Dual-Mode and Multimode Operation"></a>Dual-Mode and Multimode Operation</h3><p>To ensure the correct execution of the system, we must be able to distinguish between the execution of operating system code and user-defined code. The approach taken by most computer systems is to provide hardware support that allows different execution modes to be distinguished. Generally, at least two types of modes are distinguished (dual mode):</p>
+<p>User mode: The CPU can only execute part of the instruction set and cannot directly access hardware resources; it is mainly used to run user programs.</p>
+<p>Kernel mode (also called supervisor&#x2F;system&#x2F;privileged mode): The CPU can execute all instructions (including privileged instructions) and can access all hardware resources; it is mainly used to run the operating system kernel.</p>
+<p>The specific operations involved are: memory management, process management, device driver management, and system calls, etc.</p>
+<p>Generally, a mode bit in hardware is used to identify the current state (0 for kernel, 1 for user). When a user application requests a service from the operating system, the system must switch from user mode to kernel mode to complete the request. This process is shown in the figure below:</p>
+<img src="https://note.noughtq.top/sys/os/images/C1/11.png" style="max-width: 80%; display: block; margin: 0 auto;">
+
+<p>There can be multiple modes, for example:</p>
+<ul>
+<li><p>Intel processors have four independent protection rings, where ring 0 is kernel mode and ring 3 is user mode (although rings 1 and 2 can theoretically be used for various operating system services, they are rarely used in practice).</p>
+</li>
+<li><p>The ARMv8 architecture has seven operating modes.</p>
+</li>
+<li><p>CPUs that support virtualization technology usually have a dedicated mode to indicate the virtual machine manager’s (VMM) control state over the system; in this mode, the VMM has higher privileges than user processes but lower than kernel privileges; it needs this privilege level to create and manage virtual machines and to perform related operations by modifying the CPU state.</p>
+</li>
+</ul>
+<p>A system call provides a way for a user program to request that the operating system perform tasks that are exclusive to the operating system on behalf of the user program. The specific manner in which a system call is invoked varies widely, depending on the features provided by the underlying processor. Typically, a system call is implemented in the form of a trap at a specific location in the interrupt vector. Although some systems have a dedicated syscall instruction to initiate a system call, this trap can also be executed through a general-purpose trap instruction.</p>
+<p>When a system call is executed, it is usually treated by the hardware as a software interrupt. Control is transferred through the interrupt vector to the operating system’s service routine, and the mode bit is set to kernel mode. The system call service routine is part of the operating system. The kernel examines the interrupt instruction to determine which system call has occurred (an argument indicates the type of service requested by the user program). Other information needed for the request may be passed through registers, the stack, or memory. The kernel verifies that the arguments are correct and valid, executes the request, and returns control to the instruction following the system call.</p>
+<h3 id="Timer"><a href="#Timer" class="headerlink" title="Timer"></a>Timer</h3><p>Before transferring control to the user, the operating system ensures that the timer is set to interrupt. If the timer interrupts, control will automatically transfer back to the operating system, at which point the system may treat this interrupt as a fatal error or choose to extend the program’s running time. Obviously, instructions that modify the timer’s contents fall within the category of privileged instructions.</p>
+<h2 id="1-5-Resource-Management"><a href="#1-5-Resource-Management" class="headerlink" title="1.5 Resource Management"></a>1.5 Resource Management</h2><blockquote>
+<p>These contents will be introduced in detail in subsequent chapters and are omitted here.</p>
+</blockquote>
+<h2 id="1-6-Three-Conceptual-Pieces"><a href="#1-6-Three-Conceptual-Pieces" class="headerlink" title="1.6 Three Conceptual Pieces"></a>1.6 Three Conceptual Pieces</h2><h3 id="Virtualization"><a href="#Virtualization" class="headerlink" title="Virtualization"></a>Virtualization</h3><p>The OS takes physical resources and transforms them into a more general, more powerful, and easier-to-use virtual form (which is why the OS is sometimes called a virtual machine).</p>
+<p>The OS provides interfaces (APIs) that can be invoked by users, and generally exposes hundreds of system calls to applications. Since the OS uses these calls to support program execution, memory and device access, and other related operations, we sometimes also say that it provides a standard library to applications.</p>
+<p>Categories:</p>
+<ul>
+<li><p>CPU virtualization: The system has a great many virtual CPUs, thus transforming a single CPU (or a small group of CPUs) into what appears to be an unlimited number of CPUs, so that many programs appear to run at the same time.</p>
+</li>
+<li><p>Memory virtualization: It is as if each running program has its own private memory (a virtual address space), rather than sharing the same physical memory with other running programs (in reality, the OS maps it in some way onto the machine’s physical memory).</p>
+</li>
+</ul>
+<h3 id="Concurrency"><a href="#Concurrency" class="headerlink" title="Concurrency"></a>Concurrency</h3><p>This encompasses a series of problems that arise and must be solved when handling multiple things at the same time (that is, concurrently) within the same program.</p>
+<p>Modern multi-threaded programs also have concurrency problems.</p>
+<p>For now, we can regard a thread as a function running in the same memory space as other functions, with multiple threads active at the same time.</p>
+<h3 id="Persistence"><a href="#Persistence" class="headerlink" title="Persistence"></a>Persistence</h3><p>File system</p>
+<h2 id="1-7-Design-Goals"><a href="#1-7-Design-Goals" class="headerlink" title="1.7 Design Goals"></a>1.7 Design Goals</h2><ul>
+<li><p>Abstraction makes the system convenient and easy to use.</p>
+</li>
+<li><p>Performance</p>
+</li>
+<li><p>Minimize overhead - two types of overhead: extra time (more instructions) or space (disk &#x2F; memory)</p>
+</li>
+<li><p>Protection: isolation &amp; security</p>
+</li>
+<li><p>Reliability</p>
+</li>
+<li><p>Power-efficiency</p>
+</li>
+<li><p>Mobility</p>
+</li>
+</ul>
+<h1 id="Chapter-2-Operating-System-Structures"><a href="#Chapter-2-Operating-System-Structures" class="headerlink" title="Chapter 2 Operating-System Structures"></a>Chapter 2 Operating-System Structures</h1><h2 id="2-1-Operating-System-Services"><a href="#2-1-Operating-System-Services" class="headerlink" title="2.1 Operating-System Services"></a>2.1 Operating-System Services</h2><p>Although the specific services provided by different OSs vary, there are still some common services. The following briefly introduces them from the two perspectives of users and systems:</p>
+<img src="https://note.noughtq.top/sys/os/images/C2/1.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<h3 id="User"><a href="#User" class="headerlink" title="User"></a>User</h3><p>User interface:</p>
+<ul>
+<li><p>Graphic user interface (GUI)</p>
+</li>
+<li><p>Touch-screen interface</p>
+</li>
+<li><p>Command-line interface (CLI)</p>
+</li>
+</ul>
+<p>Program execution: load into memory, run, (normal &#x2F; abnormal) exit</p>
+<p>I&#x2F;O operations: for files or I&#x2F;O devices</p>
+<p>File-system manipulation:</p>
+<ul>
+<li><p>Read and write files &#x2F; directories</p>
+</li>
+<li><p>Create &#x2F; delete &#x2F; search &#x2F; list files</p>
+</li>
+<li><p>Permission management</p>
+</li>
+</ul>
+<p>Communication:</p>
+<ul>
+<li><p>Includes communication between different processes within the same computer, as well as communication between processes on different computer systems connected through a network</p>
+</li>
+<li><p>Implementation techniques: shared memory, message passing</p>
+</li>
+</ul>
+<p>Error detection:</p>
+<ul>
+<li><p>Errors may occur at the hardware level (CPU, memory, I&#x2F;O devices) or at the software level</p>
+</li>
+<li><p>Solutions: correct or terminate, and sometimes return an error code</p>
+</li>
+</ul>
+<h3 id="System"><a href="#System" class="headerlink" title="System"></a>System</h3><p>Resource allocation:</p>
+<ul>
+<li>Some resources may have special allocation code, while other resources may have more general request code and release code</li>
+</ul>
+<p>Logging: usage statistics, tracking the use of computing resources, facilitating administrator configuration</p>
+<p>Protection and security:</p>
+<ul>
+<li><p>Protection: when multiple processes run concurrently, processes must not interfere with one another, which requires ensuring that all access to system resources is controlled</p>
+</li>
+<li><p>Security: requires users to verify their identity</p>
+</li>
+</ul>
+<h2 id="2-2-User-and-Operating-System-Interface"><a href="#2-2-User-and-Operating-System-Interface" class="headerlink" title="2.2 User and Operating-System Interface"></a>2.2 User and Operating-System Interface</h2><h3 id="Command-Interpreters"><a href="#Command-Interpreters" class="headerlink" title="Command Interpreters"></a>Command Interpreters</h3><p>Compared with the term “command interpreters,” we may be more familiar with “shell”; in fact, the two are roughly equivalent. In Unix and Linux systems, the commonly used ones today are bash (Bourne-Again shell), zsh (Z shell), and fish (C shell and Korn shell are already rarely used). Readers can use the echo $e command to check the shell currently in use. For convenience in the following explanation, the term “command interpreter” will still be used below rather than “shell.”</p>
+<p>As the name suggests, the main function of a command interpreter is to obtain and execute the next command specified by the user. These commands are roughly implemented in the following ways:</p>
+<ul>
+<li><p>The command interpreter itself contains the code to execute commands.</p>
+</li>
+<li><p>Most commands are implemented through system programs (this is exactly what UNIX does).</p>
+</li>
+</ul>
+<h3 id="Graphic-User-Interface"><a href="#Graphic-User-Interface" class="headerlink" title="Graphic User Interface"></a>Graphic User Interface</h3><p>For the vast majority of users today, the first way they come into contact with a computer may be the GUI. Today’s mainstream operating systems all have their own GUIs. Even Linux, commonly used by programmers, has open-source desktop environments such as KDE and GNOME. So there is not much to say here.</p>
+<h3 id="Touch-Screen-Interface"><a href="#Touch-Screen-Interface" class="headerlink" title="Touch-Screen Interface"></a>Touch-Screen Interface</h3><p>Today’s smartphones and tablets basically all use touch-screen interfaces.</p>
+<h2 id="2-3-System-Calls"><a href="#2-3-System-Calls" class="headerlink" title="2.3 System Calls"></a>2.3 System Calls</h2><p>System calls provide an interface for accessing OS services. These calls are usually functions written in C and C++, but some low-level tasks may have to be written using assembly language instructions.</p>
+<h3 id="Application-Programming-Interface⚓︎"><a href="#Application-Programming-Interface⚓︎" class="headerlink" title="Application Programming Interface⚓︎"></a>Application Programming Interface⚓︎</h3><p>In fact, even a very simple program will make extensive use of the OS; moreover, the OS usually has to execute thousands of system calls per second. Most developers do not see these low-level details because they use an application programming interface (API) when designing programs, such as the Windows API, POSIX API, Java API, and so on. Programmers access the API through code libraries provided by the OS. For example, in UNIX and Linux systems written in C, such a library is libc. Behind the scenes, the functions that make up the API usually call the actual system calls on behalf of the application programmer.</p>
+<p>The reason programmers prefer programming based on APIs rather than calling system calls directly is that using APIs has the following benefits:</p>
+<p>Program portability: programs written using the same set of APIs can be compiled and run on systems with the same API. Compared with APIs, system calls are more complex and harder to work with.</p>
+<p>Runtime environment (RTE): a complete set of software used to execute programs, including compilers, interpreters, libraries, loaders, and so on. The RTE provides a system-call interface as the link to the system calls provided by the OS. Usually, each system call is associated with a number, and the system-call interface maintains a table based on these numbers. It then invokes the expected system call in the operating system kernel and returns the status of the system call. Most details of the operating system interface are hidden by the API and managed by the RTE.</p>
+<p>Common methods for passing parameters to the OS: pass parameters using registers; parameters are stored in memory in the form of a block or table, and the address of the block is passed to a register as a parameter; parameters are pushed onto a stack or popped from a stack.</p>
+<h3 id="Types-of-System-Calls"><a href="#Types-of-System-Calls" class="headerlink" title="Types of System Calls"></a>Types of System Calls</h3><p>Process control: create &#x2F; terminate processes, load &#x2F; execute, get &#x2F; set process attributes, wait for events &#x2F; send event signals, allocate &#x2F; free memory</p>
+<p>File management: create &#x2F; delete files, open &#x2F; close, read &#x2F; write &#x2F; reposition, get &#x2F; set file attributes</p>
+<p>Device management: request &#x2F; release devices, read &#x2F; write &#x2F; reposition, get &#x2F; set device attributes, logically attach or detach devices</p>
+<p>Information maintenance: get &#x2F; set time &#x2F; date, get &#x2F; set system data, get process &#x2F; file &#x2F; device attributes, set process &#x2F; file &#x2F; device attributes</p>
+<p>Communication: create &#x2F; delete communication connections, send &#x2F; receive messages, transfer status information, connect &#x2F; disconnect remote devices</p>
+<p>Protection: get &#x2F; set permissions</p>
+<h2 id="2-4-System-Services"><a href="#2-4-System-Services" class="headerlink" title="2.4 System Services"></a>2.4 System Services</h2><p>System services (also known as system utilities) provide a convenient environment for program development and execution. Some of them are simply user interfaces to system calls, while others are considerably more complex. They can be divided into the following categories:</p>
+<ul>
+<li><p>File management: creation&#x2F;deletion&#x2F;copying&#x2F;renaming&#x2F;printing&#x2F;listing, as well as general access to and manipulation of files&#x2F;directories</p>
+</li>
+<li><p>Status information: date, time, available memory or disk space, number of users, or more complex detailed performance, logging, and debugging information. Some systems also support a registry for storing and retrieving configuration information</p>
+</li>
+<li><p>File modification: text editors, special commands for searching file contents or transforming text</p>
+</li>
+<li><p>Programming-language support: compilers, assemblers, debuggers, interpreters, etc.</p>
+</li>
+<li><p>Program loading and execution: once a program has been assembled or compiled, it must be loaded into memory in order to execute. The system may provide absolute loaders, relocatable loaders, linkage editors, and overlay loaders. Debugging systems for high-level languages or machine language are also needed</p>
+</li>
+<li><p>Communication: provides mechanisms for creating virtual connections among processes, users, and computer systems</p>
+</li>
+<li><p>Background services: continuously running system program processes are called services, subsystems, or daemons. A typical system has dozens of daemons. An OS that runs important activities in the user context rather than the kernel context may use daemons to perform these activities.</p>
+</li>
+</ul>
+<h2 id="2-5-Linkers-and-Loaders"><a href="#2-5-Linkers-and-Loaders" class="headerlink" title="2.5 Linkers and Loaders"></a>2.5 Linkers and Loaders</h2><p>Normally, a program is stored on disk as a binary file (such as a.out or prog.exe). For the program to run on the CPU, it must first be loaded into memory and placed within the context of a process. The following figure summarizes this flow well:</p>
+<img src="https://note.noughtq.top/sys/os/images/C2/6.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>Source files are compiled into object files that can be loaded into any physical memory location; this format is called relocatable object files.</p>
+</li>
+<li><p>Next, the linker combines these relocatable object files into a single binary executable file. During the linking phase, other object files or libraries may also be included (specified using the flag -lm).</p>
+</li>
+<li><p>The loader is used to load the binary executable file into memory so that it can run on a CPU core.</p>
+</li>
+<li><p>The activity associated with linking and loading is relocation, which assigns final addresses to parts of the program and adjusts the code and data in the program to match these addresses.</p>
+</li>
+</ul>
+<p>To run the loader, simply enter the name of the executable file on the command line. When the program name is typed on the command line (for example, .&#x2F;main),</p>
+<ul>
+<li><p>The shell first creates a new process to run the program via the fork() system call.</p>
+</li>
+<li><p>Then, the shell uses the exec() system call to invoke the loader and passes the name of the executable file to exec().</p>
+</li>
+<li><p>The loader then uses the address space of the newly created process to load the specified program into memory.</p>
+</li>
+</ul>
+<p>So far, we have assumed that all libraries are linked into the executable file and loaded into memory. In reality, most systems allow programs to dynamically link to libraries at load time; for example, Windows supports dynamically linked libraries (DLLs). The advantage of this approach is that it avoids linking and loading libraries that may ultimately go unused into the executable file (thereby reducing extra overhead), because libraries are conditionally linked and loaded only when needed while the program is running. This is possible because the linker inserts relocation information, allowing libraries to be dynamically linked and loaded when the program is loaded.</p>
+<p>Object files and executable files usually have a standard format, including compiled machine code, as well as a symbol table containing metadata about functions and variables referenced in the program. For UNIX and Linux systems, this standard format is called ELF (executable and linkable format). There are separate ELF formats for relocatable and executable files. One piece of information in the ELF file of an executable file is the program’s entry point, which contains the address of the first instruction to be executed when the program runs.</p>
+<h2 id="2-6-Why-Applications-Are-Operating-System-Specific"><a href="#2-6-Why-Applications-Are-Operating-System-Specific" class="headerlink" title="2.6 Why Applications Are Operating-System Specific"></a>2.6 Why Applications Are Operating-System Specific</h2><p>There are several ways to make an application run on multiple OSes:</p>
+<ul>
+<li><p>Write the application in an interpreted language, and the interpreter is available on multiple OSes (such as Python, Ruby).</p>
+</li>
+<li><p>Write the application in a language that includes a virtual machine for running the application (such as Java).</p>
+</li>
+<li><p>Application developers can use standard languages or APIs, and the compiler generates binary code specific to the machine and operating system (such as the POSIX API).</p>
+</li>
+</ul>
+<p>In theory, these methods provide solutions for running applications on different OSes, but implementation is fraught with difficulties, for the following reasons:</p>
+<p>At the application level: applications that call certain APIs cannot run on OSes that do not provide those APIs.</p>
+<p>At the system level: each OS has a binary format specified for applications, and this format determines the layout of headers, instructions, and variables. These components need to be in specific locations within a specific structure in the executable file so that the operating system can open the file and load the application for correct execution. Both UNIX and Linux have adopted the ELF format as the standard for binary executable files, but this format is not tied to any particular computer architecture, so it cannot guarantee that an executable file will run on different hardware platforms. CPUs have different instruction sets, and only applications containing the appropriate instructions can execute correctly. The system calls provided by different OSes differ in many ways, including the specific operands used and the order of operands, how applications invoke system calls, and so on.</p>
+<p>Similar to how APIs specify concrete functions at the application level, at the architecture level there is something called an ABI (application binary interface), which defines how different binary code components interact with a specific OS on a specific architecture.</p>
+<ul>
+<li><p>The ABI specifies low-level details, including address width, the method for passing parameters to system calls, the organization of the runtime stack, the binary format of system libraries, and the sizes of data types, among others.</p>
+</li>
+<li><p>So if a binary executable file is compiled and linked according to a specific ABI, it should be able to run on different systems that support that ABI.</p>
+</li>
+<li><p>However, because a specific ABI is defined for a specific operating system running on a given architecture, the ABI has limited usefulness in providing cross-platform compatibility.</p>
+</li>
+</ul>
+<h2 id="2-7-Operating-System-Design-and-Implementation"><a href="#2-7-Operating-System-Design-and-Implementation" class="headerlink" title="2.7 Operating-System Design and Implementation"></a>2.7 Operating-System Design and Implementation</h2>
   </div>
 
   
