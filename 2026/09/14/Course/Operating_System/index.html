@@ -22,7 +22,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Operating_System.jpeg">
 <meta property="article:published_time" content="2026-09-13T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-10-08T07:04:34.240Z">
+<meta property="article:modified_time" content="2026-10-12T17:37:17.878Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Operating_System.jpeg">
@@ -269,7 +269,7 @@
 </htc-callout>
 
 <h1 id="Chapter-1-Introduction"><a href="#Chapter-1-Introduction" class="headerlink" title="Chapter 1 Introduction"></a>Chapter 1 Introduction</h1><h2 id="1-1-What-Operating-System-Do"><a href="#1-1-What-Operating-System-Do" class="headerlink" title="1.1 What Operating System Do"></a>1.1 What Operating System Do</h2><p>A complete computer system consists of the following parts:</p>
-<img src="https://note.noughtq.top/sys/os/images/C1/1.png" style="max-width: 50%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C1/1.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <p>Operating system: controls the hardware and coordinates its use among different application programs and among different users.</p>
 <p>We adopt a relatively widely accepted definition: an operating system is a program that is always running on the computer, and this program is usually called the kernel. In addition, there are two other types of programs:</p>
@@ -285,11 +285,11 @@
 <p>When a computer is powered on or restarted, the bootstrap program is loaded. The bootstrap program is stored in ROM or EPROM, which are usually called firmware. It initializes various aspects of the system, loads the operating system kernel, and starts executing it.</p>
 </blockquote>
 <h2 id="1-2-Computer-System-Organization"><a href="#1-2-Computer-System-Organization" class="headerlink" title="1.2 Computer-System Organization"></a>1.2 Computer-System Organization</h2><p>A modern general-purpose computer system consists of one or more CPUs and some device controllers (each with a local buffer) connected through a common bus, providing access to components and shared memory.</p>
-<img src="https://note.noughtq.top/sys/os/images/C1/2.png" style="max-width: 60%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C1/2.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <p>The following will introduce three key aspects that keep a system running: interrupts, storage structures, and I&#x2F;O structures.</p>
 <h3 id="Interrupts"><a href="#Interrupts" class="headerlink" title="Interrupts"></a>Interrupts</h3><p>Hardware can trigger an interrupt at any time by sending a signal to the CPU (usually via the system bus). When the CPU is interrupted, it stops what it is currently doing and immediately switches to executing the task at a fixed location (generally the starting address of an interrupt service routine). The timeline of an interrupt is as follows:</p>
-<img src="https://note.noughtq.top/sys/os/images/C1/3.png" style="max-width: 70%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C1/3.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <p>The interrupt service routine will call a specific interrupt handler. Since interrupts need to be handled quickly, a table of pointers (addresses) to interrupt routines is used. This table is generally stored in the low-address area of memory and is called the interrupt vector. Its address is then indexed by a unique number, which is provided with the interrupt request, to provide the address of the interrupt service routine for the interrupting device.</p>
 <p>The interrupt architecture must also save the information at the time of the interrupt, and these pieces of information need to be restored after the interrupt routine is completed. If the interrupt routine needs to change the processor state, it must save the current state (by saving the values in the registers and the program counter), and later restore that state before returning. In addition, while handling another interrupt, incoming interrupts are disabled to prevent lost interrupts.</p>
@@ -303,7 +303,7 @@
 <li><p>During execution, the interrupt-handler routine saves any state that will be changed, determines the cause of the interrupt, performs the necessary processing, restores the state, and executes the return_from_interrupt instruction, causing the CPU to return to the execution state from before the interrupt.</p>
 </li>
 </ul>
-<img src="https://note.noughtq.top/sys/os/images/C1/4.png" style="max-width: 50%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C1/4.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <p>In addition to the simple mechanisms described above, modern operating systems have more sophisticated interrupt-handling features provided by the CPU and interrupt-controller hardware:</p>
 <ul>
@@ -335,7 +335,7 @@
 </ul>
 </li>
 </ul>
-<h3 id="Storage-Structure"><a href="#Storage-Structure" class="headerlink" title="Storage Structure"></a>Storage Structure</h3><img src="https://note.noughtq.top/sys/os/images/C1/5.png" style="max-width: 60%; display: block; margin: 0 auto;">
+<h3 id="Storage-Structure"><a href="#Storage-Structure" class="headerlink" title="Storage Structure"></a>Storage Structure</h3><img src="https://note.noughtq.top/sys/os/images/C1/5.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <h3 id="I-O-Structure"><a href="#I-O-Structure" class="headerlink" title="I&#x2F;O Structure"></a>I&#x2F;O Structure</h3><p>Two I&#x2F;O methods:</p>
 <ul>
@@ -359,7 +359,7 @@
 <img src="https://note.noughtq.top/sys/os/images/C1/8.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <p>Adding too many CPUs to a multiprocessor system will make contention on the system bus become a bottleneck, and performance will instead decline. An improvement is to equip each CPU (or group of CPUs) with its own local memory, accessed through a fast small local bus. These CPUs are connected through a shared system interconnect, so that all CPUs can share one physical address space. This approach is called NUMA (non-uniform memory access), and its architecture diagram is as follows:</p>
-<img src="https://note.noughtq.top/sys/os/images/C1/9.png" style="max-width: 50%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C1/9.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <p>The advantage of this architecture is that when a CPU accesses local memory, it is not only fast but also does not cause contention in the system interconnect. Therefore, as the number of processors increases, NUMA systems can become more efficient (which is why NUMA is becoming increasingly popular in servers and HPC). But its drawback is that CPUs must access remote memory through the system interconnect, and the extra time consumed harms performance. Fortunately, the operating system can minimize this loss caused by NUMA through careful CPU scheduling and memory management.</p>
 <h3 id="Distributed-System-Clustered-System"><a href="#Distributed-System-Clustered-System" class="headerlink" title="Distributed System &amp; Clustered System"></a>Distributed System &amp; Clustered System</h3><p><a href="https://www.geeksforgeeks.org/computer-networks/distributed-system-vs-clustered-system/" target="_blank">Reference</a></p>
@@ -379,7 +379,7 @@
 <p>Kernel mode (also called supervisor&#x2F;system&#x2F;privileged mode): The CPU can execute all instructions (including privileged instructions) and can access all hardware resources; it is mainly used to run the operating system kernel.</p>
 <p>The specific operations involved are: memory management, process management, device driver management, and system calls, etc.</p>
 <p>Generally, a mode bit in hardware is used to identify the current state (0 for kernel, 1 for user). When a user application requests a service from the operating system, the system must switch from user mode to kernel mode to complete the request. This process is shown in the figure below:</p>
-<img src="https://note.noughtq.top/sys/os/images/C1/11.png" style="max-width: 80%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C1/11.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <p>There can be multiple modes, for example:</p>
 <ul>
@@ -426,7 +426,7 @@
 </li>
 </ul>
 <h1 id="Chapter-2-Operating-System-Structures"><a href="#Chapter-2-Operating-System-Structures" class="headerlink" title="Chapter 2 Operating-System Structures"></a>Chapter 2 Operating-System Structures</h1><h2 id="2-1-Operating-System-Services"><a href="#2-1-Operating-System-Services" class="headerlink" title="2.1 Operating-System Services"></a>2.1 Operating-System Services</h2><p>Although the specific services provided by different OSs vary, there are still some common services. The following briefly introduces them from the two perspectives of users and systems:</p>
-<img src="https://note.noughtq.top/sys/os/images/C2/1.png" style="max-width: 70%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C2/1.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <h3 id="User"><a href="#User" class="headerlink" title="User"></a>User</h3><p>User interface:</p>
 <ul>
@@ -514,7 +514,7 @@
 </li>
 </ul>
 <h2 id="2-5-Linkers-and-Loaders"><a href="#2-5-Linkers-and-Loaders" class="headerlink" title="2.5 Linkers and Loaders"></a>2.5 Linkers and Loaders</h2><p>Normally, a program is stored on disk as a binary file (such as a.out or prog.exe). For the program to run on the CPU, it must first be loaded into memory and placed within the context of a process. The following figure summarizes this flow well:</p>
-<img src="https://note.noughtq.top/sys/os/images/C2/6.png" style="max-width: 70%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C2/6.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <ul>
 <li><p>Source files are compiled into object files that can be loaded into any physical memory location; this format is called relocatable object files.</p>
@@ -582,7 +582,7 @@
 <h2 id="2-8-Operating-System-Structure"><a href="#2-8-Operating-System-Structure" class="headerlink" title="2.8 Operating-System Structure"></a>2.8 Operating-System Structure</h2><p>A large and complex system must be carefully designed if it is to function properly and be easy to modify. The usual approach is to break the task down into small components or modules rather than building a single monolithic system. Each module should be a clearly defined part of the system, with clearly defined interfaces and functions. The following will explore how the common components of an OS are connected to one another and form a kernel.</p>
 <h3 id="Monolithic-Structure"><a href="#Monolithic-Structure" class="headerlink" title="Monolithic Structure"></a>Monolithic Structure</h3><p>The simplest structure for organizing an operating system is no structure at all—that is, placing all kernel functionality into a single, static binary file that runs in a single address space. This approach is known as monolithic structure and is a common technique for designing operating systems.</p>
 <p>A typical example is this: the earliest UNIX operating system consisted of two parts: the kernel and system programs. The kernel was further divided into a series of interfaces and device drivers, which were continuously added and expanded over the years as UNIX evolved. We can regard the traditional UNIX operating system as layered to some extent, as shown in the figure below.</p>
-<img src="https://note.noughtq.top/sys/os/images/C2/7.png" style="max-width: 70%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C2/7.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <p>Everything below the system call interface and above the physical hardware is the kernel. The kernel provides the file system, CPU scheduling, memory management, and other operating-system functions through system calls. Taken in sum, that is an enormous amount of functionality to be combined into just one single address space.</p>
 <p>The Linux operating system is based on UNIX and has a similar structure, as shown in the figure on the right. Applications typically use the glibc standard C library to communicate with the system call interface in order to access the kernel. The Linux kernel is monolithic because it runs entirely in a single address space in kernel mode. But as we will mention later, it also has a modular design that allows it to be modified while the kernel is running.</p>
@@ -599,7 +599,7 @@
 </li>
 </ul>
 <h3 id="Microkernels"><a href="#Microkernels" class="headerlink" title="Microkernels"></a>Microkernels</h3><p>The microkernel approach constructs the OS by removing all unnecessary components from the kernel and implementing them as user-level programs placed in separate address spaces. The result is a smaller kernel. There is currently little consensus on which services should remain in the kernel and which should be implemented in user space. However, it is certain that the microkernel provides only the most basic process and memory management functions, as well as communication mechanisms. The figure below shows a typical microkernel architecture:</p>
-<img src="https://note.noughtq.top/sys/os/images/C2/10.png" style="max-width: 70%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C2/10.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <p>The main function of a microkernel is to provide communication between client programs and various services that also run in user space. This communication is achieved through message passing. For example, if a client program wants to access a file, it must interact with the file server. Client programs and services never interact directly, but instead communicate indirectly by exchanging messages with the microkernel.</p>
 <p>The benefits of adopting the microkernel approach include:</p>
@@ -739,7 +739,7 @@
 </li>
 </ul>
 <p>The names of the above states can be arbitrary, and different OSs may use different names, but the above states are common to all OSs. It should be noted that a processor core can run only one process at any given time, so many processes will be in the ready or waiting state. The figure below shows the corresponding state diagram. Be sure to pay attention to what events cause the state changes:</p>
-<img src="https://note.noughtq.top/sys/os/images/C3/2.png" style="max-width: 70%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C3/2.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <h3 id="Process-Control-Block"><a href="#Process-Control-Block" class="headerlink" title="Process Control Block"></a>Process Control Block</h3><p>In an OS, each process is represented by something called a process control block (PCB), also known as a task control block. The PCB contains many pieces of information about a specific process, including:</p>
 <p>Process state: including but not limited to the states mentioned earlier</p>
@@ -766,10 +766,10 @@
 <h3 id="Scheduling-Queues"><a href="#Scheduling-Queues" class="headerlink" title="Scheduling Queues"></a>Scheduling Queues</h3><p>When processes enter the system, they are placed in the ready queue. These processes are all in the ready state, waiting to be executed by a CPU core. The queue is stored as a linked list: the head of the queue contains a pointer to the first PCB in the list, and each PCB contains a pointer to the next PCB.</p>
 <p>Suppose a process issues an I&#x2F;O request to a device such as a disk. Since the device runs much more slowly than the processor, the process will have to wait for the I&#x2F;O to become idle. Therefore, these processes waiting for a specific event to occur will be placed in a wait queue.</p>
 <p>The following two figures show the structures of the ready queue and the wait queue, respectively:</p>
-<img src="https://note.noughtq.top/sys/os/images/C3/6.png" style="max-width: 70%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C3/6.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <p>The common representation of process scheduling is a queueing diagram, and this diagram contains the two types of queues mentioned above (the ready queue and the waiting queue). In the diagram, circles represent hardware resources, while arrows represent the flow of processes in the system.</p>
-<img src="https://note.noughtq.top/sys/os/images/C3/7.png" style="max-width: 70%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C3/7.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <p>Initially, a new process is placed in the ready queue and then waits until it is selected (or dispatched) for execution. Once a process is assigned to a CPU core for execution, one of the following events will occur:</p>
 <ul>
@@ -791,15 +791,15 @@
 <li><p>Low-level &#x2F; short-term: select a process from the ready queue and allocate the CPU to it</p>
 </li>
 </ul>
-<img src="https://note.noughtq.top/sys/os/images/C3/20.png" style="max-width: 70%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C3/20.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <h3 id="Context-Switch"><a href="#Context-Switch" class="headerlink" title="Context Switch"></a>Context Switch</h3><p>As mentioned earlier, an interrupt causes the OS to switch the CPU core from executing the current task to running a kernel routine, and interrupts occur frequently. When an interrupt occurs, the system needs to save the context information of the process currently executing on the core (state save), so that the suspended process can later be restored and continue executing (state restore). The process’s PCB can represent context information, including CPU registers, process state, and so on.</p>
 <p>The above process is called a context switch, and its diagram is as follows:</p>
-<img src="https://note.noughtq.top/sys/os/images/C3/8.png" style="max-width: 60%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C3/8.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <p>上下文切换时间是一种开销，一般以毫秒为单位。切换的速度取决于内存速度、需要被拷贝的寄存器个数、特殊指令（比如是否有能一次性加载和保存所有寄存器的指令）的存在等。因此上下文切换高度依赖于硬件支持。</p>
 <h2 id="3-3-Operations-on-Processes"><a href="#3-3-Operations-on-Processes" class="headerlink" title="3.3 Operations on Processes"></a>3.3 Operations on Processes</h2><h3 id="Process-Creation"><a href="#Process-Creation" class="headerlink" title="Process Creation"></a>Process Creation</h3><p>During execution, a process may create multiple new processes. The process that creates these processes is the parent process, and the newly created processes are the children of that process. They can also create new processes, thus forming a tree. In addition, most operating systems use a unique process identifier (pid) (usually an integer) to identify a process, which can be used as an index to access various kernel process attributes. The figure below shows a typical Linux process tree.</p>
-<img src="https://note.noughtq.top/sys/os/images/C3/9.png" style="max-width: 70%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C3/9.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <ul>
 <li><p>The systemd process serves as the root process for all user processes and is the first process at system startup.</p>
@@ -833,7 +833,7 @@
 <p>For parent and child processes obtained from the same program, we cannot determine which one runs first and which one runs later, because the CPU scheduler adopts different scheduling strategies at different times and under different circumstances. However, if the parent process uses the wait() system call, it will definitely wait for the child process to terminate before continuing to run, so the order in which the two run is then determined.</p>
 <p>After the fork() system call, by using the exec() system call, a program different from the currently calling program can be run. Specifically, it loads code (and static data) from the specified executable file and overwrites the contents of the current code segment and static data. In addition, it reinitializes the program’s heap, stack, and other memory spaces.</p>
 <p>Use a diagram to show the process of creating a process using the fork() system call:</p>
-<img src="https://note.noughtq.top/sys/os/images/C3/12.png" style="max-width: 80%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C3/12.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <h3 id="Process-Termination"><a href="#Process-Termination" class="headerlink" title="Process Termination"></a>Process Termination</h3><p>When a process completes execution of its last statement, the process terminates, and by using the exit() system call, it lets the OS delete it. At this point, the process may return a status value (an integer) to a waiting parent process (through the wait() system call, whose parameter is the child process’s exit status and whose return value is the pid of the terminated child process), and all resources used by the process are released and reclaimed by the OS.</p>
 <p>Process termination can also occur in other situations. For example, a process can terminate another process through a system call. Usually, such system calls can only be invoked by the parent process of the process to be terminated; otherwise, users or misbehaving applications could arbitrarily kill other users’ processes. It should be noted that if a parent process wants to terminate its child process, it needs to know the child process’s id. Therefore, when a process creates a new process, the id of the newly created process is passed to the parent process.</p>
@@ -872,7 +872,7 @@
 </li>
 </ul>
 <p>The figure below shows these two types of communication models:</p>
-<img src="https://note.noughtq.top/sys/os/images/C3/13.png" style="max-width: 70%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C3/13.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <p>Both types of models are very common in operating systems, and many systems implement both of them at the same time.</p>
 <p>Message passing is useful when exchanging small amounts of data because there is no need to avoid conflicts; moreover, in distributed systems, message passing is easier to implement than shared memory.</p>
@@ -1078,13 +1078,13 @@
 </ul>
 </li>
 </ul>
-<img src="https://note.noughtq.top/sys/os/images/C3/15.png" style="max-width: 70%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C3/15.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <h1 id="Chapter-4-Threads-and-Concurrency"><a href="#Chapter-4-Threads-and-Concurrency" class="headerlink" title="Chapter 4 Threads and Concurrency"></a>Chapter 4 Threads and Concurrency</h1><h2 id="4-1-Overview"><a href="#4-1-Overview" class="headerlink" title="4.1 Overview"></a>4.1 Overview</h2><p>A thread is the basic unit of task scheduling and execution, including a thread ID, a program counter (PC), a register set, and stack space. A thread shares the code segment, data segment, and other OS resources of the process with other threads belonging to the same process. We can think of a thread as a lightweight process. The following figure shows the difference between a traditional single-threaded process and a multithreaded process:</p>
-<img src="https://note.noughtq.top/sys/os/images/C4/1.png" style="max-width: 70%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C4/1.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <p>The difference in address space is as follows:</p>
-<img src="https://note.noughtq.top/sys/os/images/C4/14.png" style="max-width: 70%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/sys/os/images/C4/14.png" style="max-width: 40%; display: block; margin: 0 auto;">
 
 <p>A thread looks very much like a separate process, except for one difference: threads can share an address space and therefore can access the same data.</p>
 <p>Like a process, a thread also has something called a thread control block (TCB), which is used to store the state, register values, stack information, and so on of each thread in the process. When a context switch occurs, the OS uses the TCB to save and restore context information.</p>
@@ -1136,18 +1136,18 @@
 
   <div class="container post-prev-next" data-pagefind-ignore>
     
-    <a href="/2026/09/14/Course/Theory_of_Computation/" class="next">
+    <a href="/2026/09/14/Course/Computer_Network/" class="next">
       <div class="text">
         <p class="label">Next</p>
-        <h3 class="title">Theory of Computation</h3>
+        <h3 class="title">Computer Network</h3>
       </div>
     </a>
     
     
-    <a href="/2026/03/02/Course/Database_System/" class="prev">
+    <a href="/2026/09/14/Course/Theory_of_Computation/" class="prev">
       <div class="text">
         <p class="label">Previous</p>
-        <h3 class="title">Database System</h3>
+        <h3 class="title">Theory of Computation</h3>
       </div>
     </a>
     
