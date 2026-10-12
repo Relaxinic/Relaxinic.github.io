@@ -22,7 +22,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Operating_System.jpeg">
 <meta property="article:published_time" content="2026-09-13T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-09-20T12:51:36.328Z">
+<meta property="article:modified_time" content="2026-10-08T07:04:34.240Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Operating_System.jpeg">
@@ -558,7 +558,569 @@
 <li><p>However, because a specific ABI is defined for a specific operating system running on a given architecture, the ABI has limited usefulness in providing cross-platform compatibility.</p>
 </li>
 </ul>
-<h2 id="2-7-Operating-System-Design-and-Implementation"><a href="#2-7-Operating-System-Design-and-Implementation" class="headerlink" title="2.7 Operating-System Design and Implementation"></a>2.7 Operating-System Design and Implementation</h2>
+<h2 id="2-7-Operating-System-Design-and-Implementation"><a href="#2-7-Operating-System-Design-and-Implementation" class="headerlink" title="2.7 Operating-System Design and Implementation"></a>2.7 Operating-System Design and Implementation</h2><h3 id="Mechanisms-and-Policies"><a href="#Mechanisms-and-Policies" class="headerlink" title="Mechanisms and Policies"></a>Mechanisms and Policies</h3><p>Mechanism: A low-level method or protocol for implementing a functional fragment; it is a low-level kind of “machinery,” such as a context switch.</p>
+<blockquote>
+<p>It provides an answer to the “how” question about a certain system.</p>
+</blockquote>
+<p>Policy: An algorithm for making decisions within an OS; it is a high-level kind of “intelligence,” such as a scheduling policy.</p>
+<blockquote>
+<p>It provides an answer to the “which” question.</p>
+</blockquote>
+<p>By separating mechanism from policy, we can easily change the policy without having to reconsider the mechanism. Therefore, this is a form of modularity and also conforms to a general principle of software design.</p>
+<h3 id="Implementation"><a href="#Implementation" class="headerlink" title="Implementation"></a>Implementation</h3><p>Early OSes were written in assembly language, while most OSes today are written in high-level languages such as C or C++, with only a few systems written in assembly. The advantages of using high-level languages to implement an OS include:</p>
+<ul>
+<li><p>The same benefits gained in application development: code can be written faster, is more compact in structure, and is easier to understand and debug.</p>
+</li>
+<li><p>In addition, advances in compiler technology have improved the quality of code generated for the entire OS (through simple recompilation).</p>
+</li>
+<li><p>Finally, if an OS is written in a high-level language, porting it to other hardware platforms is much easier, which is especially important for an OS that needs to run on many different hardware systems.</p>
+</li>
+</ul>
+<p>The only potential disadvantages of implementing an OS in a high-level language may be reduced execution speed and increased storage requirements. But from today’s perspective, this is not really a problem.</p>
+<p>Although assembly language experts can write efficient small routines, for large programs, modern compilers can perform complex analysis and apply sophisticated optimization techniques, thereby generating excellent code.</p>
+<p>In addition, modern processors have deep pipelines and multiple functional units, and their ability to handle the details of complex dependencies far exceeds what the human brain can manage.</p>
+<h2 id="2-8-Operating-System-Structure"><a href="#2-8-Operating-System-Structure" class="headerlink" title="2.8 Operating-System Structure"></a>2.8 Operating-System Structure</h2><p>A large and complex system must be carefully designed if it is to function properly and be easy to modify. The usual approach is to break the task down into small components or modules rather than building a single monolithic system. Each module should be a clearly defined part of the system, with clearly defined interfaces and functions. The following will explore how the common components of an OS are connected to one another and form a kernel.</p>
+<h3 id="Monolithic-Structure"><a href="#Monolithic-Structure" class="headerlink" title="Monolithic Structure"></a>Monolithic Structure</h3><p>The simplest structure for organizing an operating system is no structure at all—that is, placing all kernel functionality into a single, static binary file that runs in a single address space. This approach is known as monolithic structure and is a common technique for designing operating systems.</p>
+<p>A typical example is this: the earliest UNIX operating system consisted of two parts: the kernel and system programs. The kernel was further divided into a series of interfaces and device drivers, which were continuously added and expanded over the years as UNIX evolved. We can regard the traditional UNIX operating system as layered to some extent, as shown in the figure below.</p>
+<img src="https://note.noughtq.top/sys/os/images/C2/7.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>Everything below the system call interface and above the physical hardware is the kernel. The kernel provides the file system, CPU scheduling, memory management, and other operating-system functions through system calls. Taken in sum, that is an enormous amount of functionality to be combined into just one single address space.</p>
+<p>The Linux operating system is based on UNIX and has a similar structure, as shown in the figure on the right. Applications typically use the glibc standard C library to communicate with the system call interface in order to access the kernel. The Linux kernel is monolithic because it runs entirely in a single address space in kernel mode. But as we will mention later, it also has a modular design that allows it to be modified while the kernel is running.</p>
+<p>Although monolithic kernels are simple enough, they are difficult to implement and extend. However, this structure has a significant performance advantage: the overhead of the system call interface is very small, and communication within the kernel is fast. Therefore, despite its various disadvantages, quite a few operating systems still adopt this structure today.</p>
+<h3 id="Layered-Approach"><a href="#Layered-Approach" class="headerlink" title="Layered Approach"></a>Layered Approach</h3><p>Monolithic architecture is often referred to as a tightly coupled system, because a change in one part of the system may have widespread effects on other parts. Another option is to design a loosely coupled system. Such a system is divided into independent, small components with specific and limited functionality, all of which together form the kernel. The advantage of a modular approach is that modifications to one component affect only that component itself and do not波及 other parts, thereby giving system implementers greater freedom in creating and changing the internal working mechanisms of the system.</p>
+<p>There are many ways to achieve system modularity. One approach is the layered approach, which decomposes the OS into several layers (levels). The lowest layer (Layer 0) is the hardware, and the highest layer (Layer N) is the user interface.</p>
+<p>A layer of an OS is an implementation of an abstract object composed of data and the operations that can act on that data. A typical OS layer—for example, Layer M—contains data structures and a set of functions that can be called by higher layers. Correspondingly, Layer M can call operations of lower layers.</p>
+<p>The main advantage of the layered approach is that it makes construction and debugging simple: the first layer can be debugged without considering the rest of the system, because by definition it implements functionality using only the underlying hardware (assuming it is correct). Once the first layer has been debugged, the second layer can be debugged on the assumption that it operates correctly, and so on. If an error is found during the debugging of a particular layer, then the error must exist in that layer, because the layers below it have already been debugged. In this way, the design and implementation of the system are simplified, and each layer hides the existence of certain data structures, operations, and hardware from higher layers.</p>
+<p>Layered systems have been successfully used in computer networks (such as the TCP&#x2F;IP protocol) and Web applications. However, relatively few OSs adopt a purely layered approach, for reasons including:</p>
+<ul>
+<li><p>It is difficult to properly define the functionality of each layer.</p>
+</li>
+<li><p>User programs need to traverse multiple layers to obtain OS services, which introduces considerable overhead.</p>
+</li>
+</ul>
+<h3 id="Microkernels"><a href="#Microkernels" class="headerlink" title="Microkernels"></a>Microkernels</h3><p>The microkernel approach constructs the OS by removing all unnecessary components from the kernel and implementing them as user-level programs placed in separate address spaces. The result is a smaller kernel. There is currently little consensus on which services should remain in the kernel and which should be implemented in user space. However, it is certain that the microkernel provides only the most basic process and memory management functions, as well as communication mechanisms. The figure below shows a typical microkernel architecture:</p>
+<img src="https://note.noughtq.top/sys/os/images/C2/10.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>The main function of a microkernel is to provide communication between client programs and various services that also run in user space. This communication is achieved through message passing. For example, if a client program wants to access a file, it must interact with the file server. Client programs and services never interact directly, but instead communicate indirectly by exchanging messages with the microkernel.</p>
+<p>The benefits of adopting the microkernel approach include:</p>
+<ul>
+<li><p>It is easier to extend the OS: all new services are added to user space, so there is no need to modify the kernel. When the kernel does need to be modified, because the microkernel itself is small, the required changes are relatively few. The resulting OS is easier to port from one hardware design to another.</p>
+</li>
+<li><p>In addition, because most services run as user processes rather than kernel processes, the microkernel also provides greater security and reliability. Even if a service fails, the rest of the OS is not affected.</p>
+</li>
+</ul>
+<p>However, the performance of a microkernel may suffer because of the increased overhead of system functions. When two user-level services need to communicate, messages must be copied between those services, which are located in different address spaces. In addition, the OS may need to switch between processes to exchange information. Therefore, the overhead caused by message copying and process switching has always been the biggest obstacle hindering the development of microkernel-based OSs.</p>
+<h3 id="Modules"><a href="#Modules" class="headerlink" title="Modules"></a>Modules</h3><p>The best approach to current OS design is perhaps to use loadable kernel modules (LKMs). In this design, the kernel contains a set of core components and can link additional services through modules at boot time or at runtime. This design pattern is very common in modern UNIX implementations.</p>
+<p>The core idea of this design is to have the kernel provide basic services, while other functions are implemented dynamically while the kernel is running. Compared with adding new functionality directly to the kernel, which requires recompiling the kernel for every modification, dynamically linking services is preferable. For example, we can build CPU scheduling and memory management algorithms directly into the kernel, and then add support for different file systems through loadable modules.</p>
+<p>The overall architecture is similar to a layered system: each kernel part has a clear and protected interface; but it is more flexible than a layered system because any module can call other modules.</p>
+<p>This approach also has similarities with microkernel architecture: the main module contains only core functionality and the mechanisms for loading and communicating with other modules; but it is more efficient because modules do not need to communicate through message passing.</p>
+<p>Linux mainly uses LKMs to support device drivers and file systems. LKMs can be “inserted” into the kernel at system boot time or at runtime. If the Linux kernel lacks a required driver, it can be loaded dynamically. At the same time, LKMs can also be removed from the kernel at runtime. For Linux, LKMs achieve a dynamic, modular kernel design while maintaining the performance advantages of a monolithic system.</p>
+<h3 id="Hybrid-Systems"><a href="#Hybrid-Systems" class="headerlink" title="Hybrid Systems"></a>Hybrid Systems</h3><p>In practice, few OSs adopt a single, strictly defined structure—they often combine different structures, forming hybrid systems to address performance, security, and usability issues. For example:</p>
+<p>Linux is monolithic, because placing the OS within a single address space provides very efficient performance; but at the same time, it is also modular, so that new functionality can be dynamically added to the kernel.</p>
+<p>Windows is likewise largely monolithic in structure (also mainly for performance reasons), but it retains some behaviors typical of microkernel systems, including support for independent subsystems that run as user-mode processes. Windows systems also support dynamically loadable kernel modules.</p>
+<h2 id="2-9-Building-and-Booting-an-Operating-System"><a href="#2-9-Building-and-Booting-an-Operating-System" class="headerlink" title="2.9 Building and Booting an Operating System"></a>2.9 Building and Booting an Operating System</h2><h3 id="Operating-System-Generation"><a href="#Operating-System-Generation" class="headerlink" title="Operating-System Generation"></a>Operating-System Generation</h3><p>Steps to generate (or build) an OS from scratch:</p>
+<ol>
+<li><p>Write the operating system source code (or obtain previously written source code)</p>
+</li>
+<li><p>Configure the target system for the operating system to be run</p>
+</li>
+<li><p>Compile the operating system</p>
+</li>
+<li><p>Install the operating system</p>
+</li>
+<li><p>Boot the computer and its new operating system</p>
+</li>
+</ol>
+<h3 id="System-Boot"><a href="#System-Boot" class="headerlink" title="System Boot"></a>System Boot</h3><p>Most system startup processes proceed as follows:</p>
+<ol>
+<li><p>A piece of code called a bootstrap program or boot loader, used to locate the kernel</p>
+</li>
+<li><p>The kernel is loaded into memory and started</p>
+</li>
+<li><p>The kernel initializes the hardware</p>
+</li>
+<li><p>The root file system is mounted</p>
+</li>
+</ol>
+<blockquote>
+<p>The boot loader is not part of the operating system!</p>
+</blockquote>
+<p>Some computer systems use a multi-stage boot process:</p>
+<ol>
+<li><p>When the computer is first powered on, a small boot loader located in non-volatile firmware (called BIOS (Basic Input&#x2F;Output System)) runs</p>
+</li>
+<li><p>This initial boot loader is usually responsible only for loading a second boot loader, which is located at a fixed position on the hard disk, the so-called boot block</p>
+</li>
+<li><p>The program stored in the boot block may be complex enough to load the entire OS into memory and begin execution. But more commonly: it is simply code (because it must fit within a single disk block) that knows only the address and length of the remaining boot program on the disk</p>
+</li>
+</ol>
+<p>Many modern computer systems have replaced the BIOS-based boot process with UEFI (unified extensible firmware interface). Compared with BIOS, UEFI has several advantages, including better support for 64-bit systems and larger-capacity hard disks, but the greatest advantage is that it is a standalone and complete boot manager, and therefore faster than the multi-stage BIOS boot.</p>
+<p>Whether booting via BIOS or UEFI, the boot program can perform a variety of tasks.</p>
+<p>In addition to loading the file containing the kernel program into memory, it also runs diagnostics to detect the machine state, such as checking memory, the CPU, and identifying devices; if the diagnostics pass, the program continues with the subsequent boot steps</p>
+<p>The boot program can also initialize various aspects of the system, from CPU registers to device controllers and the contents of main memory</p>
+<p>Eventually it starts the operating system and mounts the root file system, and only then do we consider the system to be officially running</p>
+<p>To save space and shorten startup time, the Linux kernel image is a compressed file that is decompressed after being loaded into memory. During startup, the boot loader usually creates a temporary RAM file system called initramfs. This file system contains the necessary drivers and kernel modules that must be installed to support the actual root file system (which is not in main memory). Once the kernel starts and the required drivers are installed, the kernel switches the root file system from the temporary RAM location to the appropriate root file system location. Finally, Linux creates the systemd process (the initial process in the system), and then starts other services. Eventually the system will present a login prompt to the user.</p>
+<h2 id="2-10-Operating-System-Debugging"><a href="#2-10-Operating-System-Debugging" class="headerlink" title="2.10 Operating-System Debugging"></a>2.10 Operating-System Debugging</h2><p>Broadly speaking, debugging is the activity of finding and fixing errors in a system, including both hardware and software. Performance issues are also regarded as defects, so debugging can also include performance tuning, that is, improving performance by eliminating processing bottlenecks. This section will discuss the debugging process as well as kernel errors and performance issues, but hardware debugging is outside the scope of this article.</p>
+<h3 id="Failure-Analysis"><a href="#Failure-Analysis" class="headerlink" title="Failure Analysis"></a>Failure Analysis</h3><p>If a process fails, most operating systems write the error information to log files to alert a system administrator or user that a problem has occurred. The OS may also perform a core dump, capturing the memory contents of the process and storing them in a file for later analysis. A running program and core dumps can be explored by a debugger, allowing a programmer to examine a process’s code and memory in depth when a failure occurs.</p>
+<p>Debugging user-level process code is difficult enough, but OS kernel debugging is even more complex because the kernel is large, complex, controls hardware resources, and lacks user-level debugging tools. A failure in the kernel is called a crash. When a crash occurs, error information is saved to a log file, and the memory state is saved to a crash dump file.</p>
+<p>Because the nature of the tasks is very different, OS debugging and process debugging often use different tools and techniques. One common technique is to save the kernel’s memory state to a disk area specially reserved for this purpose that contains no file system. If the kernel detects an unrecoverable error, it writes the entire memory contents (or at least the portion of system memory occupied by the kernel) to that disk area. After the system reboots, a process runs to collect the data from that area and write it to a crash dump file located in some file system for analysis. Clearly, for the debugging of ordinary user-level processes, such a strategy is unnecessary.</p>
+<h3 id="Performance-Monitoring-and-Tuning"><a href="#Performance-Monitoring-and-Tuning" class="headerlink" title="Performance Monitoring and Tuning"></a>Performance Monitoring and Tuning</h3><p>To identify bottlenecks in performance tuning, we must be able to monitor system performance. Therefore, the OS must have methods for computing and displaying metrics of system behavior. Tools can be categorized as providing either per-process or system-wide observation capabilities. To achieve these observations, tools can employ one of two approaches—counters or tracing techniques, and these two approaches are discussed one by one next.</p>
+<h4 id="Counters"><a href="#Counters" class="headerlink" title="Counters"></a>Counters</h4><p>Tools in Linux that use counters:</p>
+<p>Process-level:</p>
+<ul>
+<li><p><code>ps</code>: reports information about a single or selected processes</p>
+</li>
+<li><p><code>top</code>: reports real-time statistics of current processes (the more modern tool <code>btop</code> is recommended)</p>
+</li>
+</ul>
+<p>System-level:</p>
+<ul>
+<li><p><code>vmstat</code>: reports memory usage statistics</p>
+</li>
+<li><p><code>netstat</code>: reports statistics of network interfaces</p>
+</li>
+<li><p><code>iostat</code>: reports disk I&#x2F;O usage</p>
+</li>
+</ul>
+<p>Most counter-based tools in Linux systems read statistics from the <code>/proc</code> filesystem. It is a “pseudo” filesystem that exists only in kernel memory and is mainly used to query various process-level and kernel statistics. This filesystem is organized in a directory hierarchy, with each process (assigned a unique integer value) appearing as a subdirectory under <code>/proc</code>. For example, the directory entry <code>/proc/2155</code> will contain the statistics of the process with ID 2155.</p>
+<h4 id="Tracing"><a href="#Tracing" class="headerlink" title="Tracing"></a>Tracing</h4><p>Tracing tools collect data on specific events, such as the various steps during the execution of a system call. The following are examples of Linux tools used to trace events:</p>
+<p>Process level:</p>
+<ul>
+<li><p><code>strace</code>: Traces the system calls invoked by a process</p>
+</li>
+<li><p><code>gdb</code>: Source-level debugger</p>
+</li>
+</ul>
+<p>System level:</p>
+<ul>
+<li><p><code>perf</code>: A collection of Linux performance tools</p>
+</li>
+<li><p><code>tcpdump</code>: Collects network packets</p>
+</li>
+</ul>
+<h1 id="Chapter-3-Processes"><a href="#Chapter-3-Processes" class="headerlink" title="Chapter 3 Processes"></a>Chapter 3 Processes</h1><h2 id="3-1-Concept"><a href="#3-1-Concept" class="headerlink" title="3.1 Concept"></a>3.1 Concept</h2><p>The OS executes various programs. In a batch system, these are called jobs; in a time-sharing system, they are called user programs or tasks. Most modern operating systems are time-sharing systems.</p>
+<blockquote>
+<p>Time sharing: By letting one entity use a resource briefly, then letting another entity use these resources briefly, and repeating this cycle, the same resources are shared among many users.</p>
+</blockquote>
+<blockquote>
+<p>Space sharing: Resources are allocated (in space) to those who wish to use them. For example, disk space is a space-shared resource—once a block is allocated to a file, it is usually not allocated to another file until the user deletes the original file.</p>
+</blockquote>
+<p>We can simply regard a process as a program in execution; but in reality, a process contains more information and serves as the basic unit of resource allocation.</p>
+<p>The current activity state of a process is represented by the value of the program counter and the contents of the processor registers.</p>
+<p>The memory layout of a process is divided into multiple sections, including:</p>
+<ul>
+<li><p>Text section: executable code</p>
+</li>
+<li><p>Data section: global variables</p>
+</li>
+<li><p>Heap section: memory dynamically allocated while the program is running</p>
+</li>
+<li><p>Stack section: temporary data storage during function calls (such as function parameters, return addresses, local variables, etc.)</p>
+</li>
+</ul>
+<p>It is worth noting that the sizes of the text section and data section are fixed, because their sizes cannot change while the program is running; whereas the sizes of the heap section and stack section can dynamically grow and shrink during program execution. Although the stack section and heap section expand toward each other, the OS ensures that the two do not overlap.</p>
+<p>To emphasize again: a program itself is not a process!</p>
+<p>A program is merely a passive entity (for example, a file stored on disk containing a list of instructions, that is, an executable file).</p>
+<p>In contrast, a process is an active entity, containing a program counter (which indicates the next instruction to be executed) and a set of computing resources.</p>
+<p>When an executable file is loaded into memory, the program becomes a process.</p>
+<p>Sometimes two or more processes may be associated with the same program, and we must regard them as separate execution sequences, because although the text section is the same, the other sections are all different.</p>
+<p>In addition, a process itself can be the execution environment for other code, such as the JVM.</p>
+<h3 id="Process-State"><a href="#Process-State" class="headerlink" title="Process State"></a>Process State</h3><p>A process may be in one of the following states:</p>
+<ul>
+<li><p>New: the process is being created.</p>
+</li>
+<li><p>Running: instructions are being executed.</p>
+</li>
+<li><p>Waiting: the process is waiting for some event to occur.</p>
+</li>
+<li><p>Ready: the process is waiting to be assigned to a processor for execution.</p>
+</li>
+<li><p>Terminated: the process has finished execution.</p>
+</li>
+</ul>
+<p>The names of the above states can be arbitrary, and different OSs may use different names, but the above states are common to all OSs. It should be noted that a processor core can run only one process at any given time, so many processes will be in the ready or waiting state. The figure below shows the corresponding state diagram. Be sure to pay attention to what events cause the state changes:</p>
+<img src="https://note.noughtq.top/sys/os/images/C3/2.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<h3 id="Process-Control-Block"><a href="#Process-Control-Block" class="headerlink" title="Process Control Block"></a>Process Control Block</h3><p>In an OS, each process is represented by something called a process control block (PCB), also known as a task control block. The PCB contains many pieces of information about a specific process, including:</p>
+<p>Process state: including but not limited to the states mentioned earlier</p>
+<p>Program counter: indicates the address of the next instruction to be executed for that process</p>
+<p>CPU registers:</p>
+<ul>
+<li><p>Vary in number and type depending on the CPU architecture</p>
+</li>
+<li><p>Include accumulators, index registers, stack pointers, general-purpose registers, and any status code information</p>
+</li>
+<li><p>When an interrupt occurs, the information in the CPU registers must be saved so that the process can continue execution afterward</p>
+</li>
+</ul>
+<p>CPU-scheduling information: includes process priority, pointers to scheduling queues, and any other scheduling parameters</p>
+<p>Memory-management information: includes the values of base and limit registers, page tables or segment tables, and other such items, depending on the memory system used by the OS</p>
+<p>Accounting information: includes CPU and real time used, account numbers, job or process numbers, etc.</p>
+<p>I&#x2F;O status information: the list of I&#x2F;O devices allocated to the process, the list of open files, etc.</p>
+<h3 id="Threads"><a href="#Threads" class="headerlink" title="Threads"></a>Threads</h3><p>The process model discussed above only considers the case of executing a single thread, but one thread means that a process can only execute one task at the same time. Therefore, most modern OSs have long extended the process concept to allow a process to have multiple threads of execution, thereby enabling it to execute multiple tasks at the same time. This feature is especially useful in multicore systems, because multiple threads can run in parallel.</p>
+<p>For an introduction to multithreading, please see the next chapter.</p>
+<h2 id="3-2-Process-Scheduling"><a href="#3-2-Process-Scheduling" class="headerlink" title="3.2 Process Scheduling"></a>3.2 Process Scheduling</h2><p>A process scheduler selects a process from a set of available processes and places it on a processor core for execution. However, a CPU can execute only one process at a time. If the number of processes exceeds the number of cores, the extra processes must wait until a core becomes idle before they can be rescheduled. The number of processes currently in memory is called the degree of multiprogramming.</p>
+<p>Generally speaking, most processes can be divided into:</p>
+<p>I&#x2F;O-bound process: spends more time on I&#x2F;O than on computation.</p>
+<p>CPU-bound process: generates I&#x2F;O requests less frequently and spends more time on computation.</p>
+<h3 id="Scheduling-Queues"><a href="#Scheduling-Queues" class="headerlink" title="Scheduling Queues"></a>Scheduling Queues</h3><p>When processes enter the system, they are placed in the ready queue. These processes are all in the ready state, waiting to be executed by a CPU core. The queue is stored as a linked list: the head of the queue contains a pointer to the first PCB in the list, and each PCB contains a pointer to the next PCB.</p>
+<p>Suppose a process issues an I&#x2F;O request to a device such as a disk. Since the device runs much more slowly than the processor, the process will have to wait for the I&#x2F;O to become idle. Therefore, these processes waiting for a specific event to occur will be placed in a wait queue.</p>
+<p>The following two figures show the structures of the ready queue and the wait queue, respectively:</p>
+<img src="https://note.noughtq.top/sys/os/images/C3/6.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>The common representation of process scheduling is a queueing diagram, and this diagram contains the two types of queues mentioned above (the ready queue and the waiting queue). In the diagram, circles represent hardware resources, while arrows represent the flow of processes in the system.</p>
+<img src="https://note.noughtq.top/sys/os/images/C3/7.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>Initially, a new process is placed in the ready queue and then waits until it is selected (or dispatched) for execution. Once a process is assigned to a CPU core for execution, one of the following events will occur:</p>
+<ul>
+<li><p>The process initiates an I&#x2F;O request and is then placed in the I&#x2F;O wait queue.</p>
+</li>
+<li><p>The process creates a new child process and is then placed in the wait queue until the child process terminates.</p>
+</li>
+<li><p>The process may be forcibly removed from the core due to an interrupt or the expiration of its time slice, and is placed back in the ready queue.</p>
+</li>
+</ul>
+<h3 id="CPU-Scheduling"><a href="#CPU-Scheduling" class="headerlink" title="CPU Scheduling"></a>CPU Scheduling</h3><p>A process migrates between the ready queue and various waiting queues during its lifetime. The role of the CPU scheduler is to make a selection among the processes in the ready queue and allocate a CPU core to one of them. It must frequently select a new process for the CPU. Therefore, although a CPU-bound process may take longer to occupy a CPU core, the scheduler will not allocate the core to one process for a long time. More likely, it will force the process to be removed from the CPU and schedule another process to run (that is, preempt it).</p>
+<p>Some OSs have an intermediate form of scheduling called swapping. Its general idea is to remove processes from memory (and from active competition for the CPU) to reduce the degree of multiprogramming. The processes can then be reintroduced into memory and can continue execution from where they left off. Swapping is used only in scenarios where memory is overcommitted and must be freed.</p>
+<p>Three-level scheduling:</p>
+<ul>
+<li><p>High-level &#x2F; long-term: from the disk buffer pool to memory</p>
+</li>
+<li><p>Medium-level &#x2F; middle-term: when memory is full, move some out of memory (swap-out), and when memory has space again, swap them back in (swap-in)</p>
+</li>
+<li><p>Low-level &#x2F; short-term: select a process from the ready queue and allocate the CPU to it</p>
+</li>
+</ul>
+<img src="https://note.noughtq.top/sys/os/images/C3/20.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<h3 id="Context-Switch"><a href="#Context-Switch" class="headerlink" title="Context Switch"></a>Context Switch</h3><p>As mentioned earlier, an interrupt causes the OS to switch the CPU core from executing the current task to running a kernel routine, and interrupts occur frequently. When an interrupt occurs, the system needs to save the context information of the process currently executing on the core (state save), so that the suspended process can later be restored and continue executing (state restore). The process’s PCB can represent context information, including CPU registers, process state, and so on.</p>
+<p>The above process is called a context switch, and its diagram is as follows:</p>
+<img src="https://note.noughtq.top/sys/os/images/C3/8.png" style="max-width: 60%; display: block; margin: 0 auto;">
+
+<p>上下文切换时间是一种开销，一般以毫秒为单位。切换的速度取决于内存速度、需要被拷贝的寄存器个数、特殊指令（比如是否有能一次性加载和保存所有寄存器的指令）的存在等。因此上下文切换高度依赖于硬件支持。</p>
+<h2 id="3-3-Operations-on-Processes"><a href="#3-3-Operations-on-Processes" class="headerlink" title="3.3 Operations on Processes"></a>3.3 Operations on Processes</h2><h3 id="Process-Creation"><a href="#Process-Creation" class="headerlink" title="Process Creation"></a>Process Creation</h3><p>During execution, a process may create multiple new processes. The process that creates these processes is the parent process, and the newly created processes are the children of that process. They can also create new processes, thus forming a tree. In addition, most operating systems use a unique process identifier (pid) (usually an integer) to identify a process, which can be used as an index to access various kernel process attributes. The figure below shows a typical Linux process tree.</p>
+<img src="https://note.noughtq.top/sys/os/images/C3/9.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>The systemd process serves as the root process for all user processes and is the first process at system startup.</p>
+</li>
+<li><p>Once the system starts, the systemd process creates other processes, such as ssh, logind, etc.</p>
+</li>
+<li><p>The logind process is responsible for managing clients that log in directly to the system. After a client logs in, bash is used, and correspondingly such a child process is created.</p>
+</li>
+<li><p>In the bash CLI interface, the user creates ps and vim processes.</p>
+</li>
+<li><p>The sshd process is responsible for managing clients that connect to the system via ssh.</p>
+</li>
+</ul>
+<p>Generally speaking, when a process creates a child process, the child process needs certain resources to complete its task. The child process may obtain these resources directly from the OS, or it may be restricted to using only a subset of the parent process’s resources. The parent process may need to allocate its resources among multiple child processes, or be able to share certain resources with some child processes. Limiting the child process’s resources to a certain range within the parent process’s resources can prevent any situation in which creating too many child processes causes the system to become overloaded.</p>
+<p>In addition to providing various physical and logical resources, the parent process may also pass initialization data (input) to the child process.</p>
+<p>When a process creates a new process, there are the following two execution possibilities:</p>
+<ul>
+<li><p>The parent process and the child process continue to execute concurrently.</p>
+</li>
+<li><p>The parent process waits until some child processes terminate.</p>
+</li>
+</ul>
+<p>A new process also has the following two address space possibilities:</p>
+<ul>
+<li><p>The child process is a copy of the parent process (both the program and data are the same as the parent process).</p>
+</li>
+<li><p>The child process corresponds to a newly loaded program.</p>
+</li>
+</ul>
+<p>In UNIX systems, a new process is created through the fork() system call. The new process contains a copy of the original process’s address space. This mechanism makes it easy for the parent process to communicate with its child process. These two processes (the parent process and the child process) continue executing at the instruction after fork(), but with one difference: for the child process, the return code of fork() is 0, while the child process’s pid is returned to the parent process.</p>
+<p>For parent and child processes obtained from the same program, we cannot determine which one runs first and which one runs later, because the CPU scheduler adopts different scheduling strategies at different times and under different circumstances. However, if the parent process uses the wait() system call, it will definitely wait for the child process to terminate before continuing to run, so the order in which the two run is then determined.</p>
+<p>After the fork() system call, by using the exec() system call, a program different from the currently calling program can be run. Specifically, it loads code (and static data) from the specified executable file and overwrites the contents of the current code segment and static data. In addition, it reinitializes the program’s heap, stack, and other memory spaces.</p>
+<p>Use a diagram to show the process of creating a process using the fork() system call:</p>
+<img src="https://note.noughtq.top/sys/os/images/C3/12.png" style="max-width: 80%; display: block; margin: 0 auto;">
+
+<h3 id="Process-Termination"><a href="#Process-Termination" class="headerlink" title="Process Termination"></a>Process Termination</h3><p>When a process completes execution of its last statement, the process terminates, and by using the exit() system call, it lets the OS delete it. At this point, the process may return a status value (an integer) to a waiting parent process (through the wait() system call, whose parameter is the child process’s exit status and whose return value is the pid of the terminated child process), and all resources used by the process are released and reclaimed by the OS.</p>
+<p>Process termination can also occur in other situations. For example, a process can terminate another process through a system call. Usually, such system calls can only be invoked by the parent process of the process to be terminated; otherwise, users or misbehaving applications could arbitrarily kill other users’ processes. It should be noted that if a parent process wants to terminate its child process, it needs to know the child process’s id. Therefore, when a process creates a new process, the id of the newly created process is passed to the parent process.</p>
+<p>The following summarizes some possible reasons why a parent process may terminate a child process (in which case abort() needs to be called):</p>
+<ul>
+<li><p>The child process uses more resources than the limit that should have been allocated to it (to determine whether this has occurred, the parent process must have a mechanism to check the child process’s status).</p>
+</li>
+<li><p>The task assigned to the child process no longer needs to be handled.</p>
+</li>
+<li><p>The parent process exits, and the OS does not allow the child process to continue executing after the parent process terminates. This phenomenon is called cascading termination.</p>
+</li>
+</ul>
+<p>When a process terminates, although its resources are immediately reclaimed by the OS, its entry in the process table must be retained until the parent process calls wait(), because that table records the process’s exit status. We call processes that have already terminated but whose parent process has not yet called wait() zombie processes. All processes go through this state when they end, but they usually exist as zombies only briefly. Once the parent process calls wait(), the zombie process’s identifier and its entry in the process table are released.</p>
+<p>If the parent process does not call wait() but instead terminates directly, this will cause its child processes to become orphans. The UNIX system’s solution is to designate the init process as the new parent process of these orphan processes. init periodically executes the wait() call, thereby being able to collect the exit status of any orphan process and release the orphan’s pid and its entry in the process table. In Linux, systemd plays the role of init.</p>
+<h2 id="3-4-Interprocess-Communication"><a href="#3-4-Interprocess-Communication" class="headerlink" title="3.4 Interprocess Communication"></a>3.4 Interprocess Communication</h2><p>In an OS, concurrently executing processes may be independent processes or cooperating processes.</p>
+<ul>
+<li><p>If a process does not share data with any other executing process in the system, then it is independent.</p>
+</li>
+<li><p>A process is cooperating if it can affect or be affected by other executing processes in the system. Any process that shares data with other processes falls into this category.</p>
+</li>
+</ul>
+<p>The reasons for providing an environment that allows processes to cooperate are:</p>
+<ul>
+<li><p>Information sharing: because some applications may be interested in the same piece of information, an environment that allows concurrent access to such information must be provided.</p>
+</li>
+<li><p>Computation speedup: if a particular task is to run faster, it must be broken into multiple subtasks, and these subtasks must be executed in parallel. Such speedup can be achieved only when the computer has multiple process cores.</p>
+</li>
+<li><p>Modularity: we may want to build the system in a modular way, for example, by dividing system functions into separate processes or threads.</p>
+</li>
+</ul>
+<p>Cooperating processes require an interprocess communication (IPC) mechanism so that they can exchange data, that is, send and receive data to and from each other. There are two basic interprocess communication models:</p>
+<ul>
+<li><p>Shared memory: establish a region of memory shared by cooperating processes, and the processes can then exchange information by reading and writing data to that shared region.</p>
+</li>
+<li><p>Message passing: cooperating processes communicate by exchanging messages.</p>
+</li>
+</ul>
+<p>The figure below shows these two types of communication models:</p>
+<img src="https://note.noughtq.top/sys/os/images/C3/13.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>Both types of models are very common in operating systems, and many systems implement both of them at the same time.</p>
+<p>Message passing is useful when exchanging small amounts of data because there is no need to avoid conflicts; moreover, in distributed systems, message passing is easier to implement than shared memory.</p>
+<p>Shared memory may be faster than message passing because message passing systems are usually implemented using system calls and therefore require more time-consuming kernel intervention tasks. In a shared memory system, however, system calls are only needed to establish the shared memory region; once shared memory is established, all accesses are treated as regular memory accesses and do not require the kernel’s help.</p>
+<h3 id="Shared-Memory"><a href="#Shared-Memory" class="headerlink" title="Shared Memory"></a>Shared Memory</h3><p>IPC using shared memory requires communicating processes to establish a shared memory region, which is usually located within the address space of the process that creates the shared memory segment, while other processes wishing to use this shared memory segment for communication must attach it to their own address spaces.</p>
+<p>The OS usually prevents one process from accessing another process’s memory; shared memory requires processes to remove this restriction, after which they can exchange information by reading and writing data in the shared region.</p>
+<p>The processes themselves decide the format and location of the data, and must also ensure that simultaneous write operations to the same location are prohibited (not under the OS’s control).</p>
+<p>To further explain the concept of cooperating processes, the following introduces the common paradigm of the producer-consumer problem.</p>
+<p>The producer process is responsible for generating information, while the consumer process consumes this information.</p>
+<p>Application of shared memory in the producer-consumer problem</p>
+<ul>
+<li><p>To allow the producer and consumer processes to run concurrently, we must have a buffer of items that the producer can fill and the consumer can empty, located in the shared memory region of the producer and consumer processes.</p>
+</li>
+<li><p>While the consumer is consuming one item, the producer can simultaneously produce another item.</p>
+</li>
+<li><p>Synchronization must be implemented between the producer and consumer to ensure that the consumer does not try to consume an item that has not yet been produced.</p>
+</li>
+<li><p>Two types of buffers:</p>
+<ul>
+<li><p>Unbounded buffer: places no practical limit on the size of the buffer; the consumer may need to wait for new items, but the producer can always produce new items.</p>
+</li>
+<li><p>Bounded buffer: assumes a fixed buffer size; in this case, if the buffer is empty, the consumer must wait; if the buffer is full, the producer must wait.</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>The following variables are located in the memory region shared by the producer and consumer processes:</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> BUFFER_SIZE 10</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> &#123;</span><br><span class="line">    ...</span><br><span class="line">&#125; item;</span><br><span class="line"></span><br><span class="line">item buffer[BUFFER_SIZE];</span><br><span class="line"><span class="type">int</span> in = <span class="number">0</span>;</span><br><span class="line"><span class="type">int</span> out = <span class="number">0</span>;</span><br></pre></td></tr></table></figure>
+
+<p>It can be seen that the shared buffer is implemented as a circular array with two logical pointers, in and out. The variable in points to the next free position in the buffer; out points to the first occupied position in the buffer. When in &#x3D;&#x3D; out, the buffer is empty; when <code>((in + 1) % BUFFER_SIZE) == out</code>, the buffer is full.</p>
+<p>The following two pieces of code show the producer process and the consumer process, respectively:</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// PRODUCER</span></span><br><span class="line">item next_produced;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    <span class="comment">/* produce an item in next produced */</span></span><br><span class="line">    <span class="keyword">while</span> (((in + <span class="number">1</span>) % BUFFER_SIZE) == out)</span><br><span class="line">        ; <span class="comment">/* do nothing */</span></span><br><span class="line">    buffer[in] = next_produced;</span><br><span class="line">    in = (in + <span class="number">1</span>) % BUFFER_SIZE;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// CONSUMER</span></span><br><span class="line">item next_consumed;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    <span class="keyword">while</span> (in == out)</span><br><span class="line">        ; <span class="comment">/* do nothing */</span></span><br><span class="line">    next_consumed = buffer[out];</span><br><span class="line">    out = (out + <span class="number">1</span>) % BUFFER_SIZE;</span><br><span class="line">    <span class="comment">/* consume the item in next consumed */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Message-Passing"><a href="#Message-Passing" class="headerlink" title="Message Passing"></a>Message Passing</h3><p>Message passing provides a mechanism that allows processes to communicate and synchronize their operations without sharing the same address space. This mechanism is particularly useful in distributed environments, where communicating processes may reside on different computers connected through a network.</p>
+<p>Message passing must provide at least the following two operations: send(message), receive(message).</p>
+<p>The size of messages sent by a process can be either fixed or variable. If only fixed-size messages can be sent, the system-level implementation will be relatively simple and straightforward, but this restriction increases the difficulty of programming. Conversely, variable-size messages require a more complex system-level implementation, but programming therefore becomes simpler.</p>
+<p>If processes P and Q need to communicate, they must send and receive messages to and from each other: a communication link must exist between them, and this link can be implemented in many ways. What we focus on here is not the physical implementation of the link, but its logical implementation. The following are several ways to logically implement the link and the send() &#x2F; receive() operations:</p>
+<ul>
+<li><p>Direct &#x2F; indirect communication</p>
+</li>
+<li><p>Synchronous &#x2F; asynchronous communication</p>
+</li>
+<li><p>Automatic &#x2F; explicit buffering</p>
+</li>
+</ul>
+<h4 id="Naming"><a href="#Naming" class="headerlink" title="Naming"></a>Naming</h4><p>Processes that want to communicate must have a way to refer to each other, and they can use direct or indirect communication.</p>
+<p>Direct communication: Every process that wants to communicate must explicitly specify the recipient or sender of the communication.</p>
+<ul>
+<li><p>In this case, the send() and receive() primitives are defined as:</p>
+<ul>
+<li><p>send(P, message): Send message to P.</p>
+</li>
+<li><p>receive(Q, message): Receive a message from Q.</p>
+</li>
+</ul>
+</li>
+<li><p>The communication link has the following properties:</p>
+<ul>
+<li><p>A connection is automatically established between every pair of processes that want to communicate, and the processes only need to know each other’s identity to communicate.</p>
+</li>
+<li><p>A link is associated with exactly two processes.</p>
+</li>
+<li><p>There is also exactly one link between each pair of processes.</p>
+</li>
+</ul>
+</li>
+<li><p>The above scheme exhibits symmetry in addressing; that is, both the sending process and the receiving process must specify each other in order to communicate.</p>
+</li>
+<li><p>There is also a variant that uses asymmetric addressing: only the sender specifies the receiver, while the receiver does not need to specify the sender.</p>
+<ul>
+<li>In this mode, the send() and receive() primitives are defined as follows: send(P, message): Send message to P; receive(id, message): Receive a message from any process, and id is set to the name of the process communicating with it.</li>
+</ul>
+</li>
+<li><p>The disadvantage of the above two schemes is that the resulting procedure definitions have only limited modularity. Changing the identifier of one procedure may require checking all other procedure definitions, and all references to the old identifier must be found so that they can be changed to the new identifier. In general, any hard-coding technique like this (that is, a method in which identifiers must be explicitly declared) is less preferable than the indirect referencing technique introduced next.</p>
+</li>
+</ul>
+<p>Indirect communication: Messages are sent and received through mailboxes or ports.</p>
+<ul>
+<li><p>From an abstract perspective, a mailbox can be viewed as an object: processes can deposit messages into it and also remove messages from it.</p>
+</li>
+<li><p>Each mailbox has a unique identifier; for example, POSIX message queues use integer values to identify mailboxes.</p>
+</li>
+<li><p>A process can communicate with other processes through multiple different mailboxes, but two processes can communicate only when they share the same mailbox.</p>
+</li>
+<li><p>The definitions of the send() and receive() primitives are as follows:</p>
+<ul>
+<li><p>send(A, message): Send message to mailbox A.</p>
+</li>
+<li><p>receive(A, message): Receive message from mailbox A.</p>
+</li>
+</ul>
+</li>
+<li><p>A communication link has the following properties:</p>
+<ul>
+<li><p>A link is established between a pair of processes only when both processes have a shared mailbox.</p>
+</li>
+<li><p>A link can be associated with more than two processes.</p>
+</li>
+<li><p>There may be multiple different links between each pair of communicating processes, and each link corresponds to one mailbox.</p>
+</li>
+</ul>
+</li>
+<li><p>Now suppose that processes P1, P2, and P3 all share mailbox A. Process P1 sends a message to A, while at the same time both P2 and P3 execute receive() operations on A. Which process will receive the message sent by P1? This depends on which of the following methods is chosen:</p>
+<ul>
+<li><p>A link is allowed to be associated with at most two processes.</p>
+</li>
+<li><p>At most one process is allowed to perform a receive operation at a time.</p>
+</li>
+<li><p>The system may arbitrarily choose which process receives the message (one of P2 or P3, but not both at the same time). The system can define an algorithm to decide which process receives the message (for example, round robin, that is, letting processes take turns receiving messages).</p>
+</li>
+</ul>
+</li>
+<li><p>A mailbox can belong to a process or can be owned by the OS.</p>
+<ul>
+<li><p>If a mailbox is owned by a process (that is, the mailbox is part of the process’s address space). It is necessary to distinguish the owner (which can only receive messages through this mailbox) from users (which can only send messages to this mailbox). Since each mailbox has a unique owner, there is no confusion about which process should receive messages sent to this mailbox. When the process that owns the mailbox terminates, the mailbox also disappears, and afterward any process attempting to send a message to this nonexistent mailbox must be notified: the mailbox no longer exists.</p>
+</li>
+<li><p>A mailbox owned by the OS has its own existence, that is, it is independent and is not attached to any particular process. The OS must provide a mechanism allowing processes to perform the following operations: create a new mailbox (the process that creates the new mailbox is by default the owner of that mailbox), send and receive messages through the mailbox, and delete the mailbox. Initially, the mailbox owner is the only process that can receive messages through this mailbox, but ownership and receive permissions can be passed to other processes through appropriate system calls, although this makes it possible for each mailbox to have multiple receivers.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="Synchronization"><a href="#Synchronization" class="headerlink" title="Synchronization"></a>Synchronization</h4><p>Interprocess communication is implemented by calling the send() and receive() primitives, and each primitive can be implemented with different design schemes: message passing can be blocking or nonblocking, also known as synchronous and asynchronous.</p>
+<p>Blocking send: the sending process is blocked until the message is received by the receiving process or mailbox.</p>
+<p>Nonblocking send: the sending process continues operating after sending the message.</p>
+<p>Blocking receive: the receiver is blocked until a message is available.</p>
+<p>Nonblocking receive: the receiver retrieves either a valid message or a null value.</p>
+<p>There can be many different combinations of send() and receive(). When both are blocking, a rendezvous between the sender and receiver is achieved. Moreover, the solution to the producer-consumer problem becomes simple and direct: the producer only needs to call the blocking send() and wait for the message to be delivered to the receiver or mailbox; similarly, the consumer also blocks when calling receive() until a message is available. The relevant code for these two types of processes is shown below:</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// PRODUCER</span></span><br><span class="line">message next_produced;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    <span class="comment">/* produce an item in next produced */</span></span><br><span class="line">    <span class="built_in">send</span>(next_produced);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// CONSUMER</span></span><br><span class="line">message next_consumed;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    <span class="built_in">receive</span>(next_consumed);</span><br><span class="line">    <span class="comment">/* consume the item in next consumed */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="Buffering"><a href="#Buffering" class="headerlink" title="Buffering"></a>Buffering</h4><p>Whether communication is direct or indirect, messages exchanged by communicating processes reside in a temporary queue. In general, such queues can be implemented in the following ways:</p>
+<ul>
+<li><p>Zero capacity: The maximum length of the queue is zero, so no messages can be waiting on the link. In this case, the sender must block until the receiver receives the message.</p>
+</li>
+<li><p>Bounded capacity: The queue length is finite, n, so it can hold at most n messages. When a new message is sent, if the queue is not full, the message is placed in the queue (possibly by copying the message contents, or by saving a pointer to the message), and the sender can continue executing without waiting. Because the capacity of the link is finite, if the link is full, the sender must wait until there is available space in the queue.</p>
+</li>
+<li><p>Unbounded capacity: The queue length is infinite. Therefore, any number of messages can wait in it, and the sender never blocks.</p>
+</li>
+</ul>
+<p>The zero-capacity case is sometimes referred to as a message system with no buffering, while the other cases are referred to as systems with automatic buffering.</p>
+<h2 id="3-5-Communication-in-Client-Server-Systems"><a href="#3-5-Communication-in-Client-Server-Systems" class="headerlink" title="3.5 Communication in Client-Server Systems"></a>3.5 Communication in Client-Server Systems</h2><p>Interprocess communication techniques can also be used for communication in client-server systems. Below, we will discuss two communication strategies in client-server systems: sockets and remote procedure calls (RPC).</p>
+<h3 id="Sockets"><a href="#Sockets" class="headerlink" title="Sockets"></a>Sockets</h3><p>A socket is an endpoint for communication, and a pair of processes communicating over a network uses a pair of sockets.</p>
+<p>A socket is formed by concatenating an IP address and a port number, serving as an identifier.</p>
+<p>A client-server architecture is typically adopted: the server waits for connection requests from clients by listening on a specific port; once a request is received, the server accepts the connection from the client socket to complete the connection process.</p>
+<p>A server implementing a specific service listens on a well-known port. For example, an SSH server listens on port 22, an FTP server listens on port 21, and a web or HTTP server listens on port 80. All ports below 1024 are considered well-known and are used to implement standard services.</p>
+<p>The principles of sockets will be explained below using Java, because compared with C&#x2F;C++, Java provides an easier-to-use API and a richer library of network utility functions. Java provides 3 different types of sockets:</p>
+<ul>
+<li><p>Connection-oriented (TCP) sockets are implemented through the Socket class.</p>
+</li>
+<li><p>Connectionless (UDP) sockets use the DatagramSocket class.</p>
+</li>
+<li><p>The MulticastSocket class is a subclass of the DatagramSocket class, and multicast sockets allow data to be sent to multiple recipients.</p>
+</li>
+</ul>
+<p>Although communication using sockets is widely used and efficient, it is considered a low-level means of communication among distributed processes. One reason is that sockets only allow the exchange of unstructured byte streams between communicating threads, and imposing structure on the data is the responsibility of the client or server application.</p>
+<h3 id="Remote-Procedure-Calls"><a href="#Remote-Procedure-Calls" class="headerlink" title="Remote Procedure Calls"></a>Remote Procedure Calls</h3><p>One of the most common forms of remote service is the RPC paradigm, which was designed to abstract the mechanism of procedure calls between systems connected over a network. In many ways it is similar to the IPC mechanisms introduced earlier, and it is usually built on top of such systems. In this case, however, because we are dealing with an environment in which processes execute on different systems, a message-based communication scheme must be used to provide the remote service.</p>
+<p>Unlike IPC messages, the messages exchanged in RPC communication are well structured and are therefore no longer merely data packets. Each message is sent to an RPC daemon listening on a port on the remote system, and each message contains an identifier specifying the function to be executed as well as the arguments passed to that function. The function is then executed as requested, and any output is returned to the requester in another message.</p>
+<p>At this point a port is merely a number located at the beginning of a message packet. Typically a system has only one network address, but that address can contain multiple ports to distinguish among the many network services it supports. If a remote process needs a service, it sends a message to the corresponding port.</p>
+<p>The semantics of RPC enable a client to invoke a procedure on a remote host as if it were calling a local procedure. The RPC system hides the details required to implement communication by providing a stub on the client side. Typically, each separate remote procedure has a corresponding stub. When a client calls a remote procedure, the RPC system invokes the corresponding stub and passes to it the arguments supplied to the remote procedure. This stub is responsible for locating the port on the server and marshaling the arguments. The stub then uses the message-passing mechanism to send a message to the server. A similar stub on the server side receives this message and executes the procedure on the server. If necessary, any return values are passed back to the client in the same manner.</p>
+<p>Argument marshaling solves the problem of differences in data representation between client and server machines. Some systems store the most significant byte first (big-endian), whereas others store the least significant byte first (little-endian). Neither order is superior to the other; the choice is arbitrary in computer architecture. To resolve this difference, many RPC systems define a machine-independent data representation. One such representation is called external data representation (XDR). On the client side, argument marshaling involves converting machine-dependent data into XDR before sending it to the server. On the server side, the XDR data is unmarshaled and converted into the server-dependent representation.</p>
+<p>Another key issue concerns the semantics of the call. A local procedure call fails only under extreme circumstances, whereas an RPC may fail, be duplicated, or be executed multiple times because of common network errors. One way to address this problem is to have the OS ensure that messages are executed exactly once rather than at most once.</p>
+<ul>
+<li><p>At most once:</p>
+<ul>
+<li><p>This can be achieved by attaching a timestamp to each message: the server must keep a record of the timestamps of all processed messages, or keep a sufficiently large history to ensure that duplicate messages can be detected.</p>
+</li>
+<li><p>Incoming messages whose timestamps are already in the history are ignored.</p>
+</li>
+<li><p>In this way, the client can send a message one or more times and ensure that it is executed only once.</p>
+</li>
+</ul>
+</li>
+<li><p>Exactly once:</p>
+<ul>
+<li><p>This requires eliminating the risk that the server may never receive the request.</p>
+</li>
+<li><p>To do this, the server must not only implement the “at most once” protocol described above, but must also acknowledge (ACK) to the client that the RPC call has been received and executed.</p>
+</li>
+<li><p>Such ACK messages are very common in network communication: the client must periodically resend each RPC call until it receives the corresponding ACK.</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>Another important issue concerns communication between the server and the client. In a standard procedure call, some form of binding occurs at link, load, or execution time, so that the name of the procedure call is replaced by the memory address of the procedure call. The RPC scheme likewise requires similar binding of client and server ports, but how does the client learn the port number on the server? Since the two do not share memory, neither has complete information about the other. There are two common solutions:</p>
+<ul>
+<li><p>Binding information can be predetermined - in the form of a fixed port address.</p>
+<ul>
+<li><p>At compile time, each RPC call has a fixed port number associated with it.</p>
+</li>
+<li><p>Once the program has been compiled, the server cannot change the port number of the requested service.</p>
+</li>
+</ul>
+</li>
+<li><p>Binding can be done dynamically through a rendezvous mechanism.</p>
+<ul>
+<li><p>Typically, the OS provides a rendezvous (also called a matchmaker) daemon on a fixed RPC port.</p>
+</li>
+<li><p>The client then sends a message to this rendezvous daemon containing the name of the RPC it needs to execute, asking for its port address.</p>
+</li>
+<li><p>After receiving the returned port number, all RPC calls are sent to that port until the process terminates (or the server crashes).</p>
+</li>
+<li><p>Although this approach requires the overhead of an additional initial request, it is more flexible than the first method.</p>
+</li>
+</ul>
+</li>
+</ul>
+<img src="https://note.noughtq.top/sys/os/images/C3/15.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<h1 id="Chapter-4-Threads-and-Concurrency"><a href="#Chapter-4-Threads-and-Concurrency" class="headerlink" title="Chapter 4 Threads and Concurrency"></a>Chapter 4 Threads and Concurrency</h1><h2 id="4-1-Overview"><a href="#4-1-Overview" class="headerlink" title="4.1 Overview"></a>4.1 Overview</h2><p>A thread is the basic unit of task scheduling and execution, including a thread ID, a program counter (PC), a register set, and stack space. A thread shares the code segment, data segment, and other OS resources of the process with other threads belonging to the same process. We can think of a thread as a lightweight process. The following figure shows the difference between a traditional single-threaded process and a multithreaded process:</p>
+<img src="https://note.noughtq.top/sys/os/images/C4/1.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>The difference in address space is as follows:</p>
+<img src="https://note.noughtq.top/sys/os/images/C4/14.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>A thread looks very much like a separate process, except for one difference: threads can share an address space and therefore can access the same data.</p>
+<p>Like a process, a thread also has something called a thread control block (TCB), which is used to store the state, register values, stack information, and so on of each thread in the process. When a context switch occurs, the OS uses the TCB to save and restore context information.</p>
+<h3 id="Motivation"><a href="#Motivation" class="headerlink" title="Motivation"></a>Motivation</h3><p>The reasons for using threads can be summarized in the following two points:</p>
+<ul>
+<li><p>Parallelism: Transforming a single-threaded program into tasks that can execute the same job on multiple CPUs is called parallelization; and having each thread use one CPU is a natural and typical way to achieve parallelization.</p>
+</li>
+<li><p>Avoiding process blocking due to slow I&#x2F;O: Threads allow I&#x2F;O operations within a single program to overlap with other activities, similar to multiprogramming across processes.</p>
+</li>
+</ul>
+<p>Although these two points can also be achieved through multiple processes alone, what makes threads unique is that a shared address space makes it easy to share data, whereas processes are better suited for tasks that are logically relatively independent and do not need to share data much.</p>
+<p>In addition to applications, the kernels of most OSes are also multithreaded. In Linux systems, the ps -ef command can be used to view the kernel processes currently running in the system, among which the thread kthreadd (pid &#x3D; 2) is the parent thread of all threads.</p>
+<p>Multithreading also has broader applications, including the implementation of various algorithms and data structures, as well as current CPU-intensive problems (data mining, graphics, AI, etc.).</p>
+<h3 id="Benefits"><a href="#Benefits" class="headerlink" title="Benefits"></a>Benefits</h3><p>Responsiveness:</p>
+<ul>
+<li><p>A multithreaded interactive application can keep running even when part of it is blocked or performing a long operation, thereby improving responsiveness to the user.</p>
+</li>
+<li><p>This characteristic is especially useful when designing user interfaces. If it is single-threaded, the application will be unresponsive until the operation is completed; whereas if it is executed in a separate asynchronous thread, the application can remain responsive to the user.</p>
+</li>
+</ul>
+<p>Resource sharing:</p>
+<ul>
+<li><p>Processes can only share resources through techniques such as shared memory and message passing, and this must be arranged by the programmer.</p>
+</li>
+<li><p>By default, threads share the memory and resources of the process to which they belong, allowing an application to have several different active threads within the same address space.</p>
+</li>
+</ul>
+<p>Economy:</p>
+<ul>
+<li><p>Allocating memory and resources when a process is created is not inexpensive; whereas threads share the resources of the process to which they belong, so the cost of creating and switching threads is lower.</p>
+</li>
+<li><p>Generally speaking, thread creation consumes less time and memory than process creation, and context switching between threads is usually faster than context switching between processes.</p>
+</li>
+</ul>
+<p>Scalability: Multithreading can unleash greater potential on multiprocessor architectures because threads can run in parallel on different processing cores.</p>
+<h2 id="4-2-Multicore-Programming"><a href="#4-2-Multicore-Programming" class="headerlink" title="4.2 Multicore Programming"></a>4.2 Multicore Programming</h2><h2 id="4-3-Multithreading-Model"><a href="#4-3-Multithreading-Model" class="headerlink" title="4.3 Multithreading Model"></a>4.3 Multithreading Model</h2><h2 id="4-4-Thread-Libraries"><a href="#4-4-Thread-Libraries" class="headerlink" title="4.4 Thread Libraries"></a>4.4 Thread Libraries</h2><h2 id="4-5-Implicit-Threading"><a href="#4-5-Implicit-Threading" class="headerlink" title="4.5 Implicit Threading"></a>4.5 Implicit Threading</h2><h2 id="4-6-Threading-Issues"><a href="#4-6-Threading-Issues" class="headerlink" title="4.6 Threading Issues"></a>4.6 Threading Issues</h2>
   </div>
 
   
@@ -574,18 +1136,18 @@
 
   <div class="container post-prev-next" data-pagefind-ignore>
     
-    <a href="/2026/09/14/Course/Computer_Network/" class="next">
+    <a href="/2026/09/14/Course/Theory_of_Computation/" class="next">
       <div class="text">
         <p class="label">Next</p>
-        <h3 class="title">Computer Network</h3>
+        <h3 class="title">Theory of Computation</h3>
       </div>
     </a>
     
     
-    <a href="/2026/09/14/Course/Theory_of_Computation/" class="prev">
+    <a href="/2026/03/02/Course/Database_System/" class="prev">
       <div class="text">
         <p class="label">Previous</p>
-        <h3 class="title">Theory of Computation</h3>
+        <h3 class="title">Database System</h3>
       </div>
     </a>
     

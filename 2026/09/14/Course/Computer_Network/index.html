@@ -22,7 +22,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://example.com/img/Course/Computer_Network.jpeg">
 <meta property="article:published_time" content="2026-09-13T16:00:00.000Z">
-<meta property="article:modified_time" content="2026-09-14T13:57:04.145Z">
+<meta property="article:modified_time" content="2026-10-12T15:07:22.818Z">
 <meta property="article:author" content="Rinic">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/img/Course/Computer_Network.jpeg">
@@ -484,7 +484,468 @@
 <li><p>Six core service primitives (taking connection-oriented services as an example)</p>
 <img src="https://note.noughtq.top/web/cn/images/338.png" style="max-width: 50%; display: block; margin: 0 auto;"></li>
 </ul>
-<h1 id="Chapter-2-Physical-Layer"><a href="#Chapter-2-Physical-Layer" class="headerlink" title="Chapter 2 Physical Layer"></a>Chapter 2 Physical Layer</h1>
+<h1 id="Chapter-2-Physical-Layer"><a href="#Chapter-2-Physical-Layer" class="headerlink" title="Chapter 2 Physical Layer"></a>Chapter 2 Physical Layer</h1><p>The physical layer interface has the following characteristics:</p>
+<ul>
+<li><p>Mechanical characteristics: shape and dimensions, number and arrangement of pins, fixing and locking devices</p>
+</li>
+<li><p>Electrical characteristics: range of signal voltage, impedance matching conditions, transmission rate, distance limitations</p>
+</li>
+<li><p>Functional characteristics: specifies the role of each signal line in the interface cable</p>
+</li>
+<li><p>Procedural characteristics: specifies a set of operational procedures for transmitting a bit stream over the signal lines, including the timing relationships between the signals</p>
+</li>
+</ul>
+<h2 id="2-1-Transmission-Media"><a href="#2-1-Transmission-Media" class="headerlink" title="2.1 Transmission Media"></a>2.1 Transmission Media</h2><p>Transmission media: the physical path between computer network devices, not included in the computer network architecture (below the physical layer).</p>
+<img src="https://note.noughtq.top/web/cn/images/26.png" style="max-width: 60%; display: block; margin: 0 auto;">
+
+<h3 id="Guided-Transmission-Media"><a href="#Guided-Transmission-Media" class="headerlink" title="Guided Transmission Media"></a>Guided Transmission Media</h3><h4 id="Coaxial-Cable"><a href="#Coaxial-Cable" class="headerlink" title="Coaxial Cable"></a>Coaxial Cable</h4><img src="https://note.noughtq.top/web/cn/images/27.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>Categories:</p>
+<ul>
+<li><p>Baseband coaxial cable (50 Ω): used for digital transmission, widely used in early local area networks</p>
+</li>
+<li><p>Broadband coaxial cable (75 Ω): used for analog transmission, currently mainly used for cable television drop lines</p>
+</li>
+</ul>
+<p>Coaxial cable is relatively expensive and its cabling is not flexible or convenient enough; with the development of technology and the emergence of hubs, twisted pair is basically used as the transmission medium in the local area network field</p>
+<h4 id="Twisted-pair"><a href="#Twisted-pair" class="headerlink" title="Twisted pair"></a>Twisted pair</h4><img src="https://note.noughtq.top/web/cn/images/28.png" style="max-width: 65%; display: block; margin: 0 auto;">
+
+<p>The role of twisting:</p>
+<ul>
+<li><p>Reduce electromagnetic interference between adjacent conductors</p>
+</li>
+<li><p>Resist some electromagnetic interference from the outside</p>
+</li>
+</ul>
+<h4 id="Fiber-optics"><a href="#Fiber-optics" class="headerlink" title="Fiber optics"></a>Fiber optics</h4><img src="https://note.noughtq.top/web/cn/images/30.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>Communication is carried out by using the transmission of light pulses in optical fibers.</p>
+<p>Since the frequency of visible light is very high (on the order of about 108 MHz), the transmission bandwidth of an optical fiber communication system is far greater than the bandwidth of various other transmission media currently available.</p>
+<p>Classification:</p>
+<ul>
+<li><p>Multi-mode fiber</p>
+</li>
+<li><p>Single-mode fiber</p>
+</li>
+</ul>
+<img src="https://note.noughtq.top/web/cn/images/33.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<h3 id="Non-guided-transmission-medium"><a href="#Non-guided-transmission-medium" class="headerlink" title="Non-guided transmission medium"></a>Non-guided transmission medium</h3><img src="https://note.noughtq.top/web/cn/images/34.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<ul>
+<li>Radio waves</li>
+</ul>
+<img src="https://note.noughtq.top/web/cn/images/35.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<ul>
+<li>Microwave</li>
+</ul>
+<img src="https://note.noughtq.top/web/cn/images/36.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<img src="https://note.noughtq.top/web/cn/images/37.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>Infrared</p>
+<ul>
+<li><p>Devices: TV &#x2F; air conditioner remote controls</p>
+</li>
+<li><p>Infrared communication has been phased out</p>
+</li>
+</ul>
+</li>
+<li><p>Laser</p>
+</li>
+<li><p>Visible light</p>
+</li>
+</ul>
+<h2 id="2-2-Transmission-Methods"><a href="#2-2-Transmission-Methods" class="headerlink" title="2.2 Transmission Methods"></a>2.2 Transmission Methods</h2><h3 id="Serial-Transmission-and-Parallel-Transmission"><a href="#Serial-Transmission-and-Parallel-Transmission" class="headerlink" title="Serial Transmission and Parallel Transmission"></a>Serial Transmission and Parallel Transmission</h3><img src="https://note.noughtq.top/web/cn/images/39.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<img src="https://note.noughtq.top/web/cn/images/40.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<h3 id="Synchronous-transmission-and-asynchronous-transmission"><a href="#Synchronous-transmission-and-asynchronous-transmission" class="headerlink" title="Synchronous transmission and asynchronous transmission"></a>Synchronous transmission and asynchronous transmission</h3><h4 id="Synchronized-transmission"><a href="#Synchronized-transmission" class="headerlink" title="Synchronized transmission"></a>Synchronized transmission</h4><img src="https://note.noughtq.top/web/cn/images/41.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>Methods for clock synchronization between the sender and receiver:</p>
+<ul>
+<li><p>External synchronization: Add a clock signal line between the sender and receiver.</p>
+</li>
+<li><p>Internal synchronization: The sender encodes the clock signal into the transmitted data and sends them together (e.g., Manchester encoding).</p>
+</li>
+</ul>
+<h4 id="Asynchronous-transmission"><a href="#Asynchronous-transmission" class="headerlink" title="Asynchronous transmission"></a>Asynchronous transmission</h4><img src="https://note.noughtq.top/web/cn/images/42.png" style="max-width: 80%; display: block; margin: 0 auto;">
+
+<p>Asynchronous between bytes, meaning the time interval between bytes is not fixed.</p>
+<p>Each bit within a byte still needs to be synchronized, meaning the duration of each bit is the same.</p>
+<h3 id="Simplex-half-duplex-and-full-duplex"><a href="#Simplex-half-duplex-and-full-duplex" class="headerlink" title="Simplex, half-duplex, and full-duplex"></a>Simplex, half-duplex, and full-duplex</h3><img src="https://note.noughtq.top/web/cn/images/43.png" style="max-width: 80%; display: block; margin: 0 auto;">
+
+<h2 id="2-3-Encoding-and-Modulation"><a href="#2-3-Encoding-and-Modulation" class="headerlink" title="2.3 Encoding and Modulation"></a>2.3 Encoding and Modulation</h2><h3 id="Basic-Concepts"><a href="#Basic-Concepts" class="headerlink" title="Basic Concepts"></a>Basic Concepts</h3><img src="https://note.noughtq.top/web/cn/images/44.png" style="max-width: 80%; display: block; margin: 0 auto;">
+
+<p>Symbol: When a waveform in the time domain is used to represent a signal, the basic waveform that represents different discrete values.</p>
+<img src="https://note.noughtq.top/web/cn/images/45.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<h3 id="Common-Encoding-Methods"><a href="#Common-Encoding-Methods" class="headerlink" title="Common Encoding Methods"></a>Common Encoding Methods</h3><h4 id="Bipolar-Non-Return-to-Zero-Encoding-NRZ"><a href="#Bipolar-Non-Return-to-Zero-Encoding-NRZ" class="headerlink" title="Bipolar Non-Return-to-Zero Encoding (NRZ)"></a>Bipolar Non-Return-to-Zero Encoding (NRZ)</h4><img src="https://note.noughtq.top/web/cn/images/46.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>High coding efficiency, but there is a synchronization problem.</p>
+<p>How does the receiver determine the symbols?</p>
+<ul>
+<li><p>A clock signal line needs to be added for both the sender and receiver.</p>
+</li>
+<li><p>While the sender sends data to the receiver through the data signal line, it also sends a clock signal to the receiver through the clock signal line.</p>
+</li>
+<li><p>The receiver samples the signal on the data signal line according to the rhythm of the received clock signal.</p>
+</li>
+<li><p>For computer networks, it is preferable to use this transmission line to transmit data signals rather than clock signals.</p>
+</li>
+</ul>
+<h4 id="Bipolar-return-to-zero-encoding"><a href="#Bipolar-return-to-zero-encoding" class="headerlink" title="Bipolar return-to-zero encoding"></a>Bipolar return-to-zero encoding</h4><img src="https://note.noughtq.top/web/cn/images/47.png" style="max-width: 80%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>At the midpoint of each symbol, the signal returns to zero level.</p>
+</li>
+<li><p>The receiver only needs to sample after the signal returns to zero.</p>
+</li>
+<li><p>Return-to-zero encoding is equivalent to encoding the clock signal into the data using a return-to-zero method, which is called a “self-synchronizing” signal.</p>
+</li>
+<li><p>However, in return-to-zero encoding, most of the data bandwidth is wasted on transmitting the return to zero.</p>
+</li>
+</ul>
+<h4 id="NRZI-not-return-to-zero-inverted"><a href="#NRZI-not-return-to-zero-inverted" class="headerlink" title="NRZI(not-return-to-zero inverted)"></a>NRZI(not-return-to-zero inverted)</h4><img src="https://note.noughtq.top/web/cn/images/333.png" style="max-width: 80%; display: block; margin: 0 auto;">
+
+<p>NRZ code that toggles on 1</p>
+<p>Principle: At the beginning of each bit, the level toggles on a 1 and does not toggle on a 0.</p>
+<h4 id="Manchester-encoding"><a href="#Manchester-encoding" class="headerlink" title="Manchester encoding"></a>Manchester encoding</h4><img src="https://note.noughtq.top/web/cn/images/48.png" style="max-width: 80%; display: block; margin: 0 auto;">
+
+<p>The level transition at the middle of a symbol represents both the clock signal and the data.</p>
+<p>Whether a positive transition represents 1 or 0, and a negative transition represents 0 or 1, can be defined as desired.</p>
+<p>Problem: The bandwidth overhead is doubled (two symbols represent one bit of data, so the bit rate is only half the baud rate).</p>
+<h4 id="Differential-Manchester-encoding"><a href="#Differential-Manchester-encoding" class="headerlink" title="Differential Manchester encoding"></a>Differential Manchester encoding</h4><img src="https://note.noughtq.top/web/cn/images/49.png" style="max-width: 80%; display: block; margin: 0 auto;">
+
+<p>The level transition at the middle of a symbol represents only the clock signal, not the data.</p>
+<p>The representation of data lies in whether there is a level transition at the beginning of each symbol: no transition represents 1, and a transition represents 0.</p>
+<p>When transmitting a large number of consecutive 1s or consecutive 0s, the differential Manchester encoded signal has fewer changes than the Manchester encoded signal.</p>
+<p>In noisy environments, detecting whether there is a transition is less error-prone than detecting the direction of the transition, so the differential Manchester encoded signal is easier to detect than the Manchester encoded signal.</p>
+<p>When incorrect wiring of the transmission medium causes the high and low levels to be reversed, differential Manchester encoding is still effective.</p>
+<h4 id="4B-5B-Encoding"><a href="#4B-5B-Encoding" class="headerlink" title="4B&#x2F;5B Encoding"></a>4B&#x2F;5B Encoding</h4><p>Ensure sufficient signal transitions so that the receiver stays synchronized and reduces timing errors.</p>
+<p>It has higher encoding efficiency compared to Manchester encoding (the encoding method used by Ethernet).</p>
+<h3 id="Basic-Bandpass-Modulation-Methods-and-Hybrid-Modulation-Methods"><a href="#Basic-Bandpass-Modulation-Methods-and-Hybrid-Modulation-Methods" class="headerlink" title="Basic Bandpass Modulation Methods and Hybrid Modulation Methods"></a>Basic Bandpass Modulation Methods and Hybrid Modulation Methods</h3><p>Basic bandpass modulation methods:</p>
+<img src="https://note.noughtq.top/web/cn/images/50.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>Hybrid modulation methods: Typically, the phase and amplitude of a carrier can be combined and modulated together, for example, quadrature amplitude modulation (QAM-16):</p>
+<ul>
+<li><p>12 phases</p>
+</li>
+<li><p>Each phase has 1 or 2 selectable amplitudes</p>
+</li>
+<li><p>16 types of symbols (waveforms) can be modulated, and each symbol can correspond to 4 bits (<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi>log</mi><mo>⁡</mo></mrow><mn>2</mn></msub><mn>16</mn><mo>=</mo><mn>4</mn></mrow><annotation encoding="application/x-tex">\log_2 16=4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9386em;vertical-align:-0.2441em;"></span><span class="mop"><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.207em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">16</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">4</span></span></span></span>)</p>
+</li>
+<li><p>The correspondence between each symbol and 4 bits uses Gray code, meaning that any two adjacent symbols differ by only 1 bit.</p>
+</li>
+</ul>
+<img src="https://note.noughtq.top/web/cn/images/51.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Note: 星座图 (constellation diagram)</p>
+</blockquote>
+<h2 id="2-4-The-Maximum-Capacity-of-a-Channel"><a href="#2-4-The-Maximum-Capacity-of-a-Channel" class="headerlink" title="2.4 The Maximum Capacity of a Channel"></a>2.4 The Maximum Capacity of a Channel</h2><h3 id="Main-Factors-Causing-Signal-Distortion"><a href="#Main-Factors-Causing-Signal-Distortion" class="headerlink" title="Main Factors Causing Signal Distortion"></a>Main Factors Causing Signal Distortion</h3><ol>
+<li><p>Symbol transmission rate: The higher the transmission rate, the more severe the distortion of the signal after transmission.</p>
+</li>
+<li><p>Signal transmission distance: The longer the transmission distance, the more severe the distortion of the signal after transmission.</p>
+</li>
+<li><p>Noise interference: The greater the noise interference, the more severe the distortion of the signal after transmission.</p>
+</li>
+<li><p>Quality of the transmission medium: The poorer the quality of the transmission medium, the more severe the distortion of the signal after transmission.</p>
+</li>
+</ol>
+<p>A digital signal transmitted over a channel can be regarded as a square wave formed by the repeated superposition of multiple analog signals of different frequencies.</p>
+<img src="https://note.noughtq.top/web/cn/images/52.png" style="max-width: 60%; display: block; margin: 0 auto;">
+
+<p>If the high-frequency components in a digital signal are attenuated during transmission or even cannot pass through the channel, then the leading and trailing edges of the waveform received at the receiving end become less steep, and the time boundary occupied by each symbol is no longer clear. In this way, the signal waveform received at the receiving end loses the clear boundaries between symbols. This phenomenon is called intersymbol interference.</p>
+<p>If the frequency band of the channel is wider, then more high-frequency components of the signal can pass through, so the symbol transmission rate can be higher without causing intersymbol interference.</p>
+<p>However, the frequency bandwidth of a channel has an upper limit and cannot be infinite, so the symbol transmission rate also has an upper limit.</p>
+<h3 id="Nyquist-Theorem"><a href="#Nyquist-Theorem" class="headerlink" title="Nyquist Theorem"></a>Nyquist Theorem</h3><p>The maximum symbol transmission rate of an ideal low-pass channel &#x3D; 2W Baud &#x3D; 2W symbols&#x2F;second</p>
+<ul>
+<li><p>W: the channel’s frequency bandwidth (in Hz)</p>
+</li>
+<li><p>Baud: baud, i.e., symbols&#x2F;second</p>
+</li>
+</ul>
+<p>Using the formula given by the Nyquist theorem, the maximum symbol transmission rate (modulation rate) of the channel can be calculated from the channel’s frequency bandwidth.</p>
+<p>As long as the symbol transmission rate does not exceed the upper limit calculated according to the Nyquist theorem, intersymbol interference can be avoided.</p>
+<p>What the Nyquist theorem gives is the maximum symbol transmission rate of an ideal low-pass channel, which differs considerably from an actual channel; therefore, the maximum symbol transmission rate that an actual channel can transmit is significantly lower than the upper limit given by the Nyquist theorem.</p>
+<p>The Nyquist theorem applies to all transmission media.</p>
+<p>The relationship between baud rate (symbols) and bit rate (data): when 1 symbol carries only 1 bit of information, the baud rate and the bit rate are numerically equal; when 1 symbol carries n bits of information, when converting the baud rate into the bit rate, the numerical value must be multiplied by n.</p>
+<p>The information transmission rate cannot be increased without limit, because there is noise in an actual channel. Noise is randomly generated, and its instantaneous value can sometimes be very large, which affects the receiver’s identification of symbols, and the greater the noise power relative to the signal power, the greater the impact.</p>
+<h3 id="Shannon-Formula"><a href="#Shannon-Formula" class="headerlink" title="Shannon Formula"></a>Shannon Formula</h3><p>The ultimate information transmission rate of a channel with limited bandwidth and interference from additive white Gaussian noise is:</p>
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi><mo>=</mo><mi>W</mi><msub><mrow><mi>log</mi><mo>⁡</mo></mrow><mn>2</mn></msub><mo stretchy="false">(</mo><mn>1</mn><mo>+</mo><mfrac><mi>S</mi><mi>N</mi></mfrac><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">C = W \log_2 (1 + \frac{S}{N})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop"><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.207em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.2173em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8723em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05764em;">S</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose">)</span></span></span></span>
+
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi></mrow><annotation encoding="application/x-tex">C</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span></span></span></span>: the ultimate information transmission rate of the channel (in b/s)
+
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi></mrow><annotation encoding="application/x-tex">W</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span></span>: the channel's frequency bandwidth (in Hz)
+
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span>: the average power of the signal transmitted within the channel
+
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span>: the Gaussian noise power within the channel
+
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi><mi mathvariant="normal">/</mi><mi>N</mi></mrow><annotation encoding="application/x-tex">S/N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span>: signal-to-noise ratio (SNR), using decibels (dB) as the unit of measurement = <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>10</mn><msub><mrow><mi>log</mi><mo>⁡</mo></mrow><mn>10</mn></msub><mrow><mo fence="true">(</mo><mstyle scriptlevel="0" displaystyle="true"><mfrac><mi>S</mi><mi>N</mi></mfrac></mstyle><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">10 \log_{10} \left( \dfrac{S}{N} \right)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.4em;vertical-align:-0.95em;"></span><span class="mord">10</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop"><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.207em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">10</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">(</span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3603em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">)</span></span></span></span></span></span>
+
+<p>The larger the channel’s frequency bandwidth <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi></mrow><annotation encoding="application/x-tex">W</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span></span> or the signal-to-noise ratio <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi><mi mathvariant="normal">/</mi><mi>N</mi></mrow><annotation encoding="application/x-tex">S/N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> in the channel, the higher the channel’s ultimate information transmission rate <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi></mrow><annotation encoding="application/x-tex">C</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span></span></span></span>.</p>
+<p>An actual channel cannot increase the frequency bandwidth <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi></mrow><annotation encoding="application/x-tex">W</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span></span> or the signal-to-noise ratio <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi><mi mathvariant="normal">/</mi><mi>N</mi></mrow><annotation encoding="application/x-tex">S/N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> in the channel without limit.</p>
+<p>The information transmission rate that can be achieved in an actual channel is considerably lower than the ultimate transmission rate given by the Shannon formula. This is because in an actual channel, the signal is also subject to some other impairments, such as various pulse interferences and signal attenuation, and these factors are not considered in the Shannon formula.</p>
+<p>When the channel’s frequency bandwidth <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi></mrow><annotation encoding="application/x-tex">W</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span></span> is fixed, according to the Nyquist theorem and the Shannon formula, in order to increase the information transmission rate, it is necessary to adopt multilevel signaling (more complex modulation techniques) and strive to increase the signal-to-noise ratio in the channel.</p>
+<p>Since the publication of the Shannon formula, various new signal processing and modulation methods have continuously appeared, all with the aim of enabling a symbol to carry more bits, and thereby get as close as possible to the transmission rate limit given by the Shannon formula.</p>
+<h2 id="2-5-信道复用技术"><a href="#2-5-信道复用技术" class="headerlink" title="2.5 信道复用技术"></a>2.5 信道复用技术</h2><h3 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h3><p>Multiplexing: transmitting the signals of multiple users simultaneously over a single transmission medium.</p>
+<p>When the transmission capacity of a transmission medium is greater than the total transmission capacity of multiple channels, multiplexing technology can be used to establish multiple communication channels on this transmission medium, so as to make full use of the bandwidth of the transmission medium.</p>
+<p>Although implementing channel multiplexing increases communication costs (requiring multiplexers, demultiplexers, and a relatively expensive high-capacity shared channel), it is still relatively cost-effective if the number of multiplexed channels is large.</p>
+<img src="https://note.noughtq.top/web/cn/images/53.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<h3 id="常用技术"><a href="#常用技术" class="headerlink" title="常用技术"></a>常用技术</h3><p>Frequency division multiplexing (FDM): all users simultaneously occupy different frequency band resources for parallel communication.</p>
+<img src="https://note.noughtq.top/web/cn/images/54.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>Time division multiplexing (TDM): all users occupy the same frequency band at different times.</p>
+<img src="https://note.noughtq.top/web/cn/images/55.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>Wavelength Division Multiplexing (WDM)</p>
+<ul>
+<li><p>Based on the design concept of frequency division multiplexing, multiple optical carrier signals with similar frequencies (wavelengths) can be transmitted simultaneously over a single optical fiber, realizing fiber-based frequency division multiplexing technology.</p>
+</li>
+<li><p>Currently, 80 or more optical carrier signals can be multiplexed over a single optical fiber, so this multiplexing technology is also called Dense Wavelength Division Multiplexing (DWDM).</p>
+</li>
+<li><p>Laying optical cables is extremely costly, so as many optical fibers as possible should be placed in a single optical cable, and then dense wavelength division multiplexing technology should be used for each optical fiber.</p>
+</li>
+</ul>
+<img src="https://note.noughtq.top/web/cn/images/56.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>Code division multiplexing (CDM)</p>
+<ul>
+<li><p>Often called code division multiple access (CDMA), it is a wireless communication technology developed on the basis of spread spectrum communication technology.</p>
+</li>
+<li><p>Each user can communicate using the same frequency band at the same time.</p>
+</li>
+<li><p>Each bit time is divided into m shorter time slices, called chips; the value of m is usually 64 or 128 (for simplicity, the following examples assume that the value of m is 8).</p>
+</li>
+<li><p>In CDMA, each station is assigned a unique m-bit chip sequence: if a station wants to send bit 1, it sends its own m-bit chip sequence; if a station wants to send bit 0, it sends the complement of its own m-bit chip sequence.</p>
+</li>
+<li><p>If two or more stations send data at the same time, the signal in the channel is the superposition of the series of chip sequences or complements of chip sequences sent by these stations.</p>
+</li>
+<li><p>In order to separate each station’s signal from the channel, when assigning chip sequences to each station, the following rules must be followed:</p>
+<ul>
+<li><p>The chip sequence assigned to each station must be different, and in practice pseudorandom code sequences are often used.</p>
+</li>
+<li><p>The chip sequences assigned to each station must be mutually orthogonal, that is, the normalized inner product between the corresponding chip vectors of each chip sequence is 0.</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>Let vector A represent the chip vector of station A, and let vector B represent the chip vector of station B; that the chip sequences of two different stations A and B are mutually orthogonal means that the normalized inner product of vector A and vector B is 0, that is:</p>
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>⋅</mo><mi>B</mi><mo>=</mo><mfrac><mn>1</mn><mi>m</mi></mfrac><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>m</mi></msubsup><msub><mi>A</mi><mi>i</mi></msub><msub><mi>B</mi><mi>i</mi></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">A \cdot B = \frac{1}{m} \sum_{i=1}^m A_i B_i = 0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">A</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.1901em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">m</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:0em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8043em;"><span style="top:-2.4003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.2029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">m</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2997em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0502em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span>
+
+<h1 id="Chapter-3-Data-link-layer"><a href="#Chapter-3-Data-link-layer" class="headerlink" title="Chapter 3 Data link layer"></a>Chapter 3 Data link layer</h1><p>Link: A physical line (wired or wireless) from one node to an adjacent node, with no other switching nodes in between.</p>
+<p>Data link: When transmitting data over a link, in addition to the link itself, certain necessary communication protocols are required to control the transmission of this data. Adding the hardware and software that implement these protocols to the link constitutes a data link.</p>
+<ul>
+<li>The network adapter in a computer (commonly known as a network card) and its corresponding software driver implement these protocols; a typical network adapter includes the functions of both the physical layer and the data link layer.</li>
+</ul>
+<img src="https://note.noughtq.top/web/cn/images/57.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>Frame: The PDU for horizontal logical communication between peer entities at the data link layer.</p>
+<hr>
+<p>Services provided by the data link layer</p>
+<ul>
+<li><p>Unacknowledged connectionless service: The receiver does not acknowledge the received frames. Applicable scenarios: reliable channels with low bit error rates, real-time communication. Network example: Ethernet.</p>
+</li>
+<li><p>Acknowledged connectionless service: Each frame receives an individual acknowledgment. Applicable scenarios: unreliable channels (wireless channels). Network example: 802.11.</p>
+</li>
+<li><p>Acknowledged connection-oriented service. Applicable scenarios: unreliable channels with long delays.</p>
+</li>
+</ul>
+<blockquote>
+<p>SDLC &#x2F; HDLC: Synchronous &#x2F; High-level Data Link Control</p>
+</blockquote>
+<blockquote>
+<p>Piggybacking: When the receiver has data to send to the sender, it does not immediately send a pure acknowledgment frame. Instead, it temporarily delays sending the ACK, waiting until the next service data frame is ready to be sent, and then “attaches” the acknowledgment information to the header or a specific field of this data frame and sends it along with it.</p>
+</blockquote>
+<h2 id="3-1-Three-questions"><a href="#3-1-Three-questions" class="headerlink" title="3.1 Three questions"></a>3.1 Three questions</h2><h3 id="Encapsulation-into-frames-and-transparent-transmission"><a href="#Encapsulation-into-frames-and-transparent-transmission" class="headerlink" title="Encapsulation into frames and transparent transmission"></a>Encapsulation into frames and transparent transmission</h3><p>Encapsulation into frames: The data link layer adds the beginning and end of the frame to the PDU delivered by the upper layer to make it a frame.</p>
+<img src="https://note.noughtq.top/web/cn/images/58.png" style="max-width: 70%; display: block; marg In: 0 auto;">
+
+<ul>
+<li><p>The beginning and end of the frame contain some important control information.</p>
+</li>
+<li><p>Another function of the beginning of the frame and the end of the frame is frame delimitation, but not every frame of the data link layer protocol contains the frame delimitation mark (such as the MAC frame of Ethernet V2)</p>
+</li>
+<li><p>In order to improve the efficiency of transmission frames, the length of the data load of the frame should be as greater than the length of the first and tail as possible.</p>
+</li>
+<li><p>Considering many factors such as the demand for cache space and error control, each data link layer protocol stipulates the maximum length of the frame’s data load, that is, the maximum transfer unit (MTU)</p>
+</li>
+</ul>
+<p>Transparent transmission: make the data link layer have no restrictions on the content of the PDU delivered by the upper layer, as if the data link layer does not exist.</p>
+<ul>
+<li><p>Byte-oriented physical links use the method of byte filling to achieve transparent transmission.</p>
+</li>
+<li><p>Bit-oriented physical links use the method of bit filling to achieve transparent transmission.</p>
+</li>
+</ul>
+<h3 id="Error-detection"><a href="#Error-detection" class="headerlink" title="Error detection"></a>Error detection</h3><p>Frames may have errors during the transmission process.</p>
+<p>Bit errors may occur during transmission (called bit errors). Bit 1 may become bit 0, and vice versa.</p>
+<p>Over a period of time, the ratio of the number of bits transmitted to the total number of bits transmitted is called the bit error rate (BER)</p>
+<p>Increasing the signal-to-noise ratio of the link can reduce the error rate; but in the actual communication link, it is impossible to reduce the error rate to zero.</p>
+<p>The receiving party can detect whether there is an error code in the frame according to the error code added by the sender at the end of the frame. The commonly used verification methods are:</p>
+<p><strong>Odd-even check</strong></p>
+<ul>
+<li><p>Odd check is to add a check bit after the data to be sent, so that the number of bits 1 in the entire data after adding the check bit is odd.</p>
+</li>
+<li><p>Even check is to add a check bit after the data to be sent, so that the number of bits 1 in the whole data after adding the check bit is even.</p>
+</li>
+<li><p>In the transmitted data, if there is an error in the odd bit, the oddity of the number of bits contained in bit 1 will change, and the error code can be detected.</p>
+</li>
+<li><p>In the transmitted data, if there is an error code in an even number of bits, the parity of the number of bits contained in 1 will not change, and the error code cannot be detected (missed detection)</p>
+</li>
+<li><p>In actual use, the parity check can be divided into vertical parity check, horizontal paparity check and horizontal vertical papamity check.</p>
+</li>
+</ul>
+<p><strong>Cyclic redundancy check</strong>(cyclic redundancy check, <strong>CRC</strong>)</p>
+<p>This technology with extremely low leakage rate is widely used in the data link layer, because although the calculation is relatively complex, it is very easy to implement with hardware.</p>
+<p>The sending and receiving parties agreed to generate a polynomial <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">G(X)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">G</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mclose">)</span></span></span></span>. Based on the data to be sent and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">G(X)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">G</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mclose">)</span></span></span></span>, the sender calculates the error detection code (redundant code, the length is the maximum number of polynomials generated), and adds the redundant code to the back of the data to be sent and transmits it together.</p>
+<p>Redundant code calculation steps:</p>
+<ol>
+<li>Construct the divisor: add the maximum number of polynomials to be generated after the data to be sent 0</li>
+</ol>
+<p>Two. Construct divisors: generate a bit string composed of coefficients of polynomials as divisors</p>
+<ol start="3">
+<li><p>Do binary module 2 division: equivalent to the logical difference or operation of the corresponding bit</p>
+</li>
+<li><p>Check the remainder: The number of digits of the remainder should be the same as the maximum number of times to generate a polynomial. If the number of digits is insufficient, add 0 before the remainder to make up the number of digits.</p>
+</li>
+</ol>
+<p>After the recipient receives the data and redundant code, it calculates whether the received data and redundant code have errors through <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">G(X)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">G</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mclose">)</span></span></span></span></p>
+<p>Specific steps:</p>
+<ol>
+<li>Construct the divisor: the received information is used as the divisor</li>
+</ol>
+<p>Two. Construct divisors: generate a bit string composed of coefficients of polynomials as divisors</p>
+<ol start="3">
+<li><p>Do binary module 2 division: equivalent to the logical difference or operation of the corresponding bit</p>
+</li>
+<li><p>Check the remainder: If the remainder is 0, it can be considered that there is no error code in the transmission process; if the remainder is not 0, it can be considered that there is an error code in the transmission process.</p>
+</li>
+</ol>
+<p>Error detection techniques such as parity checks and cyclic redundancy checks can only detect that an error occurred during transmission, but cannot locate the error, and therefore cannot correct it. To correct errors in transmission, error-correcting codes with more redundant information (such as Hamming codes) can be used for forward error correction. However, error-correcting codes have relatively high overhead and are rarely used in computer networks.</p>
+<p>In computer networks, the error detection and retransmission methods introduced later are usually used to correct errors in transmission, or frames in which errors are detected are simply discarded, depending on whether the data link layer provides reliable transmission service or unreliable transmission service to its upper layer.</p>
+<p><strong>Hamming code</strong></p>
+<p>Code word: an n-bit unit containing m data bits and r check bits, described as an (n, m) code, n&#x3D;m+r</p>
+<p>Code rate: the proportion of a code word that does not contain redundant parts, which can be expressed as m&#x2F;n</p>
+<p>Hamming distance: the number of corresponding bits that differ between two code words</p>
+<ul>
+<li><p>Example: the Hamming distance between 0000000000 and 0000011111 is 5</p>
+</li>
+<li><p>If the Hamming distance between two code words is d, then d single-bit corrections are needed to convert one code word into the other code word</p>
+</li>
+</ul>
+<p>Minimum Hamming distance: the smallest Hamming distance among all pairs of code words <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mi>min</mi><mo>⁡</mo></msub></mrow><annotation encoding="application/x-tex">d_{\min}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3175em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight"><span class="mtight">m</span><span class="mtight">i</span><span class="mtight">n</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></p>
+<ul>
+<li><p>Can detect at most <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mi>min</mi><mo>⁡</mo></msub><mn>1</mn></mrow><annotation encoding="application/x-tex">d_{\min} 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3175em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight"><span class="mtight">m</span><span class="mtight">i</span><span class="mtight">n</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord">1</span></span></span></span> errors</p>
+</li>
+<li><p>Can correct at most <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">⌊</mo><mstyle scriptlevel="0" displaystyle="true"><mfrac><mrow><msub><mi>d</mi><mi>min</mi><mo>⁡</mo></msub><mo>−</mo><mn>1</mn></mrow><mn>2</mn></mfrac></mstyle><mo stretchy="false">⌋</mo></mrow><annotation encoding="application/x-tex">\lfloor \dfrac{d_{\min} - 1}{2} \rfloor</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.0574em;vertical-align:-0.686em;"></span><span class="mopen">⌊</span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">2</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3175em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight"><span class="mtight">m</span><span class="mtight">i</span><span class="mtight">n</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose">⌋</span></span></span></span> errors</p>
+</li>
+</ul>
+<p>Goal of Hamming codes: based on parity checking, how to find the error location and provide 1-bit error correction capability</p>
+<h3 id="Reliable-Transmission"><a href="#Reliable-Transmission" class="headerlink" title="Reliable Transmission"></a>Reliable Transmission</h3><p>Unreliable transmission service: simply discards frames with bit errors and does nothing else.</p>
+<p>Reliable transmission service: ensures that whatever the sender sends can ultimately be correctly received by the receiver.</p>
+<p>In general, the bit error rate of wired links is relatively low. Therefore, to reduce overhead, the data link layer is not required to provide reliable transmission service to its upper layers; even if bit errors occur, the problem of reliable transmission is handled by its upper layers.</p>
+<p>Wireless links are susceptible to interference and have a relatively high bit error rate. Therefore, the data link layer is required to provide reliable transmission service to its upper layers.</p>
+<p>Transmission errors (the first three situations occur in the upper layers of the data link layer, and the last one occurs in the data link layer and its lower layers):</p>
+<ul>
+<li><p>Bit errors (bit errors): just introduced above.</p>
+</li>
+<li><p>Packet loss: when the input queue is almost full, received packets are actively discarded.</p>
+</li>
+<li><p>Packet out-of-order: the order in which packets arrive differs from the order in which they were sent.</p>
+</li>
+<li><p>Packet duplication: when a router is busy, packets wait for a long time in the input queue, causing the sender to time out and retransmit, so that the receiver ultimately receives multiple identical packets.</p>
+</li>
+</ul>
+<p>Reliable transmission service is not limited to the data link layer; all other layers may also choose to implement reliable transmission.</p>
+<p>The implementation of reliable transmission is relatively complex and has relatively high overhead. Whether to use reliable transmission depends on application requirements.</p>
+<img src="https://note.noughtq.top/web/cn/images/68.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p><strong>Stop-and-wait protocol</strong>:</p>
+<img src="https://note.noughtq.top/web/cn/images/69.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>If the receiver does not receive the data packet, it will not send the corresponding ACK or NAK. If no measures are taken, the sender will remain in the state of waiting for the receiver’s ACK or NAK.</p>
+<p>To solve the above problem, the sender can start a timeout timer each time it finishes sending a data packet.</p>
+<p>If the retransmission time-out (RTO) set by the timeout timer is reached but the sender still has not received the receiver’s ACK or NAK, it retransmits the data packet that was previously sent. Generally, the RTO can be set slightly larger than the average round-trip time RTT between the sender and receiver.</p>
+<p>To avoid the transmission error of duplicate packets, each packet must carry a sequence number. For the stop-and-wait protocol, since the sender stops and waits after sending each data packet, it is enough to ensure that each time a new data packet is sent, its sequence number is different from that of the previously sent data packet. Therefore, one bit is enough for numbering (0&#x2F;1).</p>
+<p>If the receiver receives a duplicate data packet, it discards it and sends another acknowledgment packet. The acknowledgment packet also needs to be numbered to prevent the sender from mistaking which data packet the acknowledgment packet corresponds to. The number of bits used is the same as the number of bits used for the data packet.</p>
+<blockquote>
+<p>After using the timeout retransmission mechanism, the negative acknowledgment mechanism can be omitted, which makes the protocol simpler to implement. However, if the bit error rate of the point-to-point link is relatively high, using the negative acknowledgment mechanism can enable the sender to retransmit as soon as possible before the timeout timer expires.</p>
+</blockquote>
+<blockquote>
+<p>The stop-and-wait protocol belongs to the automatic repeat request (ARQ) protocol, that is, the retransmission request is automatically made by the sender, rather than the receiver requesting the sender to retransmit a certain erroneous data packet.</p>
+</blockquote>
+<p>Channel utilization:</p>
+<img src="https://note.noughtq.top/web/cn/images/72.png" style="max-width: 70%; display: block; margin: 0 auto;">
+<img src="https://note.noughtq.top/web/cn/images/73.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>If timeout retransmission occurs, the channel utilization rate will be even lower for transmitting useful data information.</p>
+</li>
+<li><p>When the RTT is relatively large, in order to improve channel utilization, the sender and receiver are not suitable for using the stop-and-wait protocol, and instead can choose to use the Go-Back-N (GBN) protocol or the Selective Repeat (SR) protocol.</p>
+</li>
+</ul>
+<p><strong>Go-Back-N Protocol (GBN)</strong></p>
+<img src="https://note.noughtq.top/web/cn/images/74.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>Using pipelined transmission can significantly improve channel utilization.</p>
+<p>At this time, the sender cannot continuously send data packets without limit; otherwise, routers in the network or the receiver may not have enough time to process these data packets, which may lead to the loss of data packets. This is actually a waste of network resources.</p>
+<p>Therefore, in addition to using pipelined transmission, the Go-Back-N protocol also uses a sending window to limit the number of data packets the sender can continuously send. This belongs to the continuous ARQ protocol.</p>
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span> bits are used to number the packets, and the sequence number range is <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn><mo>∼</mo><mo stretchy="false">(</mo><msup><mn>2</mn><mi>n</mi></msup><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">0 \sim (2^n - 1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∼</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6644em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span> (in this example, it is assumed that 3 bits are used to number the packets).
+
+<p>The sender needs to maintain a sending window <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>T</mi></msub></mrow><annotation encoding="application/x-tex">W_T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> (range <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>&lt;</mo><msub><mi>W</mi><mi>T</mi></msub><mo>≤</mo><mo stretchy="false">(</mo><msup><mn>2</mn><mi>n</mi></msup><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">1 &lt; W_T \le (2^n - 1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6835em;vertical-align:-0.0391em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6644em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span>). Without receiving an acknowledgment packet from the receiver, the sender can continuously send all data packets whose sequence numbers fall within <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>T</mi></msub></mrow><annotation encoding="application/x-tex">W_T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> (below, take <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>T</mi></msub><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">W_T = 5</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">5</span></span></span></span>).</p>
+<p>The receiver needs to maintain a receiving window <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>R</mi></msub></mrow><annotation encoding="application/x-tex">W_R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>. Only data packets that arrive correctly at the receiver (without errors) and whose sequence numbers fall within <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>R</mi></msub></mrow><annotation encoding="application/x-tex">W_R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> are received by the receiver; the value of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>R</mi></msub></mrow><annotation encoding="application/x-tex">W_R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> can only be 1, which is the same as the stop-and-wait protocol.</p>
+<p>Each time the receiver correctly receives a data packet whose sequence number falls within the receiving window, it slides the receiving window forward by one position, so that a new sequence number falls within the receiving window; at the same time, the receiver also needs to send an acknowledgment packet for that data packet to the sender.</p>
+<p>Each time the sender receives an acknowledgment packet that is acknowledged in order, it slides the sending window forward by one position, so that a new sequence number falls within the sending window, and data packets whose sequence numbers fall within the sending window can continue to be sent.</p>
+<p>During the operation of the Go-Back-N protocol, the sender’s sending window and the receiver’s receiving window continuously slide forward according to the above rules (because this type of protocol is also called a sliding window protocol).</p>
+<img src="https://note.noughtq.top/web/cn/images/75.png" style="max-width: 70%; display: block; margin: 0 auto;">
+
+<p>In the absence of transmission errors, the channel utilization of the Go-Back-N protocol is significantly higher than that of the Stop-and-Wait protocol; the degree of improvement depends on the size of the sending window.</p>
+<p>At this time, the channel utilization is: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>η</mi><mo>=</mo><mstyle scriptlevel="0" displaystyle="true"><mfrac><mrow><mi>W</mi><mo>×</mo><msub><mi>t</mi><mi>f</mi></msub></mrow><mrow><msub><mi>t</mi><mi>f</mi></msub><mo>+</mo><mtext>RTT</mtext></mrow></mfrac></mstyle></mrow><annotation encoding="application/x-tex">\eta = \dfrac{W \times t_f}{t_f + \text{RTT}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">η</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.3324em;vertical-align:-0.9721em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3603em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.10764em;">f</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord text"><span class="mord">RTT</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.10764em;">f</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9721em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span>, where <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mi>f</mi></msub></mrow><annotation encoding="application/x-tex">t_f</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9012em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.10764em;">f</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span> is the time required to send a single frame.</p>
+<p>An error in one data packet may cause the retransmission of a large number of data packets. When the channel quality is poor (error-prone), the channel utilization of the Go-Back-N protocol is not higher than that of the Stop-and-Wait protocol.</p>
+<p>The receiver uses cumulative acknowledgment: the receiver does not have to send an acknowledgment packet for every data packet it receives; instead, after receiving several data packets with consecutive sequence numbers, it can send an acknowledgment packet for the last data packet that arrived in order. When the receiver sends a cumulative acknowledgment packet is determined by the specific implementation. An acknowledgment packet ACKn indicates that all data packets with sequence number n and before have been correctly received.</p>
+<p>Advantages:</p>
+<ul>
+<li><p>Reduces the number of acknowledgment packets injected into the network</p>
+</li>
+<li><p>Even if an acknowledgment packet is lost, it may not be necessary to retransmit the data packet</p>
+</li>
+</ul>
+<p>Disadvantage: It cannot promptly and accurately reflect to the sender the number of all data packets that the receiver has correctly received.</p>
+<hr>
+<p>Use <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mtext> </mtext><mo stretchy="false">(</mo><mi>n</mi><mo>&gt;</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">n\ (n &gt; 1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">n</span><span class="mspace"> </span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span> bits to number the packets.</p>
+<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mn>1</mn><mo>&lt;</mo><msub><mi>W</mi><mi>R</mi></msub><mo>≤</mo><msub><mi>W</mi><mi>T</mi></msub></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><msub><mi>W</mi><mi>T</mi></msub><mo>+</mo><msub><mi>W</mi><mi>R</mi></msub><mo>≤</mo><msup><mn>2</mn><mi>n</mi></msup></mrow></mstyle></mtd></mtr></mtable><mo fence="true">}</mo></mrow><mn>1</mn><mo>&lt;</mo><msub><mi>W</mi><mi>R</mi></msub><mo>≤</mo><msup><mn>2</mn><mrow><mo stretchy="false">(</mo><mi>n</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow></msup></mrow><annotation encoding="application/x-tex">\left.
+\begin{aligned}
+&amp;1 &lt; W_R \le W_T \\
+&amp;W_T + W_R \le 2^n
+\end{aligned}
+\right\} 1 &lt; W_R \le 2^{(n-1)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:3em;vertical-align:-1.25em;"></span><span class="minner"><span class="mopen nulldelimiter"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.75em;"><span style="top:-3.75em;"><span class="pstrut" style="height:2.84em;"></span><span class="mord"></span></span><span style="top:-2.25em;"><span class="pstrut" style="height:2.84em;"></span><span class="mord"></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.25em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.75em;"><span style="top:-3.91em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7144em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.25em;"><span></span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size4">}</span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.888em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.888em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathnormal mtight">n</span><span class="mbin mtight">−</span><span class="mord mtight">1</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span></span></span></span>
+
+<p>And, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>R</mi></msub></mrow><annotation encoding="application/x-tex">W_R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> exceeding <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>T</mi></msub></mrow><annotation encoding="application/x-tex">W_T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> has no meaning, and in general <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>R</mi></msub><mo>=</mo><msub><mi>W</mi><mi>T</mi></msub></mrow><annotation encoding="application/x-tex">W_R = W_T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> is taken.</p>
+<p>Ensure that after the receive window slides forward, the new sequence numbers falling within the receive window do not overlap with the previous old sequence numbers, so as to avoid being unable to distinguish between old and new data packets.</p>
+<p>Sender:</p>
+<ul>
+<li><p>It can send all multiple data packets whose sequence numbers fall within the send window even without having received acknowledgment packets from the receiver.</p>
+</li>
+<li><p>Only when acknowledgment packets for the sent data packets are received in order can the send window slide forward to the corresponding position.</p>
+</li>
+<li><p>If acknowledgment packets that arrive out of order are received, they should be recorded to prevent timeout retransmission of their corresponding data packets, but the send window cannot slide forward.</p>
+</li>
+</ul>
+<p>Receiver:</p>
+<ul>
+<li><p>It can receive data packets that arrive out of order but have no bit errors and whose sequence numbers fall within the receive window.</p>
+</li>
+<li><p>In order to make the sender retransmit only the packets in which errors occurred, the receiver no longer uses cumulative acknowledgment, but instead needs to acknowledge each correctly received data packet one by one.</p>
+</li>
+<li><p>Only after receiving data packets in order can the receive window slide forward to the corresponding position.</p>
+</li>
+</ul>
+<h2 id="3-2-点对点协议"><a href="#3-2-点对点协议" class="headerlink" title="3.2 点对点协议"></a>3.2 点对点协议</h2><h2 id="3-3-共享式以太网"><a href="#3-3-共享式以太网" class="headerlink" title="3.3 共享式以太网"></a>3.3 共享式以太网</h2><h2 id="3-4-交换式以太网"><a href="#3-4-交换式以太网" class="headerlink" title="3.4 交换式以太网"></a>3.4 交换式以太网</h2><h2 id="3-5-以太网的-MAC-帧格式"><a href="#3-5-以太网的-MAC-帧格式" class="headerlink" title="3.5 以太网的 MAC 帧格式"></a>3.5 以太网的 MAC 帧格式</h2><h2 id="3-6-虚拟局域网"><a href="#3-6-虚拟局域网" class="headerlink" title="3.6 虚拟局域网"></a>3.6 虚拟局域网</h2><h2 id="3-7-以太网的发展"><a href="#3-7-以太网的发展" class="headerlink" title="3.7 以太网的发展"></a>3.7 以太网的发展</h2><h2 id="3-8-802-11-无线局域网"><a href="#3-8-802-11-无线局域网" class="headerlink" title="3.8 802.11 无线局域网"></a>3.8 802.11 无线局域网</h2>
   </div>
 
   
@@ -501,10 +962,10 @@
   <div class="container post-prev-next" data-pagefind-ignore>
     <a class="next"></a>
     
-    <a href="/2026/09/14/Course/Operating_System/" class="prev">
+    <a href="/2026/09/14/Course/Theory_of_Computation/" class="prev">
       <div class="text">
         <p class="label">Previous</p>
-        <h3 class="title">Operating System</h3>
+        <h3 class="title">Theory of Computation</h3>
       </div>
     </a>
     
