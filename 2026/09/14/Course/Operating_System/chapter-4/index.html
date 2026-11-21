@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 4 Threads and Concurrency — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Operating System</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-10-17">17 Oct 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-4-Threads-and-Concurrency">Chapter 4 Threads and Concurrency</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#41-Overview">1 Overview</a>
+      <ul class="toc-subsections">
+        <li><a href="#Motivation">1.1 Motivation</a></li>
+        <li><a href="#Benefits">1.2 Benefits</a></li>
+      </ul>
+    </li>
+    <li><a href="#42-Multicore-Programming">2 Multicore Programming</a>
+      <ul class="toc-subsections">
+        <li><a href="#Programming-Challenges">2.1 Programming Challenges</a></li>
+        <li><a href="#Types-of-Parallelism">2.2 Types of Parallelism</a></li>
+      </ul>
+    </li>
+    <li><a href="#43-Multithreading-Model">3 Multithreading Model</a>
+      <ul class="toc-subsections">
+        <li><a href="#Many-to-One-Model">3.1 Many-to-One Model</a></li>
+        <li><a href="#One-to-One-Model">3.2 One-to-One Model</a></li>
+        <li><a href="#Many-to-Many-Model">3.3 Many-to-Many Model</a></li>
+      </ul>
+    </li>
+    <li><a href="#44-Thread-Libraries">4 Thread Libraries</a></li>
+    <li><a href="#45-Implicit-Threading">5 Implicit Threading</a>
+      <ul class="toc-subsections">
+        <li><a href="#Thread-Pools">5.1 Thread Pools</a></li>
+        <li><a href="#Fork-Join">5.2 Fork Join</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<h2 id="41-Overview">1 Overview</h2>
+<p>A thread is the basic unit of task scheduling and execution, including a thread ID, a program counter (PC), a register set, and stack space. A thread shares the code segment, data segment, and other OS resources of the process with other threads belonging to the same process. We can think of a thread as a lightweight process. The following figure shows the difference between a traditional single-threaded process and a multithreaded process:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C4/1.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The difference in address space is as follows:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C4/14.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>A thread looks very much like a separate process, except for one difference: threads can share an address space and therefore can access the same data.</p>
+<p>Like a process, a thread also has something called a thread control block (TCB), which is used to store the state, register values, stack information, and so on of each thread in the process. When a context switch occurs, the OS uses the TCB to save and restore context information.</p>
+<h3 id="Motivation">1.1 Motivation</h3>
+<p>The reasons for using threads can be summarized in the following two points:</p>
+<ul>
+<li><p>Parallelism: Transforming a single-threaded program into tasks that can execute the same job on multiple CPUs is called parallelization; and having each thread use one CPU is a natural and typical way to achieve parallelization.</p>
+</li>
+<li><p>Avoiding process blocking due to slow I/O: Threads allow I/O operations within a single program to overlap with other activities, similar to multiprogramming across processes.</p>
+</li>
+</ul>
+<p>Although these two points can also be achieved through multiple processes alone, what makes threads unique is that a shared address space makes it easy to share data, whereas processes are better suited for tasks that are logically relatively independent and do not need to share data much.</p>
+<p>In addition to applications, the kernels of most OSes are also multithreaded. In Linux systems, the ps -ef command can be used to view the kernel processes currently running in the system, among which the thread kthreadd (pid = 2) is the parent thread of all threads.</p>
+<p>Multithreading also has broader applications, including the implementation of various algorithms and data structures, as well as current CPU-intensive problems (data mining, graphics, AI, etc.).</p>
+<h3 id="Benefits">1.2 Benefits</h3>
+<p>Responsiveness:</p>
+<ul>
+<li><p>A multithreaded interactive application can keep running even when part of it is blocked or performing a long operation, thereby improving responsiveness to the user.</p>
+</li>
+<li><p>This characteristic is especially useful when designing user interfaces. If it is single-threaded, the application will be unresponsive until the operation is completed; whereas if it is executed in a separate asynchronous thread, the application can remain responsive to the user.</p>
+</li>
+</ul>
+<p>Resource sharing:</p>
+<ul>
+<li><p>Processes can only share resources through techniques such as shared memory and message passing, and this must be arranged by the programmer.</p>
+</li>
+<li><p>By default, threads share the memory and resources of the process to which they belong, allowing an application to have several different active threads within the same address space.</p>
+</li>
+</ul>
+<p>Economy:</p>
+<ul>
+<li><p>Allocating memory and resources when a process is created is not inexpensive; whereas threads share the resources of the process to which they belong, so the cost of creating and switching threads is lower.</p>
+</li>
+<li><p>Generally speaking, thread creation consumes less time and memory than process creation, and context switching between threads is usually faster than context switching between processes.</p>
+</li>
+</ul>
+<p>Scalability: Multithreading can unleash greater potential on multiprocessor architectures because threads can run in parallel on different processing cores.</p>
+<h2 id="42-Multicore-Programming">2 Multicore Programming</h2>
+<p>On a single-core system, concurrency merely means that threads are interleaved in time, because the core can execute only one thread at a time.</p>
+<p>But on a multi-core system, concurrency means that some threads can run in parallel, because the system can assign a thread to a separate core.</p>
+<blockquote>
+<p>A concurrent system executes multiple tasks by making progress on all of them (not necessarily at the same time); a parallel system can execute multiple tasks at the same time. So even without parallelism, there can still be concurrency. Before the advent of multiprocessor and multi-core architectures, most computer systems had only one processor, so systems used the ability of the CPU scheduler to switch quickly between processes to provide the illusion of parallelism, but in reality such processes were running concurrently rather than in parallel.</p>
+</blockquote>
+<h3 id="Programming-Challenges">2.1 Programming Challenges</h3>
+<p>Identifying tasks:</p>
+<ul>
+<li><p>Specifically, this means examining the application to find tasks that can be divided into separate, concurrent tasks.</p>
+</li>
+<li><p>Ideally, these tasks are independent of one another, so they can run in parallel on different cores.</p>
+</li>
+</ul>
+<p>Balancing:</p>
+<ul>
+<li><p>While identifying tasks that can run in parallel, the programmer must also ensure that these tasks have as equal an amount of execution workload as possible.</p>
+</li>
+<li><p>In some cases, a particular task may contribute less to the overall process than other tasks, and in such cases it may not be worthwhile to use a separate execution core to run that task.</p>
+</li>
+</ul>
+<p>Data splitting: Just as an application is divided into different tasks, the data accessed and operated on by these tasks must also be divided so that they can run on independent processor cores.</p>
+<p>Data dependency:</p>
+<ul>
+<li><p>It is necessary to check whether the data accessed by the tasks has dependencies between two or more tasks.</p>
+</li>
+<li><p>When one task depends on another task&#39;s data, the programmer must ensure that the tasks are executed synchronously to accommodate the data dependency.</p>
+</li>
+</ul>
+<p>Testing and debugging: When a program runs in parallel on multiple cores, many different execution paths may appear, so testing and debugging such concurrent programs is inherently more difficult than testing and debugging single-threaded applications.</p>
+<h3 id="Types-of-Parallelism">2.2 Types of Parallelism</h3>
+<p>Data parallelism: Distribute subsets of the same data across multiple computing cores and perform the same operation on each core.</p>
+<p>Task parallelism: Distribute tasks (threads) rather than data across multiple computing cores; each thread performs different operations, and they may process the same data or different data.</p>
+<p>In summary, data parallelism involves distributing data across multiple cores, whereas task parallelism involves distributing tasks across multiple cores. Their difference is shown in the figure below:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C4/5.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+
+<p>These two types of parallelism are not mutually exclusive, and in fact some applications adopt both strategies at the same time (hybrid).</p>
+<hr>
+<p>Why is it not better to have more threads?</p>
+<ol>
+<li><p>Switching overhead: The creation and switching of threads consume system resources; if too many threads are created, they will take up a large amount of system resources, causing the system load to become too high, and if a thread crashes, it may cause the process to crash.</p>
+</li>
+<li><p>Synchronization issues: Too many threads may lead to</p>
+<ul>
+<li><p>Race conditions: Multiple threads access and modify shared resources at the same time. Without appropriate synchronization mechanisms, this may lead to data inconsistency or incorrect results.</p>
+</li>
+<li><p>Deadlock: Multiple threads wait for each other to release resources, causing the program to be unable to continue executing.</p>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="43-Multithreading-Model">3 Multithreading Model</h2>
+<p>Support for threads can be provided either by the user (i.e., user threads) or by the kernel (i.e., kernel threads).</p>
+<ul>
+<li><p>User threads are supported above the kernel and do not require kernel involvement for management.</p>
+</li>
+<li><p>Kernel threads, on the other hand, are directly supported and managed by the OS, and almost all modern OSs support kernel threads.</p>
+</li>
+</ul>
+<p>It is not hard to imagine that some relationship must exist between user threads and kernel threads. Several common ways of establishing this relationship are discussed below.</p>
+<h3 id="Many-to-One-Model">3.1 Many-to-One Model</h3>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C4/8.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The many-to-one model maps multiple user threads to a single kernel thread.</p>
+<p>Thread management is handled by a user-space thread library, so it is relatively efficient.</p>
+<p>However, if a thread executes a blocking system call, the entire process will be blocked.</p>
+<p>In addition, because only one thread can access the kernel at a time, multiple threads cannot run in parallel on a multicore system.</p>
+<h3 id="One-to-One-Model">3.2 One-to-One Model</h3>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C4/7.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The one-to-one model maps a single user thread to a kernel thread.</p>
+<p>Compared with the many-to-one model, it provides higher concurrency by allowing another thread to run when a thread makes a blocking system call.</p>
+<p>At the same time, it also allows multiple threads to run in parallel on multiple processors.</p>
+<p>The only drawback is that creating a user thread requires creating a corresponding kernel thread, and a large number of kernel threads may harm system performance.</p>
+<p>Both Linux and Windows implement the one-to-one model.</p>
+<h3 id="Many-to-Many-Model">3.3 Many-to-Many Model</h3>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C4/9.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The many-to-many model multiplexes multiple user threads onto a smaller or equal number of kernel threads.</p>
+<p>The number of kernel threads depends on the specific application or the specific machine.</p>
+<p>Impact on concurrency: Developers can create as many user threads as needed, and the corresponding kernel threads can run in parallel on multiple processors; in addition, when a thread executes a blocking system call, the kernel can schedule other threads to continue executing.</p>
+<hr>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C4/10.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>A variant of the many-to-many model (the two-level model): multiple user threads are still multiplexed onto a smaller or equal number of kernel threads, but at the same time a user thread is allowed to be bound to a single kernel thread.</p>
+<p>Although this is the most flexible of the three models, it is difficult to implement in practice; in addition, as the number of processing cores on most systems continues to increase, limiting the number of kernel threads has become less important, so most operating systems today still adopt the one-to-one model.</p>
+<h2 id="44-Thread-Libraries">4 Thread Libraries</h2>
+<p>Thread libraries provide programmers with an API for creating and managing threads. The methods for implementing thread libraries include:</p>
+<ul>
+<li><p>Providing the library entirely in user space, without kernel support: All the code and data structures of the library exist in user space, which means that calling functions in the library results in local function calls in user space rather than system calls.</p>
+</li>
+<li><p>Implementing a kernel-level thread library directly supported by the OS: The library&#39;s code and data structures reside in kernel space, and calling functions in the API typically triggers system calls to the kernel.</p>
+</li>
+</ul>
+<p>Several commonly used thread libraries:</p>
+<ul>
+<li><p>POSIX Pthreads: As a thread extension of the POSIX standard, it can be provided either as a user-level library or exist as a kernel-level library.</p>
+</li>
+<li><p>Windows thread library: A kernel-level library for Windows systems.</p>
+</li>
+<li><p>Java thread API: Allows threads to be created and managed directly in Java programs. However, since the JVM in most cases runs on top of a host OS, the Java thread API typically makes use of existing thread libraries on the host system for implementation.</p>
+</li>
+</ul>
+<blockquote>
+<p>Windows systems -&gt; Windows API</p>
+</blockquote>
+<blockquote>
+<p>UNIX, Linux, macOS -&gt; Pthreads</p>
+</blockquote>
+<p>For the POSIX and Windows thread models, any global data is shared by all threads belonging to the same process. However, since Java does not have the concept of &quot;global data,&quot; accessing shared data between threads must be explicitly arranged.</p>
+<p>Strategies for creating multithreading are divided into synchronous threading and asynchronous threading:</p>
+<ul>
+<li><p>Asynchronous threading: After the parent thread creates a child thread, the parent thread can still continue executing its current task, so the parent and child threads can run concurrently and independently. Since these threads are independent of one another, they usually share little data. This approach is commonly used in designing web servers, responsive user interfaces, and so on.</p>
+</li>
+<li><p>Synchronous threading: After the parent thread creates one or more child threads, these child threads can execute tasks concurrently, but the parent thread must wait for all child threads to terminate before it can continue executing. When each child thread completes its work, it terminates and joins with the parent thread; only after all child threads have joined can the parent thread resume execution. Generally speaking, synchronous threading involves extensive sharing of data among threads, for example, the parent thread may consolidate the computation results of the various child threads.</p>
+</li>
+</ul>
+<hr>
+<p>Pthreads refers to the POSIX standard that defines an API for thread creation and synchronization. This is a specification for thread behavior, not an implementation. Therefore, OS designers can implement this specification in any way they wish, and many OSs have implemented this specification.</p>
+<h2 id="45-Implicit-Threading">5 Implicit Threading</h2>
+<p>With the advancement of multi-core processing technology, the number of processes contained in an application will also increase accordingly. Designing such a program is by no means a simple task: programmers must not only deal with the challenges listed earlier, but also other challenges such as program correctness.</p>
+<p>One way to address these difficulties and better support concurrent and parallel application design is to shift the creation and management of threads from application developers to compilers and runtime libraries. This strategy is called implicit threading. Several different design approaches will be discussed below that enable applications to take full advantage of multi-core processors through implicit threading.</p>
+<p>It should be noted that these strategies usually require application developers to identify tasks that can run in parallel, rather than the threads themselves. Tasks are usually written as functions, which are then mapped by the runtime library onto separate threads, and a many-to-many model is generally adopted. The advantage of this approach is that developers only need to determine the specific content of the parallel tasks, while the specific details of thread creation and management are handled by the relevant libraries.</p>
+<h3 id="Thread-Pools">5.1 Thread Pools</h3>
+<p>Previously, we introduced a multithreaded web server: whenever the server receives a request, it creates a separate thread to handle that request. However, such a multithreaded server still has some problems:</p>
+<ul>
+<li><p>Consider the time cost required to create a thread, and the fact that once the task is completed, the thread is discarded</p>
+</li>
+<li><p>If every concurrent request is allowed to be served by a newly created thread, then the number of simultaneously active threads in the system will be unlimited, and unlimited threads may exhaust system resources</p>
+</li>
+</ul>
+<p>One solution to these problems is to use thread pool technology. Its basic idea is:</p>
+<ul>
+<li><p>Create a certain number of threads at startup and place them in a pool; these threads remain idle and wait to be assigned tasks</p>
+</li>
+<li><p>When the server receives a request, it does not directly create a new thread, but instead submits the request to the thread pool and then continues waiting for other requests</p>
+</li>
+<li><p>If there is an idle thread in the pool, that thread will be awakened and immediately handle the request; if no thread is available, the task will queue and wait until a thread is released</p>
+</li>
+<li><p>Once a thread completes its work, it returns to the pool and waits for the next work assignment</p>
+</li>
+<li><p>Thread pools work best when the tasks submitted to the pool can be executed asynchronously</p>
+</li>
+</ul>
+<p>The benefits of using a thread pool include:</p>
+<ul>
+<li><p>Handling requests with ready-made threads is usually faster than waiting to create a new thread</p>
+</li>
+<li><p>A thread pool limits the number of threads that exist at any moment, which is especially important for systems that cannot support a large number of concurrent threads</p>
+</li>
+<li><p>Separating the tasks to be executed from the mechanism that creates tasks allows us to use different strategies to run tasks, such as scheduling tasks to execute after a delay or periodically</p>
+</li>
+</ul>
+<p>The number of threads in a thread pool can be set heuristically based on factors such as the number of system CPU cores, the amount of physical memory, and the expected number of concurrent client requests. More advanced thread pool architectures can dynamically adjust the number of threads in the pool according to usage patterns; their additional advantage is that when system load is low, they can maintain a smaller thread pool size, thereby reducing memory usage.</p>
+<h3 id="Fork-Join">5.2 Fork Join</h3>
+<p>The thread creation strategy introduced in the &quot;Thread Libraries&quot; section is commonly referred to as the fork-join model.</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C4/12.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The parent thread creates (forks) one or more child threads, and then waits for these child threads to terminate and joins with them (retrieving and integrating the results of the child threads).</p>
+<p>This synchronization model is usually a form of explicit thread creation, but it is also very suitable for implicit threading; for the latter, the fork phase does not directly construct threads, but instead specifies parallel tasks.</p>
+<p>Typically, a library is used to manage the number of threads created and to handle the assignment of tasks to each thread, such as the related APIs provided by Java, etc.</p>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-3/" rel="prev"><span>← Previous chapter</span>Chapter 3 Processes</a>
+  <a href="../chapter-5/" rel="next"><span>Next chapter →</span>Chapter 5 CPU Scheduling</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Theory of Computation — Relaxinic</title>
+  <link rel="preload" href="../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../course/">Notes</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-09-14">14 Sept 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title">Theory of Computation</h1>
+        </div>
+      </header>
+
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body course-intro">
+<aside class="post-callout">
+  <strong class="callout-title">Warning</strong>
+  These notes are written primarily for my own study needs. They may not be comprehensive or suitable for everyone, so feel free to browse selectively.
+</aside>
+
+<aside class="post-callout">
+  <strong class="callout-title">Acknowledgments</strong>
+  Part of these notes draws inspiration from the excellent Theory of Computation notes written by <a href="https://note.noughtq.top/math/toc/" target="_blank">NoughtQ</a>. I am also grateful to Professor Yingchun Yang for her teaching and guidance in the course, which helped shape the understanding reflected in these notes.
+</aside>
+</div>
+<nav class="chapter-index" aria-label="Chapters">
+  <ol class="post-list">
+    <li>
+      <a class="post-link" href="chapter-1/">
+        <span class="post-title">Chapter 1 Sets, Relations and Language</span>
+        <time class="post-date" datetime="2026-09-14">14 Sept 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-2/">
+        <span class="post-title">Chapter 2 Finite Automata and Regular Expressions</span>
+        <time class="post-date" datetime="2026-10-02">02 Oct 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-3/">
+        <span class="post-title">Chapter 3 Context-Free Languages</span>
+        <time class="post-date" datetime="2026-10-31">31 Oct 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-4/">
+        <span class="post-title">Chapter 4 Turing Machine</span>
+        <time class="post-date" datetime="2026-11-20">20 Nov 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-5/">
+        <span class="post-title">Chapter 5 Undecidability</span>
+        <time class="post-date" datetime="2026-11-21">21 Nov 2026</time>
+      </a>
+    </li>
+  </ol>
+</nav>
+
+        </div>
+      </div>
+    </article>
+<script type="application/json" id="chapter-anchors">{"Chapter-1-Sets-Relations-and-Language":"chapter-1/","11-Sets":"chapter-1/","12-Relations-and-Functions":"chapter-1/","13-Special-Types-of-Binary-Relations":"chapter-1/","14-Finite-and-Infinite-Sets":"chapter-1/","15-Three-Fundamental-Proof-Techniques":"chapter-1/","Mathematical-induction":"chapter-1/","Pigeonhole-principle":"chapter-1/","Diagonalization":"chapter-1/","16-Closures-and-Algorithms":"chapter-1/","Growth-of-Functions":"chapter-1/","Analysis-of-Algorithms":"chapter-1/","Closure-Properties-and-Closures":"chapter-1/","17-Alphabets-and-Languages":"chapter-1/","Chapter-2-Finite-Automata-and-Regular-Expressions":"chapter-2/","21-Deterministic-Finite-Automata":"chapter-2/","DFA-Minimization":"chapter-2/","22-Nondeterministic-Finite-Automata":"chapter-2/","Method-for-Constructing-an-Equivalent-DFA-from-an-NFA":"chapter-2/","23-Regular-Expressions":"chapter-2/","24-Regular-Languages":"chapter-2/","Some-Conclusions":"chapter-2/","25-Languages-that-Are-and-Are-Not-Regular":"chapter-2/","Pumping-theorem":"chapter-2/","Summary-Deciding-regular-languages":"chapter-2/","Chapter-3-Context-Free-Languages":"chapter-3/","31-Context-Free-Grammars":"chapter-3/","32-Parse-Trees":"chapter-3/","Leftmost-and-Rightmost-Derivations":"chapter-3/","Ambiguity":"chapter-3/","33-Pushdown-Automata":"chapter-3/","34-Pushdown-Automata-and-Context-Free-Grammars":"chapter-3/","From-a-CFG-to-a-PDA":"chapter-3/","Normalizing-a-PDA":"chapter-3/","From-a-PDA-to-a-CFG":"chapter-3/","35-Languages-that-Are-and-Are-Not-Context-Free":"chapter-3/","Closure-Properties":"chapter-3/","Parse-Tree-Height-and-the-Pumping-Theorem":"chapter-3/","Failure-of-Intersection-and-Complement-Closure":"chapter-3/","Establishing-Context-Freeness":"chapter-3/","36-Algorithms-for-Context-Free-Grammars":"chapter-3/","Polynomial-Time-Conversions":"chapter-3/","Chomsky-Normal-Form":"chapter-3/","Membership-Testing-by-Dynamic-Programming":"chapter-3/","Derivation-Length-in-CNF":"chapter-3/","Chapter-4-Turing-Machine":"chapter-4/","Chapter-5-Undecidability":"chapter-5/"}</script>
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

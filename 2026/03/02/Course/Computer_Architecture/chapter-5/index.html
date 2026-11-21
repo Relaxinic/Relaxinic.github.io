@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 5 Thread-Level Parallelism — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  <link rel="stylesheet" href="../../../../../../media/katex/katex.min.css">
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Computer Architecture</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-06-30">30 Jun 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-5-Thread-Level-Parallelism">Chapter 5 Thread-Level Parallelism</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#51-Introduction">1 Introduction</a>
+      <ul class="toc-subsections">
+        <li><a href="#Multiprocessor-Architecture">1.1 Multiprocessor Architecture</a></li>
+        <li><a href="#Challenges-of-Parallel-Processing">1.2 Challenges of Parallel Processing</a></li>
+      </ul>
+    </li>
+    <li><a href="#52-Centralized-Shared-Memory-Architectures">2 Centralized Shared-Memory Architectures</a>
+      <ul class="toc-subsections">
+        <li><a href="#Multiprocessor-Cache-Coherence">2.1 Multiprocessor Cache Coherence</a></li>
+        <li><a href="#Basic-Schemes-for-Enforcing-Coherence">2.2 Basic Schemes for Enforcing Coherence</a></li>
+        <li><a href="#Snooping-Coherence-Protocols">2.3 Snooping Coherence Protocols</a></li>
+        <li><a href="#Extensions-to-the-Basic-Coherence-Protols">2.4 Extensions to the Basic Coherence Protols</a></li>
+        <li><a href="#Limitations-in-SMPs-and-Snooping-Protocols">2.5 Limitations in SMPs and Snooping Protocols</a></li>
+        <li><a href="#Implementing-Snooping-Cache-Coherence">2.6 Implementing Snooping Cache Coherence</a></li>
+      </ul>
+    </li>
+    <li><a href="#53-Distributed-Shared-Memory-and-Directory-Based-Coherence">3 Distributed Shared-Memory and Directory-Based Coherence</a>
+      <ul class="toc-subsections">
+        <li><a href="#Directory-Based-Cache-Coherence-Protocols">3.1 Directory-Based Cache Coherence Protocols</a></li>
+        <li><a href="#An-Example-Directory-Protocol">3.2 An Example Directory Protocol</a></li>
+      </ul>
+    </li>
+    <li><a href="#54-Synchronization">4 Synchronization</a>
+      <ul class="toc-subsections">
+        <li><a href="#Basic-Hardware-Primitives">4.1 Basic Hardware Primitives</a></li>
+        <li><a href="#Implementing-Locks-Using-Coherence">4.2 Implementing Locks Using Coherence</a></li>
+        <li><a href="#Barrier-Synchronization">4.3 Barrier Synchronization</a></li>
+      </ul>
+    </li>
+    <li><a href="#55-Models-of-Memory-Consistency">5 Models of Memory Consistency</a>
+      <ul class="toc-subsections">
+        <li><a href="#The-Programmers-View">5.1 The Programmer&#39;s View</a></li>
+        <li><a href="#Relaxed-Consistency-Models">5.2 Relaxed Consistency Models</a></li>
+      </ul>
+    </li>
+    <li><a href="#56-Cross-Cutting-Issues">6 Cross-Cutting Issues</a>
+      <ul class="toc-subsections">
+        <li><a href="#Compiler-Optimization-and-the-Consistency-Model">6.1 Compiler Optimization and the Consistency Model</a></li>
+        <li><a href="#Using-Speculation-to-Hide-Latency-in-Strict-Consistency-Model">6.2 Using Speculation to Hide Latency in Strict Consistency Model</a></li>
+        <li><a href="#Inclusion-and-Its-Implementation">6.3 Inclusion and Its Implementation</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<h2 id="51-Introduction">1 Introduction</h2>
+<p>This chapter primarily explores thread-level parallelism (TLP). TLP utilizes MIMD (multiple instructions, multiple data).</p>
+<p>As mentioned earlier, due to the slowdown in ILP technological advancements, the development of uniprocessors is gradually coming to an end. Consequently, the importance of multiprocessors is increasing—they consist of a set of tightly coupled processors controlled by the operating system, sharing memory through a common address space (not necessarily a single physical memory). Multiprocessors achieve TLP through two different software models:</p>
+<ul>
+<li>Parallel processing: A set of tightly coupled threads collaborating on a single task.</li>
+<li>Request-level parallelism: Execution of multiple relatively independent processes from one or more users. A single application running on multiple processors can utilize request-level parallelism, such as a database responding to queries, or through multiple independently running applications (the latter often referred to as multiprogramming).</li>
+</ul>
+<p>Multiprocessors include both single-chip systems with multiple cores, known as multicore, and computers composed of multiple chips, where each chip is typically a multicore unit.</p>
+<p>Later, we will also discuss multithreading—a technique that supports interleaved execution of multiple threads on a single multiple-issue processor. Many multicore processors also include support for multithreading.</p>
+<h3 id="Multiprocessor-Architecture">1.1 Multiprocessor Architecture</h3>
+<p>To fully utilize an MIMD multiprocessor with n processors, at least n threads or processes are typically required for execution. Independent threads within a single process are usually explicitly specified by the programmer or dynamically created by the operating system based on multiple independent requests. At the other extreme, a thread may consist of only a few dozen iterations of a loop—generated by a parallel compiler exploiting data parallelism within the loop.</p>
+<p>Although the amount of computation assigned to a thread (referred to as grain size) is crucial for efficiently exploiting TLP, the fundamental difference from ILP lies in the fact that TLP is identified by software systems or programmers at a high level of abstraction, consisting of code segments ranging from hundreds to millions of instructions that can be executed in parallel.</p>
+<p>Threads can also be utilized for DLP, but their overhead is typically higher than that of SIMD processors or GPUs. It is essential to ensure that the grain size is large enough to efficiently exploit parallelism.</p>
+<p>For existing shared-memory multiprocessors, they can be divided into two main categories based on their memory organization:</p>
+<p>Symmetric (shared-memory) multiprocessors (SMP) (or centralized shared-memory multiprocessors)</p>
+<ul>
+<li><p>Feature a small to moderate number of cores, typically 32 or fewer</p>
+</li>
+<li><p>In such multiprocessors with a limited number of cores, these processors can share a single centralized memory that all processors have equal access to, hence the term &quot;symmetric&quot;</p>
+</li>
+<li><p>Most current multicore processors fall under SMP</p>
+</li>
+<li><p>SMP is sometimes referred to as uniform memory access (UMA) multiprocessors. All processors uniformly share physical memory, with equal access time to any memory word, and each processor may have private caches or private memory.</p>
+</li>
+<li><p>Some multicore processors have non-uniform access to the outermost cache, a structure known as nonuniform cache access (NUCA), so even with a single main memory, they are not true SMPs</p>
+</li>
+</ul>
+<p>Distributed shared memory (DSM)</p>
+<ul>
+<li><p>In multiprocessor systems composed of multiple multicore chips, each multicore chip typically has its own memory unit, so the memory in such systems is organized in a distributed rather than centralized manner</p>
+</li>
+<li><p>Many distributed memory designs enable fast access to local memory, while remote memory access is significantly slower</p>
+</li>
+<li><p>In such architectures, programmers and software systems must explicitly distinguish between local and remote memory access operations, but typically do not need to focus on the specific distribution among remote storage nodes</p>
+</li>
+<li><p>To support a larger number of processors, memory must be organized in a distributed rather than centralized fashion; otherwise, the memory system would need to meet the bandwidth demands of more processors at the cost of increased access latency</p>
+</li>
+<li><p>Due to these issues, SMP gradually loses its advantages as the number of processors increases, so the vast majority of large-scale multiprocessor systems adopt distributed memory organization</p>
+</li>
+<li><p>DSM multiprocessors are also known as nonuniform memory access (NUMA) architectures because data access time depends on the physical location of the data word in memory. All CPUs share a unified address space, using load and store instructions to access remote memory, which is slower than accessing local memory, and processors in NUMA systems can use caches.</p>
+</li>
+<li><p>The main disadvantage of DSM is that the data communication mechanism between processors becomes more complex, and more effort is required at the software level to fully leverage the advantages of increased memory bandwidth.</p>
+</li>
+</ul>
+<blockquote>
+<p>NUMA can be further divided into:
+NC-NUMA: No cache, thus unable to hide the time required to access remote memory
+CC-NUMA: Has a coherent cache</p>
+</blockquote>
+<p>In both SMP and DSM architectures, communication between threads is achieved through a shared address space. This means that as long as the appropriate access permissions are in place, any processor can address any memory location. The shared memory in SMP and DSM essentially refers to the sharing of the address space.</p>
+<h3 id="Challenges-of-Parallel-Processing">1.2 Challenges of Parallel Processing</h3>
+<p>Multiprocessors have a wide range of applications, including:</p>
+<ul>
+<li><p>Running independent tasks that require almost no communication</p>
+</li>
+<li><p>Or executing parallel programs that require inter-thread collaboration to complete</p>
+</li>
+</ul>
+<p>To address the challenges posed by these tasks, a comprehensive approach is typically required:</p>
+<ul>
+<li><p>Carefully selecting algorithms and optimizing implementations</p>
+</li>
+<li><p>Adapting to the underlying programming language and system</p>
+</li>
+<li><p>Coordinating the operating system and its support functions</p>
+</li>
+<li><p>Adjusting the architecture and hardware implementation</p>
+</li>
+</ul>
+<p>Although one of these aspects may often become the primary bottleneck, when the processor scale becomes very large, we need to synchronously optimize all layers of software and hardware. Specifically, we mainly encounter the following two challenges:</p>
+<ul>
+<li><p>Limited parallelism in programs (corresponding to the first application above)</p>
+</li>
+<li><p>Relatively high communication overhead, or the high latency of remote access in parallel processors (corresponding to the second application above). The specific duration depends on the communication mechanism, the type of interconnection network, and the scale of the multiprocessor</p>
+</li>
+</ul>
+<blockquote>
+<p>Both of the above issues can be explained by Amdahl&#39;s Law.</p>
+</blockquote>
+<p>The corresponding solutions are:</p>
+<ul>
+<li><p>For the issue of insufficient application parallelism, the focus should be on the software level: on one hand, adopting new algorithms that provide better parallel performance; on the other hand, relying on the software system to maximize the effective execution time of the processor in its full configuration</p>
+</li>
+<li><p>To mitigate the impact of high remote latency, collaboration between architects and programmers is required: for example, reducing the number of remote accesses through hardware mechanisms (such as caching shared data) or software methods (such as restructuring data structures to localize access); or attempting to mask latency using multithreading techniques or prefetching strategies</p>
+</li>
+</ul>
+<h2 id="52-Centralized-Shared-Memory-Architectures">2 Centralized Shared-Memory Architectures</h2>
+<p>Using large, multi-level caches can significantly reduce a processor&#39;s demand for memory bandwidth, a discovery that has driven the development of centralized shared-memory multiprocessors.</p>
+<p>Early processors were all single-core designs, typically occupying an entire motherboard, with memory located on a shared bus.</p>
+<p>With the advent of high-performance processors, the memory demands of processors exceeded the capacity of conventional buses. As a result, modern microprocessors connect memory directly to a single chip—sometimes referred to as a backside bus or memory bus, to distinguish it from the bus used for I/O.</p>
+<ul>
+<li><p>Whether performing I/O operations or handling accesses from other chips, accessing a chip&#39;s local memory must go through the chip that &quot;owns&quot; that memory.</p>
+</li>
+<li><p>Therefore, this type of memory access is asymmetric: local memory access is fast, while remote memory access is slower.</p>
+</li>
+<li><p>In multi-core architectures, all cores on a single chip share that memory, but asymmetric access patterns often exist between different cores through their respective memories.</p>
+</li>
+</ul>
+<p>Symmetric shared-memory machines typically support caching of both private and shared data, where:</p>
+<ul>
+<li><p>Private data is used by only one processor. When private data is cached, its storage location migrates to the cache, reducing average access time and memory bandwidth requirements.</p>
+</li>
+<li><p>Shared data can be accessed by multiple processors. When caching shared data, its value may be replicated across multiple caches. In addition to reducing access latency and memory bandwidth demands, this replication can alleviate contention issues that arise when multiple processors simultaneously read the same shared data item. However, caching shared data also introduces a new challenge—cache coherence.</p>
+</li>
+</ul>
+<h3 id="Multiprocessor-Cache-Coherence">2.1 Multiprocessor Cache Coherence</h3>
+<p>Cache Coherence Problem: This issue arises because two different processors build their views of memory through their respective caches, so these processors may ultimately see different values for the same memory location. The problem stems from the coexistence of a global state defined by main memory and local states defined by independent caches private to each processor core.</p>
+<p>An informal way to put it is: if a memory system returns the most recently written value for any data item when it is read, we can say the memory system is coherent. While intuitive and easy to understand, this definition is vague and overly simplistic—the actual situation is far more complex. Moreover, this simple definition actually encompasses two aspects of memory system behavior:</p>
+<ul>
+<li><p>Coherence: Specifies which values a read operation can return.</p>
+</li>
+<li><p>Consistency: Determines when the value of a write operation can be returned by a read operation.</p>
+</li>
+</ul>
+<p>A strict definition of coherence is: a memory system is said to be coherent when the following conditions are met:</p>
+<ul>
+<li><p>A write by processor P to location X, followed immediately by a read by P from X, with no other processor writing to X between the write and the read, always returns the value written by P. This property preserves program order and holds even in a single processor.</p>
+</li>
+<li><p>When a read by a processor from location X occurs after a write by another processor to X, provided there is sufficient time between the read and write and no other write to X occurs between the two accesses, the read returns the written value. This property defines the core meaning of memory coherence: if a processor can consistently read stale data, the memory is clearly in an inconsistent state.</p>
+</li>
+<li><p>Write serialization: Writes to the same location are serialized. That is, any two writes to the same location by two processors are seen in the same order by all processors. For example, if values 1 and 2 are written sequentially to a location, no processor can read 2 before 1.</p>
+</li>
+</ul>
+<p>Although these three properties are sufficient to ensure coherence, consistency is equally crucial. For instance, we cannot require that a read from X immediately obtain the (latest) value written to X by another processor, because the written data may not have even left the original processor yet. Consistency is defined by the memory consistency model, which will be discussed later.</p>
+<p>Coherence and consistency complement each other:</p>
+<ul>
+<li><p>Coherence governs the behavior of read and write operations to the same memory address.</p>
+</li>
+<li><p>Consistency defines the behavior of read and write operations involving different memory addresses.</p>
+</li>
+</ul>
+<p>For now, we make the following two basic assumptions:</p>
+<ul>
+<li><p>A write operation is not considered complete (and subsequent writes are not allowed to proceed) until all processors are aware of its result.</p>
+</li>
+<li><p>A processor must not reorder any write operation relative to other memory accesses. This means that if a processor writes to address A and then to address B, any processor that observes the new value of B must also have obtained the new value of A.</p>
+</li>
+</ul>
+<p>These assumptions allow processors to reorder read operations but force them to complete writes in program order. These assumptions will remain in effect until the introduction of the &quot;memory consistency model.&quot;</p>
+<h3 id="Basic-Schemes-for-Enforcing-Coherence">2.2 Basic Schemes for Enforcing Coherence</h3>
+<p>In programs running on multiprocessors, multiple copies of the same data often exist simultaneously in various levels of cache. In a coherent multiprocessor, the cache provides both migration and replication of shared data.</p>
+<ul>
+<li><p>Migration: Data items can be transparently moved to the local cache and used. This reduces both the latency of accessing remotely allocated shared data and the bandwidth pressure on the shared memory.</p>
+</li>
+<li><p>Replication: Effectively reduces access latency and resource contention when reading shared data.</p>
+</li>
+</ul>
+<p>Thus, achieving efficient migration and replication is crucial for improving the performance of shared data access. Therefore, multiprocessors introduce hardware-level protocols to maintain cache coherence. These protocols are called cache coherence protocols, and their core implementation lies in tracking the sharing state of data blocks. The state of each cache block is maintained through associated status bits (similar to the valid and dirty bits in a uniprocessor cache). Based on different implementation techniques, these protocols can be divided into two categories:</p>
+<p>Directory-based:</p>
+<ul>
+<li><p>The sharing state of a specific physical memory block (which processor has a copy of a particular memory block in its cache) is stored in a location called the directory.</p>
+</li>
+<li><p>There are two distinct directory-based cache coherence schemes:</p>
+</li>
+<li><p>In SMP, a centralized directory associated with memory or another single serialization point (such as the outermost cache of a multi-core chip) can be used.</p>
+</li>
+<li><p>In DSM, since a single directory hinders performance and struggles to meet the memory scaling requirements of multi-core architectures, a distributed directory is required, though it is more complex to implement.</p>
+</li>
+</ul>
+<p>Snooping:</p>
+<ul>
+<li><p>Each cache holding a copy of a physical memory block can track the sharing state of that block.</p>
+</li>
+<li><p>In SMP, the caches of individual cores typically communicate via a broadcast medium (such as the bus between the core&#39;s own cache and the shared cache/memory), and all cache controllers continuously monitor or snoop the medium to determine if they have a copy of the requested data block on the bus or in exchange access.</p>
+</li>
+<li><p>Snooping techniques are also applicable to coherence protocols in multi-chip multiprocessors.</p>
+</li>
+</ul>
+<p>Snooping protocols are widely popular in multiprocessor systems that use microprocessors (single-core) connected to a single shared memory via a bus. The bus provides a convenient broadcast medium for implementing snooping protocols. However, multi-core architectures have changed this landscape, as all cores on a multi-core chip share a certain level of cache. Consequently, some designs have shifted to directory protocols due to their lower overhead.</p>
+<p>We will first focus on snooping protocols and discuss directory protocols in detail when we cover DSM architectures.</p>
+<h3 id="Snooping-Coherence-Protocols">2.3 Snooping Coherence Protocols</h3>
+<p>To maintain cache coherence, there are two methods:</p>
+<p><strong>Write Invalidate Protocol</strong>: Ensures that a processor has exclusive access to a data item before writing to it.</p>
+<ul>
+<li>Exclusive access guarantees that when a write operation is performed on a shared cache line, all copies of that cache line in other caches are invalidated.</li>
+<li>When other processors subsequently read the data, a cache miss occurs, requiring them to fetch the updated data from memory or from a cache holding a valid copy (resulting in longer read latency). This reduces bandwidth consumption caused by repeated writes on the bus.</li>
+<li>If two processors attempt to write to the same data simultaneously, one will succeed, causing the other&#39;s data copy to be invalidated. The other processor must obtain a new copy of the data containing the latest updated value to complete its write operation.</li>
+<li>Thus, this protocol ensures write serialization.</li>
+<li>This is currently the most mainstream protocol.</li>
+</ul>
+<p><strong>Write Update / Write Broadcast Protocol</strong>: Whenever a processor writes to a shared cache line, it broadcasts the new value to update all copies of that cache line in other caches.</p>
+<ul>
+<li>Since the write update protocol must broadcast write operations to all shared cache lines, it consumes more bandwidth.</li>
+</ul>
+<p>Therefore, almost all modern multiprocessor systems choose to implement the write invalidate protocol, and we will focus only on this protocol moving forward.</p>
+<h4 id="Basic-Implementation-Techniques">Basic Implementation Techniques</h4>
+<p>We also need to locate data items when a cache miss occurs:</p>
+<p>In a write-through cache, finding the current value of a data item is relatively simple because all written data is immediately sent to memory, where the latest value of the data item can always be obtained.</p>
+<p>Summary: Various scenarios of read/write operations in a snooping cache</p>
+<p>For a write-back cache, determining the latest data value is more difficult because the latest value of a data item may exist in a private cache rather than in a shared cache or main memory.</p>
+<p>However, we can apply the same snooping mechanism to cache misses and write operations: each processor snoops on all addresses transmitted on the shared bus; when a processor finds that it holds a dirty copy of the target cache block, it returns that cache block as the response to the read request and terminates the access to main memory (or the L3 cache). The complexity of this method lies in the need to obtain the target block from another processor&#39;s private cache (L1 or L2), which typically takes longer than accessing the L3 cache.</p>
+<p>Since write-back caches have lower memory bandwidth requirements, they can support the collaboration of more high-speed processors. For this reason, all multi-core processors adopt a write-back strategy in the outermost cache.</p>
+<p>Next, we will explore consistency implementation schemes based on write-back caches.</p>
+<ul>
+<li><p>The conventional cache tags can be used to implement the snooping mechanism, and the valid bit of each block makes invalidation operations easy to implement.</p>
+</li>
+<li><p>Handling read misses triggered by invalidation or other events is also straightforward, as they rely solely on the snooping function.</p>
+</li>
+<li><p>For write operations, we need to know whether there are other cached copies of the block. If not, in a write-back cache, there is no need to place this write operation on the bus. Not sending a write request reduces write time and saves bandwidth.</p>
+</li>
+<li><p>To track whether a cache block is shared, we can add an additional state bit for each cache block, enabling us to determine whether a write operation needs to generate an invalidation signal.</p>
+</li>
+<li><p>When writing to a block in a shared state, the cache generates an invalidation command on the bus and marks the block as exclusive. After that, the core no longer sends any invalidation requests for this block.</p>
+</li>
+<li><p>The core holding the only copy of a cache block is typically referred to as the owner of that cache block.</p>
+</li>
+<li><p>When an invalidation instruction is sent, the owner&#39;s cache block state changes from shared to non-shared (or exclusive). If another processor later requests this cache block, its state must be set back to shared.</p>
+</li>
+<li><p>Since our snooping cache can also detect any invalidation, it can know when an exclusive cache block is requested by another processor and restore the state to shared.</p>
+</li>
+<li><p>Each bus transaction must check the cache address tags, which may interfere with the processor&#39;s cache access. To reduce this interference, we have the following measures:</p>
+</li>
+<li><p>Duplicate the tags and direct snooping accesses to the tag copies.</p>
+</li>
+<li><p>Use a directory at the shared L3 cache. This directory can indicate whether a given block is shared and which cores may have copies. With directory information, invalidation operations can target only those caches that hold copies of the cache block. This requires that the L3 always retain copies of any data items in L1 or L2, a property known as inclusion.</p>
+</li>
+</ul>
+<h4 id="A-Simple-Protocol">A Simple Protocol</h4>
+<p>We generally implement a snooping coherence protocol by integrating a finite state controller into each core. This controller responds to requests from the in-core processor and the bus (or other broadcast medium), changing the state of selected cache blocks while using the bus to access data or invalidate it. Logically, each cache block can be considered to have its own independent controller, meaning that snooping operations or cache requests for different cache blocks can be processed independently. In practice, a single controller allows multiple operations on different cache blocks to be executed in an interleaved manner.</p>
+<p>We define the protocol to include three states:</p>
+<ul>
+<li><p><strong>Invalid</strong>: The data in the cache line is invalid.</p>
+</li>
+<li><p><strong>Shared</strong>: Indicates that the block in the private cache may be shared by multiple cores.</p>
+</li>
+<li><p><strong>Modified</strong>: Indicates that the block has been updated in the private cache; this state also implies that the block is exclusive. At this point, the corresponding data in memory and any copies of the data in other caches are invalid (since they do not contain the most recent data).</p>
+</li>
+</ul>
+<p>When an invalidation request or write-invalidate appears on the bus, all cores that have a copy of the cache block in their private caches set it to invalid. In the case of a write-invalidate for a write-back cache, if the block exists only in one private cache and is in an exclusive state, that cache must also perform a write-back operation; otherwise, the data can be read directly from the shared cache or main memory.</p>
+<p>The figure below shows the finite state transition diagram for a single private cache block using a write-invalidate protocol and a write-back cache (the left diagram shows CPU requests, and the right diagram shows bus requests):</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/ca/images/C5/5.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>Merging the two state transition diagrams together yields the following state diagram:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/ca/images/C5/6.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>Any valid cache block is either in a shared state across one or more private caches or strictly in an exclusive state within a single cache.</p>
+</li>
+<li><p>Any transition to the exclusive state (which is necessary for a processor to write to the block) requires an invalidate or write-invalidate signal on the bus, causing all local caches to set the block to an invalid state.</p>
+</li>
+<li><p>Additionally, if another local cache previously held the block in an exclusive state (making it dirty), that cache performs a write-back operation, providing the data block containing the target address.</p>
+</li>
+<li><p>Finally, when a read miss occurs on the bus for a block in the exclusive state, the local cache holding the exclusive copy changes its state to shared.</p>
+</li>
+</ul>
+<p>Another characteristic of this protocol is that a memory block in the shared state always remains up-to-date in the external shared cache (L2 or L3, or memory if no shared cache exists). This feature significantly simplifies the implementation.</p>
+<p>Although this simple cache protocol executes correctly, it overlooks many complexities. Most importantly, it assumes that all operations are atomic—meaning each operation can complete without interference from others—which is not the case in reality. Non-atomic operations introduce the possibility of protocol deadlock, where the system enters a state from which it cannot proceed. We will discuss these scenarios later.</p>
+<h3 id="Extensions-to-the-Basic-Coherence-Protols">2.4 Extensions to the Basic Coherence Protols</h3>
+<p>The consistency protocol described earlier is a simple three-state protocol, commonly referred to by the initials of its states, hence known as the MSI (Modified, Shared, Invalid) protocol. We can extend this basic protocol by adding additional states and transactions to optimize specific behaviors, thereby (potentially) improving performance. Among the most common extensions are:</p>
+<p>MESI protocol: Adds an exclusive state, resulting in four states: Modified, Exclusive, Shared, and Invalid.</p>
+<ul>
+<li><p>The exclusive state indicates that the cache block exists only in a single cache and has not been modified.</p>
+</li>
+<li><p>If a block is in the exclusive state, writing to it does not require generating an invalidation signal, thus optimizing scenarios where the same cache first reads and then writes to the data block.</p>
+</li>
+<li><p>Of course, when a read miss occurs for a block in the exclusive state, the block must be transitioned to the shared state to maintain consistency.</p>
+</li>
+<li><p>The advantage of adding the exclusive state is that when the same core writes again to a data block in the exclusive state, it neither needs to acquire bus access nor generate an invalidation signal, because the system knows that the data block exists only in this local cache; the processor only needs to change its state to modified to complete the update.</p>
+</li>
+<li><p>This state extension can be easily implemented by encoding the consistency state bit as an exclusive state bit and using a dirty bit to indicate modification.</p>
+</li>
+</ul>
+<p>Below is the state diagram of the MESI protocol (jxh version):</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/ca/images/C5/38.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>MOESI protocol: Based on the MESI protocol, it adds an &quot;owned&quot; state, indicating that the relevant cache block is held by this cache and the copy in main memory is outdated.</p>
+<ul>
+<li><p>In the MSI and MESI protocols, when attempting to share a cache block in the modified state, the state of the block in both the original cache and the new shared cache transitions to the shared state, and it must be written back to main memory.</p>
+</li>
+<li><p>In the MOESI protocol, the modified state of the original cache can directly transition to the owned state without immediately writing to memory. Other new caches sharing the block remain in the shared state; the owned state held only by the original cache indicates that the main memory copy is invalid and designates the cache as the owner.</p>
+</li>
+<li><p>When a miss occurs, the owner must provide the data block (since main memory is not updated); if it is evicted, it must be written back to main memory.</p>
+</li>
+</ul>
+<h3 id="Limitations-in-SMPs-and-Snooping-Protocols">2.5 Limitations in SMPs and Snooping Protocols</h3>
+<p>As the number of processors in a multiprocessor system increases, or as the memory demand per processor grows, any centralized resource in the system can become a bottleneck. For multi-core processors, even a small number of cores can cause a single shared bus to become a performance bottleneck. Therefore, multi-core designs have shifted toward higher-bandwidth interconnection schemes and the use of multiple independent memories to support a larger number of cores.</p>
+<p>The bandwidth of snooping caches can also be a limitation, as each cache must check every miss, and increasing interconnect bandwidth only shifts the problem to the caches. Below are some techniques to increase snooping bandwidth:</p>
+<ul>
+<li><p>Replicating tag bits to double bandwidth.</p>
+</li>
+<li><p>If multi-core processors share the outermost cache, a distributed cache can be used—each processor manages a portion of the memory region and handles snoop requests for the corresponding address space.</p>
+<ul>
+<li>Since the L3 cache serves to filter snoop requests, it must be inclusive.</li>
+</ul>
+</li>
+<li><p>A directory can be set up at the outermost shared cache level (e.g., L3).</p>
+<ul>
+<li><p>Similarly, the L3 cache must remain inclusive.</p>
+</li>
+<li><p>With the introduction of a directory structure, there is no need to broadcast to all L2 caches; instead, only the specific L2 caches that may hold copies of the data block, as indicated by the directory, need to be queried.</p>
+</li>
+<li><p>Similar to the previous method, the associated directory entries can also be stored in a distributed manner.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="Implementing-Snooping-Cache-Coherence">2.6 Implementing Snooping Cache Coherence</h3>
+<p>In a single-bus multi-core processor, the following methods can be used to make these steps substantially atomic:</p>
+<ul>
+<li><p>First (before changing the cache state), arbitrate for the bus leading to the shared cache or memory, and do not release the bus until all operations are completed.</p>
+</li>
+<li><p>Use a single line to indicate that all necessary invalidation requests have been received and are being processed.</p>
+</li>
+<li><p>Upon receiving this signal, the processor that generated the invalidation signal can release the bus, knowing that all required operations will be completed before any activity related to the next invalidation is processed.</p>
+</li>
+</ul>
+<p>In a system without a single centralized bus, other methods are used to achieve atomicity of cache invalidation operations. Specifically, it must be ensured that when two processors attempt to write to the same data block simultaneously (a situation called a race), a strict order is followed: one write operation is fully processed and completed before the other write operation can begin execution. Which write operation wins the race is not important; the key is that there is only one winner, and its consistency operation completes first.</p>
+<p>In a multi-core architecture using a multi-bus design, as long as each memory block is associated with only one independent bus, access requests to the same data block can be serialized through that shared bus, thereby eliminating race conditions. This feature, combined with the ability to restart the cache invalidation process for the losing party in a race, constitutes a key element of snooping-based cache coherence that can be implemented without a single bus.</p>
+<p>In practical designs, a mix of snooping protocols and directory protocols can be used.</p>
+<h2 id="53-Distributed-Shared-Memory-and-Directory-Based-Coherence">3 Distributed Shared-Memory and Directory-Based Coherence</h2>
+<p>The previously introduced snooping protocol requires communication with all other caches every time a cache invalidation occurs. This characteristic of not using a centralized data structure to track cache states is both an advantage of the snooping approach (low implementation cost) and its fatal weakness, as it results in poor scalability.</p>
+<p>In recent years, the development of multi-core processors has forced all designers to adopt distributed memory to meet the bandwidth demands of each processor. This memory organization can improve memory bandwidth and interconnect bandwidth by separating local memory traffic from remote memory traffic, thereby reducing the bandwidth requirements on the memory system and interconnect network. However, if the broadcast operations required for cache invalidation in coherence protocols cannot be eliminated, the benefits of distributed memory will be extremely limited.</p>
+<p>Additionally, we have mentioned an alternative to the snooping protocol—the directory protocol.</p>
+<ul>
+<li><p>The directory records the state information of each potentially cached block, including which caches (or cache groups) hold copies of the block and whether the data is dirty (modified).</p>
+</li>
+<li><p>In multi-core processors with a shared last-level cache (L3), implementing the directory mechanism is very simple: it only requires maintaining a bit vector for each L3 cache block, with a length equal to the number of cores. This bit vector identifies which private L2 caches may hold a copy of the corresponding block in the L3 cache, so invalidation requests only need to be sent to these specific caches. When the L3 adopts an inclusive design, this mechanism works perfectly on a single multi-core chip.</p>
+</li>
+<li><p>In multi-core systems, a solution using a single directory is not scalable, even if it avoids broadcast operations. Therefore, we must set up distributed directories, but the distribution must ensure that the coherence protocol can locate the directory information for any cached memory block. An obvious solution is to distribute the directories along with the memory units—just as different memory requests point to different memory locations, different coherence requests can access different distributed directories. If the information is maintained in a partitioned last-level cache, such as the L3 cache, the directory information can be distributed across cache partitions, effectively improving bandwidth utilization.</p>
+</li>
+<li><p>Distributed directories have the following characteristic: the shared state of a block is always located at a single known location. This property, combined with information about the cache blocks held by nodes, allows the coherence protocol to avoid broadcast operations.</p>
+</li>
+<li><p>The simplest directory implementation associates an entry in the directory for each memory block. In this case, the total amount of information is proportional to the product of the number of memory blocks and the number of nodes. For multiprocessors with no more than a few hundred processors (each possibly multi-core), this overhead is acceptable with a reasonable block size.</p>
+</li>
+</ul>
+<p>For larger-scale multiprocessor systems, methods that efficiently scale the directory structure are needed, but we do not need to consider this scenario.</p>
+<h3 id="Directory-Based-Cache-Coherence-Protocols">3.1 Directory-Based Cache Coherence Protocols</h3>
+<p>The directory protocol must implement two core operations: handling read misses and processing writes to shared and clean cache blocks.</p>
+<p>To achieve these functions, the directory needs to track the state of each cache block. Specifically, the following states exist:</p>
+<ul>
+<li><p>Shared: One or more nodes have cached the data block, and the value in memory remains synchronized with all cached copies.</p>
+</li>
+<li><p>Uncached: No node holds a copy of the cache block.</p>
+</li>
+<li><p>Modified: Only one node holds a copy of the data block and has performed a write operation, rendering the corresponding copy in memory invalid. In this case, the processor is referred to as the owner of the data block.</p>
+</li>
+</ul>
+<p>In addition to tracking states, it is also necessary to record which nodes have copies of the memory block, as these copies need to be invalidated during a write. The simplest way to implement this is to maintain a bit vector for each memory block. When the memory block is in the shared state, each bit in the vector indicates whether the corresponding processor chip holds a copy of the block. When the memory block is in the exclusive state, this bit vector can also be used to track its owner.</p>
+<p>For efficiency, the state of each cache block is also recorded separately in the various levels of cache.</p>
+<p>Although the specific operations during state transitions differ slightly, the state machine states and transition mechanisms in each cache are entirely consistent with the previously used snooping-based cache scheme.</p>
+<p>However, there are significant differences in the invalidation of data items and the location of exclusive copies: both operations require communication between the requesting node and the directory, as well as between the directory and one or more remote nodes. In the snooping protocol, these two steps are accomplished by broadcasting to all nodes simultaneously.</p>
+<p>The following diagram illustrates the various types of messages exchanged between nodes:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/ca/images/C5/19.png" style="max-width: 80%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>A local node is the node that initiates the request, while a home node is the node that stores the memory location and directory entry corresponding to the target address.</p>
+</li>
+<li><p>The physical address space adopts a static distribution scheme, so it is always possible to determine which node holds the memory and directory information for a specific physical address (e.g., high-order bits can represent the node number, while low-order bits indicate the offset within that node&#39;s memory).</p>
+</li>
+<li><p>Even when the home node is also the local node, the directory must still be accessed because data copies may exist in a third-party node called a remote node.</p>
+<ul>
+<li><p>A remote node is a node that holds a copy of a cache block (regardless of whether the copy is in an exclusive or shared state).</p>
+</li>
+<li><p>The remote node may be the same as the local node or the home node. In such cases, inter-processor messages can be replaced by intra-processor messages, while other mechanisms remain unchanged.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="An-Example-Directory-Protocol">3.2 An Example Directory Protocol</h3>
+<p>The following diagram shows the state transition diagram of a single cache block in a directory-based system:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/ca/images/C5/20.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>This state transition diagram is largely consistent with the snooping-based approach: the states and triggering conditions are nearly identical.</p>
+</li>
+<li><p>The difference is that in the snooping mechanism, write-invalidation operations are broadcast via a bus (or other network), whereas here, we use a directory controller to selectively send data fetch and invalidation operations.</p>
+</li>
+<li><p>Any cache block must be in an exclusive state when being written, and all shared blocks must maintain the latest value in memory.</p>
+</li>
+<li><p>In most multi-core processors, the outermost cache is shared by all cores, and an internal directory or snooping mechanism is used to maintain cache coherence among the private caches of each core on the same chip. Therefore, by simply connecting to the outermost shared cache, the on-chip multi-core coherence mechanism can be extended to larger processors. This also alleviates contention issues between processors and coherence requests while avoiding duplication of tag bits.</p>
+</li>
+</ul>
+<p>In directory-based protocols, messages sent to the directory trigger two different types of operations: updating the directory state and sending additional messages to satisfy the request. The state in the directory represents the three standard states of a memory block; however, unlike the snooping scheme, the directory state here reflects the overall status of all cache copies rather than the state of a single block.</p>
+<p>To track the set of nodes holding copies of a cache block, we use a bit vector called Sharers. Directory requests need to update the sharers and perform invalidation operations by reading this set.</p>
+<p>The following diagram shows the operations taken by the directory node upon receiving a message (the state diagram structure is consistent with the one above):</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/ca/images/C5/21.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>This directory handles three different types of requests: read miss, write miss, and data write-back.</p>
+<p>To understand the mechanisms of these directory operations, we will analyze step by step the requests received and the operations performed in each state.</p>
+<p>When a block is in the uncached state, the copy in memory is the current valid value, so the following types of requests may occur:</p>
+<ul>
+<li><p>Read miss: The requesting node obtains the requested data from memory, and this requester becomes the only sharing node; at this point, the state of the data block is set to the shared state.</p>
+</li>
+<li><p>Write miss: The requesting node receives the value and becomes the sharing node; the data block is set to the exclusive state to indicate that its only valid copy is cached; the Sharers field identifies its owner.</p>
+</li>
+</ul>
+<p>When a block is in the shared state, the memory value is up to date, so the following requests may occur:</p>
+<ul>
+<li><p>Read miss: The requested data is sent from memory to the requesting node, and the requesting node is added to the Sharers.</p>
+</li>
+<li><p>Write miss: The value is sent to the requesting node; invalidation messages are sent to all nodes in the Sharers, and the Sharers are updated to include only the identifier of the requesting node; at this point, the state of the block is set to the exclusive state.</p>
+</li>
+</ul>
+<p>When a block is in the exclusive state, the current value of the block is held in the cache of the node identified by the Sharers (owner), so the following directory requests exist:</p>
+<ul>
+<li><p>Read miss: A data fetch message is sent to the owner, which transitions the state of the block in the owner&#39;s cache to the shared state and prompts the owner to send the data to the directory. The data is written to memory at the directory and then sent back to the requesting processor. The identity of the requesting node is added to the Sharers, which still includes the identity of the original owner processor (since it still holds a readable copy).</p>
+</li>
+<li><p>Data write-back: Since the owner is replacing the block, it must be written back. This operation updates the memory copy to the latest state (the home directory essentially becomes the new owner), at which point the block transitions to the uncached state and the Sharers are cleared.</p>
+</li>
+<li><p>Write miss: The block will belong to a new owner. A message is sent to the original owner to invalidate the block in its cache and transfer the value to the directory; the directory then forwards the value to the requesting node, making it the new owner. The Sharers are updated to the information of the new owner, and the exclusive state of the block remains unchanged.</p>
+</li>
+</ul>
+<h2 id="54-Synchronization">4 Synchronization</h2>
+<p>Why is synchronization needed? Because it is necessary to know when different processes can safely use shared data.</p>
+<p>Synchronization mechanisms are typically built from user-level software routines that rely on hardware-provided synchronization instructions. For smaller-scale multiprocessor systems or low-contention scenarios, the key hardware capability is to provide an uninterruptible instruction or instruction sequence that can atomically retrieve and modify a value. Based on this capability, software synchronization mechanisms can be constructed. This section focuses on the implementation principles of two synchronization operations: locking and unlocking. Through these two operations, both mutual exclusion control can be achieved, and a foundation can be laid for more complex synchronization mechanisms.</p>
+<h3 id="Basic-Hardware-Primitives">4.1 Basic Hardware Primitives</h3>
+<p>In a multiprocessor system, the key capability required to implement synchronization is a set of hardware primitives that can atomically read and modify a memory location. Without this capability, the cost of building basic synchronization primitives would be extremely high and would increase with the number of processors. In fact, there are multiple alternative basic hardware primitives, all of which provide the ability to atomically read and write a location. However, architects generally do not expect users to directly use these basic hardware primitives; instead, they expect system programmers to use them to build synchronization libraries. Let us start with one of these hardware primitives and demonstrate how it can be used to construct some basic synchronization operations.</p>
+<p>The hardware primitive we will introduce is atomic exchange, which swaps the value in a register with the value in memory.</p>
+<ul>
+<li><p>Suppose we need to build a simple lock: 0 indicates the lock is free, and 1 indicates the lock is held.</p>
+</li>
+<li><p>A processor attempts to acquire the lock by executing an exchange instruction: it swaps a register containing 1; the register&#39;s memory address corresponds to the lock. If another processor already holds the lock, the exchange instruction returns 1; otherwise, when it returns 0, the memory location&#39;s value is simultaneously updated to 1, preventing other competing exchange operations from also obtaining 0.</p>
+</li>
+<li><p>For example, when two processors simultaneously attempt to execute an exchange instruction, this contention is resolved: one processor will inevitably complete the exchange first and return 0, while the second processor&#39;s exchange will return 1.</p>
+</li>
+<li><p>The key to using the exchange primitive for synchronization lies in its atomicity: the entire exchange process is indivisible, and two concurrent exchanges are serialized through write serialization.</p>
+</li>
+</ul>
+<p>There are also other atomic primitives for synchronization, but they all share a key feature: they read and update a memory value in a way that allows determining whether two operations are executed atomically. Below are some of these atomic primitives:</p>
+<ul>
+<li><p>Test-and-set: Tests a value and sets a new value if the test passes. We can define an operation that checks whether a value is 0 and sets it to 1, used similarly to the atomic exchange operation.</p>
+</li>
+<li><p>Fetch-and-increment: Returns the value of a memory location and atomically increments it. By using 0 to indicate that the synchronization variable is not held, we can use this instruction similarly to the exchange operation.</p>
+</li>
+</ul>
+<p>Implementing a single atomic memory operation presents challenges because it requires completing both a memory read and write within an uninterruptible instruction. This requirement complicates consistency implementation—hardware must not allow any other operation to be inserted between the read and write, and must also avoid deadlock situations.</p>
+<p>Another type of hardware primitive uses a pair of instructions, where the return value of the second instruction indicates whether the pair was executed atomically. If the pair appears as though all other processors&#39; operations occurred either entirely before or after them, then the pair is effectively atomic. This is the approach adopted by the MIPS and RISC-V architectures.</p>
+<p>In RISC-V, this pair includes a special load operation (called load reserved) lr and a special store operation (called store conditional) sc.</p>
+<ul>
+<li><p>Load reserved loads the memory content specified by rs1 into the rd register and creates a reservation on that memory address.</p>
+</li>
+<li><p>Store conditional stores the value in rs2 to the memory address specified by rs1.</p>
+</li>
+<li><p>If another write operation invalidates the reservation on that memory location during this period, the store conditional fails and writes a non-zero value to rd.</p>
+</li>
+<li><p>If successful, it writes 0 to rd.</p>
+</li>
+<li><p>If a context switch occurs between the two instructions, the store conditional also fails.</p>
+</li>
+<li><p>We can use this pair to construct other synchronization primitives.</p>
+</li>
+<li><p>The reserved register tracks the address specified by the lr instruction.</p>
+</li>
+<li><p>If an interrupt occurs, or if the cache block corresponding to the address in the link register is invalidated (e.g., by another sc instruction), the link register is cleared.</p>
+</li>
+<li><p>The sc instruction only checks whether its address matches the reserved register&#39;s address: if it matches, it succeeds; otherwise, it fails.</p>
+</li>
+<li><p>Since the store conditional will fail after any repeated store attempt to the load reserved address or any exception, the instructions inserted between these two must be chosen carefully. Therefore, only register-to-register operations should be safely allowed; otherwise, deadlock may occur.</p>
+</li>
+<li><p>Additionally, to reduce the probability of store conditional failures caused by unrelated events or competing processors, the number of instructions between load reserved and store conditional should be kept as small as possible.</p>
+</li>
+</ul>
+<h3 id="Implementing-Locks-Using-Coherence">4.2 Implementing Locks Using Coherence</h3>
+<p>Once atomic operations are available, the consistency mechanism of multiprocessors can be used to implement spin locks. The processor continuously attempts to acquire such locks, looping until successful. Programmers use spin locks when they expect the lock to be held for a short time and want the locking process to have low latency when the lock becomes available. However, spin locks cause the processor to occupy resources while looping in a waiting state, making them unsuitable in certain scenarios.</p>
+<p>Without a cache coherence mechanism, the simplest implementation is to store the lock in memory.</p>
+<ul>
+<li><p>The processor can continuously attempt to acquire the lock through atomic operations and check whether the swap operation returns a lock in an idle state.</p>
+</li>
+<li><p>When releasing the lock, the processor only needs to store the value 0 at that address to unlock it.</p>
+</li>
+</ul>
+<p>The code sequence for a spin lock is as follows:</p>
+<pre><code>        addi x2,R0,#1
+lockit: EXCH x2,0(x1)    ; atomic exchange
+        bnez x2,lockit   ; already locked?
+</code></pre>
+<p>If a multiprocessor supports cache coherence, locks can be cached through this mechanism to maintain lock consistency. A caching lock has the following advantages:</p>
+<p>It allows the &quot;spinning&quot; process (i.e., repeatedly testing and acquiring the lock in a tight loop) to be performed on a local cached copy, without needing to access global memory each time an attempt is made to acquire the lock.</p>
+<ul>
+<li><p>The previous spin lock process needs to be modified so that it spins by performing read operations on the local copy of the lock until it successfully sees that the lock is available.</p>
+</li>
+<li><p>The process attempts to acquire the lock by performing a swap operation; the processor first reads the lock to test its state.</p>
+</li>
+<li><p>The processor continues reading and testing until the read value indicates that the lock is unlocked.</p>
+</li>
+<li><p>The processor then competes with all other similarly &quot;spinning&quot; processes to see which one can lock the variable first.</p>
+</li>
+<li><p>All processes use a swap instruction: this instruction reads the old value and stores 1 into the lock variable; the sole winner sees 0, while the losers see the 1 placed by the winner.</p>
+</li>
+<li><p>The winning processor executes the code following the lock, and upon completion, stores 0 into the lock variable to release the lock, then a new competition begins.</p>
+</li>
+<li><p>The following is the code for executing this spin lock (note: 0 indicates unlocked, 1 indicates locked):</p>
+</li>
+</ul>
+<pre><code>lockit: ld x2,0(x1)         ; load of lock
+        bnez x2,lockit      ; not available-spin
+        addi x2,R0,#1       ; load locked value
+        EXCH x2,0(x1)       ; swap
+        bnez x2,lockit      ; branch if lock wasn’t 0
+</code></pre>
+<ul>
+<li>The processor that recently used the lock is likely to use it again in the short term. At this point, the lock may still remain in the processor&#39;s cache, significantly reducing the time required to acquire the lock.</li>
+</ul>
+<p>The following table illustrates the interaction between the processor and the bus/directory when multiple processes compete to lock a variable using atomic exchange instructions:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/ca/images/C5/22.png" style="max-width: 80%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>When the processor holding the lock writes 0 to the lock, all copies in other caches are invalidated and must fetch the new value to update their local copies.</p>
+</li>
+<li><p>One of the caches will be the first to obtain the unlocked state value (0) and successfully acquire the lock through an exchange operation. Then, when the cache invalidation requests from other processors receive a response, they will find that the variable is already locked, so they can only continue testing and remain in a spinning state.</p>
+</li>
+</ul>
+<h3 id="Barrier-Synchronization">4.3 Barrier Synchronization</h3>
+<p>Barrier forces processes to wait until all processes have reached the barrier before releasing them to continue execution. Its implementation is mainly based on:</p>
+<ul>
+<li>Shared counter</li>
+<li>Spin waiting to release signals</li>
+</ul>
+<p>Below is a piece of code related to the implementation of a barrier:</p>
+<pre><code class="language-cpp">{
+    lock(counterlock);                    // ensure update atomic
+    if (count == 0) release = 0;          // first--&gt;reset release
+        ++count;                          // count arrivals
+    if (count == total){                  // all arrived
+        count = 0;                        // reset counter
+        release = 1;                      // release processes
+    }
+    unlock(counterlock);                  // release lock
+    spin(release == 1) ;                  // wait for arrivals
+}
+</code></pre>
+<p>This code has a problem: in the barrier, the slower processes may be trapped by the fastest process. Therefore, the following improvements have been made:</p>
+<ul>
+<li><p>Counting after leaving the barrier: Use an additional shared counter to count the processes in the barrier. Prevent any process from re-entering the barrier before all processes have left the previous instance. However, this method introduces additional latency and is therefore not recommended.</p>
+</li>
+<li><p>Sense-reversing barrier: This method solves the problem of processes being trapped, but the performance is still not high. The implementation code is as follows:</p>
+</li>
+</ul>
+<pre><code class="language-cpp">{
+    Lock_sense = !Lock_sense;             // toggle Local_sense
+    lock(counterlock);                    // ensure update atomic
+    if (count == 0) release = 0;          // first--&gt;reset release
+        ++count;                          // count arrivals
+    if (count == total){                  // all arrived
+        count = 0;                        // reset counter
+        release = Lock_sense;             // release processes
+    }
+    unlock(counterlock);                  // release lock
+    spin(release == Lock_sense) ;         // wait for signal
+}
+</code></pre>
+<p>To improve barrier performance, we can adopt a software optimization—the combining tree barrier: using a predetermined n-ary tree structure, processes synchronize at child nodes and then report to the parent node, until the root node releases all processes. This reduces contention at a single synchronization point.</p>
+<h2 id="55-Models-of-Memory-Consistency">5 Models of Memory Consistency</h2>
+<p>Determining the degree of memory consistency is a rather complex issue.</p>
+<p>The most intuitive model of memory consistency is called sequential consistency. It requires that the result of any execution is the same as if the memory access operations issued by each processor maintain their program order, and the access operations between different processors can be interleaved arbitrarily. This model eliminates the possibility of certain non-intuitive executions in the previous example, because all assignment operations must be completed before the IF statement begins execution.</p>
+<p>The simplest way to achieve sequential consistency is to require the processor to delay the completion of any memory access until all invalidation operations triggered by that access are finished. Of course, an equally effective method is to delay the next memory access until the previous one is completed. It is important to remember that memory consistency involves operations on different variables: the two accesses that must be executed in order actually target different memory locations. In the example above, the reading of A or B (A == 0 or B == 0) must be delayed until the previous write operation (B = 1 or A = 1) is completed. Under the sequential consistency model, a write operation cannot simply be placed in the write buffer and then immediately followed by a read.</p>
+<p>Although sequential consistency provides a simple programming paradigm, it can reduce potential performance, especially in multi-core systems with a large number of processors and high interconnect latency.</p>
+<p>To achieve better performance, there are two approaches:</p>
+<ul>
+<li><p>Retain sequential consistency but use latency-hiding techniques.</p>
+</li>
+<li><p>Use a memory consistency model with fewer restrictions that allows hardware to accelerate execution. This may change the programmer&#39;s perception of multiprocessors, so before exploring these relaxed models, we need to understand the programmer&#39;s expected needs.</p>
+</li>
+</ul>
+<h3 id="The-Programmers-View">5.1 The Programmer&#39;s View</h3>
+<p>Although the sequential consistency model has performance disadvantages, from a programmer&#39;s perspective, it offers the advantage of simplicity. We hope to develop a programming model that is both easy to explain and allows for high-performance implementation.</p>
+<p>One programming model that achieves efficient execution assumes that programs are synchronized.</p>
+<ul>
+<li>A program is considered synchronized if all accesses to shared data are ordered through synchronization operations.</li>
+<li>A data reference is said to be ordered by synchronization operations if and only if, in all possible executions, a write operation by one processor to a variable and an access (read or write) by another processor to the same variable are separated by a pair of synchronization operations—the first performed by the writing processor after the write, and the second by the accessing processor before the access.</li>
+<li>A situation where a variable may be updated without being ordered by synchronization is called a data race, because the execution result depends on the relative speeds of the processors; similar to races in hardware design, the outcome is unpredictable. This also gives synchronized programs another name: data-race-free.</li>
+</ul>
+<p>It is widely believed that most programs are synchronizable. This is because if accesses are not handled through synchronization, the program&#39;s behavior becomes unpredictable—differences in execution speed determine which processor wins the data race, thereby affecting the final program result. Even under sequential consistency, reasoning about such programs is extremely difficult.</p>
+<p>Programmers could attempt to ensure sequentiality by constructing their own synchronization mechanisms, but this is extremely complex, error-prone, and may lack architectural support—meaning these mechanisms could fail in future multiprocessor iterations. Therefore, the vast majority of programmers choose to use proven synchronization libraries optimized for multiprocessors and synchronization types.</p>
+<p>Additionally, using standard synchronization primitives ensures that even if the underlying architecture implements a memory consistency model more relaxed than sequential consistency, correctly synchronized programs will behave as if the hardware implements sequential consistency.</p>
+<h3 id="Relaxed-Consistency-Models">5.2 Relaxed Consistency Models</h3>
+<p>The core idea of the relaxed consistency model is to allow read and write operations to complete out of order, but enforce ordering through synchronization operations, so that the behavior of synchronized programs appears as if the processor has sequential consistency. Depending on which read-write orders are relaxed, there are various classifications of relaxed consistency models. We define ordering relationships using a set of rules in the form of X -&gt; Y, indicating that operation X must complete before operation Y begins. Sequential consistency requires maintaining all four possible orders: R -&gt; W, R -&gt; R, W -&gt; R, W -&gt; W. Relaxed models are defined by relaxing subsets of these four orders:</p>
+<ul>
+<li><p>Relaxing only the W -&gt; R order results in a model known as total store ordering or processor consistency. Since this model preserves the order of write operations, many programs that follow sequential consistency can adopt this model without additional synchronization operations.</p>
+</li>
+<li><p>Relaxing both W -&gt; R and W -&gt; W orders results in a model known as partial store order.</p>
+</li>
+<li><p>Relaxing all four orders leads to a series of models, including weak ordering, the PowerPC consistency model, release consistency, and the RISC-V consistency model.</p>
+</li>
+</ul>
+<p>By relaxing these ordering constraints, processors can achieve significant performance advantages, which is why RISC-V, ARMv8, and the C++/C language standards have chosen relaxed consistency as their memory model.</p>
+<p>Release consistency distinguishes between two types of synchronization operations:</p>
+<ul>
+<li><p>Acquire operations (marked as <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>S</mi><mi>A</mi></msub></mrow><annotation encoding="application/x-tex">S_A</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0576em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">A</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>) used to gain access to shared variables.</p>
+</li>
+<li><p>Release operations (marked as <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>S</mi><mi>R</mi></msub></mrow><annotation encoding="application/x-tex">S_R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0576em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>) used to release objects to allow other processors to gain access.</p>
+</li>
+</ul>
+<p>In synchronized programs, acquire operations must precede the use of shared data, while release operations must occur after all updates to shared data and before the next acquire operation. This characteristic allows us to moderately relax ordering requirements—ensuring that read and write operations occurring before an acquire do not need to complete before that acquire, and read and write operations occurring after a release do not need to wait for that release to complete.</p>
+<p>The following diagram illustrates the ordering constraints of various consistency models for general accesses and synchronization accesses:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/ca/images/C5/26.png" style="max-width: 80%; display: block; margin: 0 auto;">
+
+<p>Releasing coherence provides one of the most relaxed and easily verifiable models, ensuring that synchronization programs observe sequentially consistent execution results. Although most synchronization operations are either acquire or release, some operations combine both acquire and release semantics, resulting in ordering effects equivalent to weak ordering. While synchronization operations always guarantee that previous write operations have completed, we sometimes need to ensure the completion of write operations without relying on specific synchronization operations. In such cases, an explicit instruction—called FENCE in RISC-V—is required to ensure that all previous instructions in the thread have completed execution, including all memory writes and the completion of related invalidation operations.</p>
+<h2 id="56-Cross-Cutting-Issues">6 Cross-Cutting Issues</h2>
+<p>Since multiprocessors redefine many system characteristics (such as the importance of performance evaluation, memory latency, and scalability), they introduce design issues that span the entire technology domain, affecting both hardware and software. This section will provide several examples centered around the problem of memory coherence.</p>
+<h3 id="Compiler-Optimization-and-the-Consistency-Model">6.1 Compiler Optimization and the Consistency Model</h3>
+<p>Another reason for defining a memory consistency model is to clarify the scope of legal compiler optimizations on shared data.</p>
+<ul>
+<li><p>In explicitly parallel programs, unless synchronization points are clearly defined and the program is synchronized, the compiler cannot swap read and write operations on two different shared data items, as such transformations may affect program semantics. This restriction even hinders relatively simple optimizations (such as register allocation for shared data), as this process typically involves swapping reads and writes.</p>
+</li>
+<li><p>In implicitly parallelized programs (such as code written in High Performance Fortran (HPF)), this issue does not arise because the program must be synchronized and synchronization points are known.</p>
+</li>
+</ul>
+<p>From both research and practical perspectives, whether a more relaxed coherence model can bring significant advantages to compilers remains an open question, and the lack of a unified model is likely to delay the deployment of compilers.</p>
+<h3 id="Using-Speculation-to-Hide-Latency-in-Strict-Consistency-Model">6.2 Using Speculation to Hide Latency in Strict Consistency Model</h3>
+<p>The speculation techniques discussed in Chapter 3 can be used to hide memory latency. They can also be employed to mask the latency caused by strict coherence models, thereby gaining the advantages of a relaxed memory model. The core idea is that the processor dynamically reorders memory accesses through out-of-order execution, allowing instructions to execute in a non-sequential order. This out-of-order memory access may violate the principle of sequential consistency, thereby affecting program execution results. This issue can be avoided by leveraging the delayed commit feature of processors that support speculative execution: assuming the cache coherence protocol operates based on an invalidation mechanism, if the processor receives an invalidation notification for a memory address before the corresponding memory reference operation is committed, it triggers a speculative recovery mechanism to roll back the computation and restart execution from the invalidated memory reference.</p>
+<p>If the processor&#39;s reordering of memory requests leads to an execution order that could produce results different from those seen under sequential consistency, the processor will re-execute. The key to this approach is that the processor only needs to ensure that the final result is the same as if all accesses were completed in order, by detecting situations where discrepancies might occur. The advantage of this scheme is that speculative restarts are rarely triggered, only when unsynchronized accesses actually cause a race condition.</p>
+<p>Some argue that combining sequential or processor consistency with speculative execution is the preferred coherence model. The reasoning is as follows:</p>
+<ul>
+<li><p>Aggressive implementations of sequential or processor consistency can yield greater advantages than relaxed models.</p>
+</li>
+<li><p>It requires only minimal additional cost on processors that already support speculative execution.</p>
+</li>
+<li><p>It allows programmers to reason based on the simpler programming model of sequential or processor consistency.</p>
+</li>
+</ul>
+<h3 id="Inclusion-and-Its-Implementation">6.3 Inclusion and Its Implementation</h3>
+<p>All multiprocessors use a multi-level cache hierarchy to reduce the demand on global interconnects and the latency caused by cache misses. If the cache has a multilevel inclusion property (i.e., each level of the cache hierarchy is a subset of the level farther from the processor), then a multi-level structure can be employed. This reduces contention between coherence traffic and processor traffic when snooping and processors must compete for the cache. Many processors with multi-level caches enforce the inclusion property. This restriction is also known as the subset property, because each cache is a subset of the cache below it in the hierarchy.</p>
+<p>Consider a two-level example: any miss in L1 either hits in L2 or causes a miss in L2, resulting in data being brought into both L1 and L2. Similarly, any invalidation that hits in L2 must be sent to L1. The question is: what happens when the block sizes of L1 and L2 differ?</p>
+<p>Choosing different block sizes is quite reasonable, as L2 is much larger and its latency accounts for a larger portion of the miss penalty, so using a larger block size—one block in L2 represents multiple blocks in L1, and a miss in L2 results in the replacement of data equivalent to multiple L1 blocks. For example, if the block size of L2 is four times that of L1, a miss in L2 will replace data equivalent to four L1 blocks.</p>
+<p>To maintain inclusion under varying block sizes, when a replacement operation occurs at a lower level, we must probe the higher levels of the hierarchy to ensure that the replaced data is invalid in the higher-level caches; different associativity settings introduce challenges.</p>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-4/" rel="prev"><span>← Previous chapter</span>Chapter 4 Data-Level Parallelism in Vector, SIMD, and GPU Architectures</a>
+  
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

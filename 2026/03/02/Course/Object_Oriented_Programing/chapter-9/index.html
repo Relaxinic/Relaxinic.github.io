@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 9 Smart Pointers — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Object-Oriented Programing</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-06-18">18 Jun 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-9-Smart-Pointers">Chapter 9 Smart Pointers</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#91-RAII">1 RAII</a></li>
+    <li><a href="#92-Smart-Pointers-in-Standard-Library">2 Smart Pointers in Standard Library</a>
+      <ul class="toc-subsections">
+        <li><a href="#Custom-Deleter">2.1 Custom Deleter</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<p>In C++ programming, managing dynamically allocated memory is a critical task. Traditional manual memory management (using <code>new</code> and <code>delete</code>) is error-prone and often leads to issues such as memory leaks (e.g., forgetting to release memory) or dangling pointers (e.g., accessing already freed memory). Smart pointers were introduced to address these challenges in a safer and more automated manner.</p>
+<h2 id="91-RAII">1 RAII</h2>
+<p>RAII (Resource Acquisition Is Initialization) is a powerful and widely used programming technique in C++. Its core idea is to bind the lifecycle of a resource to that of an object. Resource acquisition occurs during object construction, and resource release occurs during object destruction.</p>
+<p>When designing an RAII object, its copy (and move) semantics must be carefully considered. The main handling strategies are as follows:</p>
+<ul>
+<li><p><strong>Prohibit copying</strong>: When a resource should not be shared among multiple owners, or when copying is too expensive, copying of the RAII object should be prohibited. Specifically, the copy constructor and copy assignment operator should be disabled (by making them <code>private</code> without implementation, or using <code>= delete</code>).</p>
+</li>
+<li><p><strong>Shared ownership</strong>: Allow multiple RAII objects to jointly manage the same resource, using mechanisms such as reference counting to ensure that the resource is released only when the last owner is destroyed.</p>
+</li>
+<li><p><strong>Copy the underlying resource (i.e., deep copy)</strong>: When the resource itself can be copied and it is reasonable to create an independent copy, this strategy can be adopted: when copying the RAII object, not only the object itself is copied, but also the resource it manages, thereby creating a completely independent copy of the resource.</p>
+</li>
+<li><p><strong>Transfer ownership</strong>: Allow RAII objects to transfer ownership of the managed resource through move operations (such as using move constructors and move assignment operators) without performing a deep copy. After the move, the source object is typically left in a valid but unspecified state (often an &quot;empty&quot; state).</p>
+</li>
+</ul>
+<h2 id="92-Smart-Pointers-in-Standard-Library">2 Smart Pointers in Standard Library</h2>
+<p>Smart pointers are a concrete application of the RAII principle in dynamic memory management. They are class objects that behave like raw pointers but automatically release the dynamically allocated memory they point to when their lifetime ends.</p>
+<p>The C++ standard library provides several main types of smart pointers to meet different memory management needs:</p>
+<p><code>std::unique_ptr</code></p>
+<ul>
+<li><p>Exclusive ownership: <code>std::unique_ptr</code> has unique and exclusive ownership of the object it points to, meaning that at any given time, only one <code>std::unique_ptr</code> instance can point to and manage a specific piece of dynamic memory.</p>
+</li>
+<li><p>Non-copyable but movable: To ensure ownership uniqueness, <code>std::unique_ptr</code> does not support copy operations (i.e., the copy constructor and copy assignment operator are disabled). However, it supports move operations (<code>std::move</code>), allowing ownership to be transferred from one <code>std::unique_ptr</code> to another. After the transfer, the original <code>std::unique_ptr</code> no longer points to the object.</p>
+</li>
+<li><p>Lightweight: <code>std::unique_ptr</code> has very low overhead, typically comparable to a raw pointer.</p>
+</li>
+<li><p>Creation method: It is recommended to use <code>std::make_unique&lt;T&gt;(...)</code> to create a <code>std::unique_ptr</code>. This approach is safer and results in cleaner code.</p>
+</li>
+</ul>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;memory&gt;     // This header file needs to be included to use smart pointers.
+
+struct MyData {
+    int value;
+    MyData(int v) : value(v) {
+        std::cout &lt;&lt; &quot;MyData(&quot; &lt;&lt; value &lt;&lt; &quot;) constructed.&quot; &lt;&lt; std::endl;
+    }
+    ~MyData() {
+        std::cout &lt;&lt; &quot;MyData(&quot; &lt;&lt; value &lt;&lt; &quot;) destructed.&quot; &lt;&lt; std::endl;
+    }
+    void print() const {
+        std::cout &lt;&lt; &quot;Value: &quot; &lt;&lt; value &lt;&lt; std::endl;
+    }
+};
+
+void process_unique_data(std::unique_ptr&lt;MyData&gt; ptr) {
+    if (ptr) {
+        ptr-&gt;print();
+    } else {
+        std::cout &lt;&lt; &quot;Pointer is null.&quot; &lt;&lt; std::endl;
+    }
+} 
+// ptr goes out of scope here; if it owns an object, the object will be destroyed
+
+int main() {
+    // Use std::make_unique to create a unique_ptr
+    std::unique_ptr&lt;MyData&gt; u_ptr1 = std::make_unique&lt;MyData&gt;(10);
+
+    if (u_ptr1) {
+        u_ptr1-&gt;print(); // Accessing members through -&gt;
+        std::cout &lt;&lt; &quot;u_ptr1&#39;s data value: &quot; &lt;&lt; u_ptr1-&gt;value &lt;&lt; std::endl;
+    }
+
+    // Transfer of Ownership
+    std::unique_ptr&lt;MyData&gt; u_ptr3 = std::move(u_ptr1); 
+    // u_ptr1 is now empty
+
+    // Passing unique_ptr as a parameter to a function (ownership is transferred)
+    process_unique_data(std::move(u_ptr3));
+    // u_ptr3 becomes empty after calling process_unique_data because ownership has been transferred to the function
+    return 0;
+    // Auto-destruct
+}
+</code></pre>
+<p><code>std::shared_ptr</code></p>
+<ul>
+<li><p>Shared Ownership: <code>std::shared_ptr</code> allows multiple instances to jointly point to and own the same dynamically allocated object. It internally uses a reference count mechanism to track how many <code>std::shared_ptr</code> instances are sharing the object.</p>
+</li>
+<li><p>Reference Counting: When a new <code>std::shared_ptr</code> points to the object (e.g., through copy construction or assignment), the reference count increases. When a <code>std::shared_ptr</code> is destroyed or no longer points to the object, the reference count decreases.</p>
+</li>
+<li><p>Automatic Destruction: The object is automatically deleted only when the last <code>std::shared_ptr</code> pointing to it is destroyed, causing the reference count to drop to zero.</p>
+</li>
+<li><p>Creation Method: It is also recommended to use <code>std::make_shared&lt;T&gt;(...)</code> to create a <code>std::shared_ptr</code>.</p>
+</li>
+</ul>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;memory&gt;
+#include &lt;vector&gt;
+
+struct SharedResource {
+    int id;
+    SharedResource(int i) : id(i) {
+        std::cout &lt;&lt; &quot;SharedResource(&quot; &lt;&lt; id &lt;&lt; &quot;) created.&quot; &lt;&lt; std::endl;
+    }
+    ~SharedResource() {
+        std::cout &lt;&lt; &quot;SharedResource(&quot; &lt;&lt; id &lt;&lt; &quot;) destroyed.&quot; &lt;&lt; std::endl;
+    }
+    void use() const {
+        std::cout &lt;&lt; &quot;Using SharedResource(&quot; &lt;&lt; id &lt;&lt; &quot;).&quot; &lt;&lt; std::endl;
+    }
+};
+
+int main() {
+    // Using std::make_shared to create a shared_ptr
+    std::shared_ptr&lt;SharedResource&gt; s_ptr1 = std::make_shared&lt;SharedResource&gt;(101);
+
+    std::cout &lt;&lt; &quot;s_ptr1 use_count: &quot; &lt;&lt; s_ptr1.use_count() &lt;&lt; std::endl; // Output 1
+
+    s_ptr1-&gt;use();
+
+    std::shared_ptr&lt;SharedResource&gt; s_ptr2 = s_ptr1; // Copy construction, reference count increases
+    std::cout &lt;&lt; &quot;s_ptr1 use_count: &quot; &lt;&lt; s_ptr1.use_count() &lt;&lt; std::endl; // Output 2
+    std::cout &lt;&lt; &quot;s_ptr2 use_count: &quot; &lt;&lt; s_ptr2.use_count() &lt;&lt; std::endl; // Output 2
+
+    std::vector&lt;std::shared_ptr&lt;SharedResource&gt;&gt; ptr_vector;
+    ptr_vector.push_back(s_ptr1);
+    ptr_vector.push_back(s_ptr2);
+    ptr_vector.push_back(std::make_shared&lt;SharedResource&gt;(202));
+
+    std::cout &lt;&lt; &quot;s_ptr1 use_count after vector push: &quot; &lt;&lt; s_ptr1.use_count() &lt;&lt; std::endl; // Output 4 (s_ptr1, s_ptr2, vector[0], vector[1])
+    std::cout &lt;&lt; &quot;ptr_vector[2] use_count: &quot; &lt;&lt; ptr_vector[2].use_count() &lt;&lt; std::endl; // Output 1
+
+    for (const auto&amp; ptr : ptr_vector) {
+        ptr-&gt;use();
+    }
+
+    s_ptr1.reset(); // s_ptr1 No longer pointing to an object, reference count decreased.
+    std::cout &lt;&lt; &quot;After s_ptr1.reset(), s_ptr2 use_count: &quot; &lt;&lt; s_ptr2.use_count() &lt;&lt; std::endl; // Output 3
+
+    ptr_vector.clear(); //The shared_ptr in the vector is destroyed, and the reference count decreases accordingly.
+    std::cout &lt;&lt; &quot;After vector.clear(), s_ptr2 use_count: &quot; &lt;&lt; s_ptr2.use_count() &lt;&lt; std::endl; // Output 1
+
+    // s_ptr2 goes out of scope at the end of the main function, the reference count becomes 0, and SharedResource(101) is destroyed
+    // SharedResource(202) reference count becomes 0 and is destroyed after ptr_vector.clear()
+    return 0;
+}
+</code></pre>
+<p><code>std::weak_ptr</code></p>
+<ul>
+<li><p>Non-owning pointer: <code>std::weak_ptr</code> is an observer pointer that points to an object managed by <code>std::shared_ptr</code>, but it does not participate in the object&#39;s reference counting. That is, it neither increases nor decreases the object&#39;s strong reference count. Therefore, the existence of such a pointer does not prevent the object it points to from being destroyed.</p>
+</li>
+<li><p>Solving circular dependencies: The main purpose of <code>std::weak_ptr</code> is to break circular dependency issues that may arise with <code>std::shared_ptr</code>. When two or more objects strongly reference each other through <code>std::shared_ptr</code>, even if there are no external pointers pointing to them, their reference counts cannot drop to zero, leading to memory leaks. By using <code>std::weak_ptr</code> in one or more links of the circular reference chain, this cycle can be broken, allowing the objects to be properly reclaimed.</p>
+</li>
+<li><p>Checking object liveness: Since <code>std::weak_ptr</code> does not own the object, the object it points to may be destroyed during its lifetime. Therefore, before accessing the object pointed to by <code>std::weak_ptr</code>, it must be converted to a <code>std::shared_ptr</code> by calling its <code>lock()</code> method. If the object still exists, <code>lock()</code> returns a valid <code>std::shared_ptr</code>; otherwise, it returns an empty <code>std::shared_ptr</code>.</p>
+</li>
+</ul>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;memory&gt;
+
+struct NodeB; // Forward declaration
+
+struct NodeA {
+    std::shared_ptr&lt;NodeB&gt; b_ptr;
+    NodeA() { std::cout &lt;&lt; &quot;NodeA created.&quot; &lt;&lt; std::endl; }
+    ~NodeA() { std::cout &lt;&lt; &quot;NodeA destroyed.&quot; &lt;&lt; std::endl; }
+};
+
+struct NodeB {
+    // If `std::shared_ptr&lt;NodeA&gt; a_ptr;` is used here, it will cause a circular dependency.
+    std::weak_ptr&lt;NodeA&gt; a_ptr; // Using weak_ptr to break cycles
+    NodeB() { std::cout &lt;&lt; &quot;NodeB created.&quot; &lt;&lt; std::endl; }
+    ~NodeB() { std::cout &lt;&lt; &quot;NodeB destroyed.&quot; &lt;&lt; std::endl; }
+
+    void check_a() {
+        if (auto locked_a = a_ptr.lock()) { // Attempt to obtain shared_ptr
+            std::cout &lt;&lt; &quot;NodeA is still alive.&quot; &lt;&lt; std::endl;
+            // It is safe to use locked_a.
+        } else {
+            std::cout &lt;&lt; &quot;NodeA has been destroyed.&quot; &lt;&lt; std::endl;
+        }
+    }
+};
+
+int main() {
+    std::shared_ptr&lt;NodeA&gt; a = std::make_shared&lt;NodeA&gt;();
+    std::shared_ptr&lt;NodeB&gt; b = std::make_shared&lt;NodeB&gt;();
+
+    a-&gt;b_ptr = b; // NodeA points to NodeB
+    b-&gt;a_ptr = a; // NodeB points to NodeA (via weak_ptr)
+
+    std::cout &lt;&lt; &quot;a use_count: &quot; &lt;&lt; a.use_count() &lt;&lt; std::endl; // Usually 1 (a in main)
+    std::cout &lt;&lt; &quot;b use_count: &quot; &lt;&lt; b.use_count() &lt;&lt; std::endl; // Usually 2 (b in main and a-&gt;b_ptr)
+
+    b-&gt;check_a();
+
+    // When a and b go out of scope:
+
+    // 1. a&#39;s shared_ptr is destroyed, NodeA&#39;s reference count becomes 0 (because b-&gt;a_ptr is a weak_ptr), and NodeA is destroyed.
+
+    // 2. When NodeA is destroyed, its member a-&gt;b_ptr (shared_ptr) is destroyed, reducing NodeB&#39;s reference count.
+
+    // 3. b&#39;s shared_ptr is destroyed. If NodeB&#39;s reference count becomes 0 at this point, NodeB is destroyed.
+
+    // If b-&gt;a_ptr were a shared_ptr, neither a nor b&#39;s reference counts could drop to 0, resulting in a memory leak.
+
+    return 0; // a and b are destroyed
+}
+</code></pre>
+<h3 id="Custom-Deleter">2.1 Custom Deleter</h3>
+<p>The aforementioned <code>std::shared_ptr</code> and <code>std::unique_ptr</code> both support custom deleters. These provide a callable object for the smart pointers. When releasing resources, this callable object is invoked to perform the actual deallocation instead of the default <code>delete</code>.</p>
+<p>Many resources are not allocated via <code>new</code>/<code>delete</code>, but are acquired and released through specific C APIs or library functions. For example:</p>
+<ul>
+<li><p><code>FILE*</code> (C file handle): acquired via <code>fopen()</code>, released via <code>fclose()</code>.</p>
+</li>
+<li><p><code>HANDLE</code> (Windows API handle): acquired via <code>CreateEvent()</code>, etc., released via <code>CloseHandle()</code>.</p>
+</li>
+<li><p><code>sqlite3*</code> (SQLite database connection): acquired via <code>sqlite3_open()</code>, released via <code>sqlite3_close()</code>.</p>
+</li>
+<li><p>Memory allocated via <code>malloc()</code>: released via <code>free()</code>.</p>
+</li>
+</ul>
+<p>In <code>std::shared_ptr</code>, the custom deleter is passed as the second argument to the constructor:</p>
+<pre><code class="language-cpp">std::shared_ptr&lt;T&gt; ptr(raw_pointer, custom_deleter);
+</code></pre>
+<p><code>raw_pointer</code> is a raw pointer pointing to the resource to be managed.</p>
+<p><code>custom_deleter</code> is a callable object that accepts a parameter of type <code>T*</code> and performs the release of the resource.</p>
+<p><code>std::unique_ptr</code> also supports custom deleters, but its syntax is slightly different because the deleter is part of its template parameters. This allows <code>unique_ptr</code> to know the type of the deleter at compile time, potentially resulting in lower memory overhead and faster runtime performance. The following example demonstrates its usage:</p>
+<pre><code class="language-cpp">std::unique_ptr&lt;FILE, decltype(&amp;close_file_func)&gt; unique_file_ptr(fopen(&quot;test_unique.txt&quot;, &quot;w&quot;), &amp;close_file_func);
+// Or use lambda
+std::unique_ptr&lt;FILE, decltype([](FILE* f){ if(f) fclose(f); })&gt; unique_file_ptr_lambda(fopen(&quot;test_unique_lambda.txt&quot;, &quot;w&quot;), [](FILE* f){ if(f) fclose(f); });
+</code></pre>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-8/" rel="prev"><span>← Previous chapter</span>Chapter 8 Exception</a>
+  <a href="../chapter-10/" rel="next"><span>Next chapter →</span>Chapter 10 Design Concepts</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

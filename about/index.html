@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en" data-page="section">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- theme-head:start -->
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <!-- theme-head:end -->
+  <title>About — Relaxinic</title>
+  <link rel="preload" href="../media/disc.webp" as="image">
+  <link rel="preload" href="../img/favicon.png" as="image">
+  <link rel="preload" href="../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../styles.css?v=31">
+  <link rel="stylesheet" href="../page-transition.css?v=7">
+  <script type="module" src="../js/section.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-section="about">
+  <header class="site-header">
+    <a class="wordmark" href="../">Relaxinic</a>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell section-shell">
+    <div class="section-heading">
+      <div class="section-disc about-mark" data-transition-disc aria-hidden="true">
+        <div class="disc-face">
+          <img src="../media/disc.webp" width="1254" height="1254" alt="">
+        </div>
+        <img class="about-favicon" src="../img/favicon.png" width="300" height="300" alt="">
+      </div>
+      <h1 data-section-title>About</h1>
+    </div>
+    <div class="about-content">
+      <section aria-labelledby="currently">
+        <h2 id="currently">Currently</h2>
+        <p>I am an undergraduate student in Computer Science at Zhejiang University (Class of 2028). My work and interests focus on the intersection of artificial intelligence and music.</p>
+      </section>
+      <section aria-labelledby="about-this-site">
+        <h2 id="about-this-site">About this site</h2>
+        <p>This website serves as a personal research and writing space. Here I document technical experiments, research notes, and small projects related to AI‑driven music technologies. The site also collects occasional writings on music, culture, and listening.</p>
+      </section>
+      <section aria-labelledby="research-interests">
+        <h2 id="research-interests">Research Interests</h2>
+        <ul>
+          <li>Music Generation</li>
+          <li>Human-AI Music Interaction</li>
+          <li>Multimodal Music Understanding</li>
+        </ul>
+      </section>
+      <section aria-labelledby="contact">
+        <h2 id="contact">Contact</h2>
+        <div class="contact-links">
+          <a href="https://github.com/Relaxinic" aria-label="GitHub" title="GitHub">
+            <img src="../img/contact-github.svg" width="22" height="22" alt="">
+          </a>
+          <a href="https://www.cc98.org/user/id/759815" aria-label="CC98" title="CC98">
+            <img src="../img/contact-cc98.png" width="22" height="22" alt="">
+          </a>
+          <a href="https://www.last.fm/user/Relaxinic" aria-label="Last.fm" title="Last.fm">
+            <img src="../img/contact-lastfm.svg" width="22" height="22" alt="">
+          </a>
+          <a href="mailto:huyunze@zju.edu.cn" aria-label="Email" title="Email">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="2.75" y="5.75" width="18.5" height="12.5" rx="2"/>
+              <path d="m3.5 7 8.5 6 8.5-6"/>
+            </svg>
+          </a>
+        </div>
+      </section>
+    </div>
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

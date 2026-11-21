@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 8 Exception — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Object-Oriented Programing</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-06-07">07 Jun 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-8-Exception">Chapter 8 Exception</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#81-Throwing-Execption">1 Throwing Execption</a></li>
+    <li><a href="#82-Exception-and-Inheritance">2 Exception and Inheritance</a></li>
+    <li><a href="#83-Exception-in-Standard-Library">3 Exception in Standard Library</a></li>
+    <li><a href="#84-Exception-Specifications">4 Exception Specifications</a></li>
+    <li><a href="#85-Exception-in-Ctors-and-Dtors">5 Exception in Ctors and Dtors</a></li>
+    <li><a href="#86-Exception-Safety">6 Exception Safety</a></li>
+    <li><a href="#87-Summary">7 Summary</a></li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<p>A run-time error refers to an unexpected situation that occurs during the execution of a program.</p>
+<p>An exception is an abnormal or unexpected situation that occurs while a program is running, which may prevent the program from continuing its normal flow. The exception mechanism provides a structured way to handle these runtime errors by separating the core logic code that describes &quot;what the program should do&quot; from the code that handles error conditions, making the program structure clearer.</p>
+<p>When a function may throw an exception, the caller can choose different handling strategies:</p>
+<ul>
+<li><p>Very concerned: Use a try-catch block to catch and handle specific types of exceptions, preventing the exception from propagating further.</p>
+</li>
+<li><p>Moderately concerned: Catch the exception for partial handling (such as logging), then use <code>throw;</code> to rethrow the exception, allowing the upper-level caller to continue processing.</p>
+</li>
+<li><p>Not concerned about certain special cases: Use multiple catch blocks to handle specific exception types separately, and use <code>catch (...)</code> to handle all other types of exceptions.</p>
+</li>
+<li><p>Not concerned at all: The caller&#39;s code may not even be aware of the issue, and the exception will continue to propagate upward until it finds a matching catch block or causes the program to terminate.</p>
+</li>
+</ul>
+<pre><code class="language-cpp">try {
+    // Code that may throw an exception
+} catch (ExceptionType1 param1) {
+    // Handle exceptions of type ExceptionType1
+} catch (ExceptionType2 param2) {
+    // Handling exceptions of type ExceptionType2
+} catch (...) {
+    // Handle all other types of exceptions
+}
+</code></pre>
+<p>The <code>catch</code> block checks all handlers in order from top to bottom:</p>
+<ul>
+<li><p>First, it looks for an exact match of the exception type.</p>
+</li>
+<li><p>Then, it applies basic class conversion, which only applies when catching exceptions by reference (<code>&amp;</code>) or pointer (<code>*</code>), allowing a base class reference/pointer to catch derived class exceptions (polymorphism). That is, even if a derived class exception is thrown, if the <code>catch</code> block for the base class exception appears before the <code>catch</code> block for the derived class exception, the exception will be caught by the former first (somewhat counterintuitive).</p>
+</li>
+<li><p>Finally, if none match, the ellipsis (<code>...</code>) catches exceptions of any type.</p>
+</li>
+</ul>
+<h2 id="81-Throwing-Execption">1 Throwing Execption</h2>
+<p>In C++, we use the <code>throw</code> keyword to throw exceptions.</p>
+<p>The <code>throw</code> statement has two main forms:</p>
+<p><code>throw expression;</code>: This is the most common form, used to throw a new exception object. The <code>expression</code> can be of any type and any value. The value of this <code>expression</code> is used to initialize a temporary exception object, which is then passed to the exception handling mechanism.</p>
+<pre><code class="language-cpp">template &lt;class T&gt;
+T&amp; Vector&lt;T&gt;::operator[](int indx) {
+    if (indx &lt; 0 || indx &gt;= m_size) {
+        // Throw an exception object indicating an index out of bounds
+        // Here, an object of type VectorIndexError is thrown
+        throw VectorIndexError(indx);
+    }
+    return m_elements[indx];
+}
+</code></pre>
+<p>We can throw almost any type of value, but it is generally recommended to throw objects of class types, especially standard exception classes that inherit from <code>std::exception</code> or custom exception classes, so that more information about the error can be carried.</p>
+<ul>
+<li><p>Throwing an object (recommended): <code>throw MyErrorType(&quot;Detail message&quot;);</code></p>
+</li>
+<li><p>Throwing a basic type (not recommended): <code>throw 42;</code> (lacks error information)</p>
+</li>
+<li><p>Throwing a pointer (strongly not recommended): <code>throw new MyErrorType();</code> (requires manual <code>delete</code> in the <code>catch</code> block, prone to memory leaks)</p>
+</li>
+</ul>
+<p>When <code>throw expression;</code> is executed:</p>
+<ul>
+<li><p>The execution of the current function stops immediately</p>
+</li>
+<li><p>The program begins the process of stack unwinding, starting from the current scope and sequentially calling the destructors of local objects</p>
+</li>
+<li><p>During stack unwinding, the program searches up the call stack for a matching <code>catch</code> block; the search process considers the type of the exception object and the parameter types declared in the <code>catch</code> block, including base-to-derived class reference/pointer conversions</p>
+</li>
+<li><p>Once a matching <code>catch</code> block is found, stack unwinding stops, and control transfers to the beginning of that <code>catch</code> block</p>
+</li>
+<li><p>If no matching <code>catch</code> block is found all the way back to the <code>main</code> function, <code>std::terminate()</code> is called, which by default terminates the program</p>
+</li>
+</ul>
+<p><code>throw;</code>: This form is called re-throwing, and it can only be used inside a <code>catch</code> block. Its purpose is to throw the currently handled exception (i.e., the exception just caught by this <code>catch</code> block) again to an outer scope.</p>
+<pre><code class="language-cpp">void outer2() {
+    String err(&quot;exception caught&quot;);
+    try {
+        func(); // func() may throw VectorIndexError
+    } catch (VectorIndexError&amp; e) {
+        // Caught VectorIndexError exception
+        std::cout &lt;&lt; err &lt;&lt; &quot;: &quot; &lt;&lt; e.diagnostic() &lt;&lt; std::endl; // Perform local processing (e.g., logging)
+
+        // Rethrow the same exception for the upper-level caller to handle.
+        throw; // Spread anomaly
+    }
+    // If not rethrown and no other exception occurs, control returns here
+    // But because of the throw above, control continues to propagate upward
+}
+</code></pre>
+<h2 id="82-Exception-and-Inheritance">2 Exception and Inheritance</h2>
+<p>The inheritance mechanism can be used to build a hierarchy of exception classes. By defining a base exception class and multiple derived exception classes, we can organize and handle different types of errors more flexibly.</p>
+<pre><code class="language-cpp">class MathErr {
+    ...
+    virtual void diagnostic();
+};
+class OverflowErr : public MathErr { ... }
+class UnderflowErr : public MathErr { ... }
+class ZeroDivideErr : public MathErr { ... }
+
+// ...
+
+try {
+    // code to exercise math options
+    throw UnderFlowErr(); // Throwing a derived class exception
+} catch (ZeroDivideErr&amp; e) {
+    // Handle ZeroDivideErr (Exact Match)
+    // handle zero divide case
+} catch (MathErr&amp; e) {
+    // Handle MathErr and its derived classes (such as UnderflowErr)
+    // handle other math errors
+} catch (...) {
+    // Handle any other exceptions
+}
+</code></pre>
+<h2 id="83-Exception-in-Standard-Library">3 Exception in Standard Library</h2>
+<p>The C++ standard library provides a set of standard exception classes that form a hierarchy through inheritance. These are typically used to report errors that may occur in standard library functions. Common standard library exceptions include:</p>
+<ul>
+<li><p><code>std::exception</code>: The base class for all standard library exceptions</p>
+</li>
+<li><p><code>std::bad_alloc</code>: Thrown when a <code>new</code> operation fails to allocate memory. When <code>new</code> fails, it does not return <code>nullptr</code> (unless <code>std::nothrow</code> is specified), but instead throws a <code>std::bad_alloc</code> exception by default</p>
+</li>
+<li><p><code>std::runtime_error</code>: The base class for runtime errors, such as <code>std::overflow_error</code>, <code>std::range_error</code></p>
+</li>
+<li><p><code>std::logic_error</code>: The base class for program logic errors, such as <code>std::domain_error</code>, <code>std::invalid_argument</code>, <code>std::out_of_range</code>, <code>std::length_error</code></p>
+</li>
+</ul>
+<h2 id="84-Exception-Specifications">4 Exception Specifications</h2>
+<p>Exception specification (<code>throw(...)</code>) is used to declare the types of exceptions that a function may throw.</p>
+<pre><code class="language-cpp">// May throw an exception of type MathErr.
+void abc(int a) throw(MathErr) {
+    ... 
+}
+
+// Declare that no exceptions will be thrown
+void goodguy() throw() {
+    ...
+}
+
+// No exception specification; any exception may be thrown.
+void average() { } 
+
+// Introduced in C++11, explicitly indicates that the function will not throw exceptions.
+void lala() noexcept; 
+</code></pre>
+<h2 id="85-Exception-in-Ctors-and-Dtors">5 Exception in Ctors and Dtors</h2>
+<p>A special characteristic of constructors is that they have no return value, so failure cannot be indicated through a return value.</p>
+<p>Traditional methods for handling constructor failures include using &quot;uninitialized flags&quot; or placing initialization work in a separate <code>Init()</code> function.</p>
+<p>However, a better approach is to throw an exception in the constructor to indicate initialization failure.</p>
+<p>When a constructor throws an exception, the destructor of that object will not be called. Therefore, before throwing an exception in the constructor, it is necessary to ensure that any allocated resources are properly cleaned up. This is typically achieved through the RAII (Resource Acquisition Is Initialization) technique.</p>
+<hr>
+<p>A destructor is called in the following situations:</p>
+<ul>
+<li><p>Normal invocation: when an object goes out of its scope.</p>
+</li>
+<li><p>When an exception occurs: during stack unwinding, as the exception propagates upward and passes through the lifetime scope of an object, the destructor of that object is called to perform resource cleanup.</p>
+</li>
+</ul>
+<blockquote>
+<p>Exceptions should be avoided in destructors.</p>
+</blockquote>
+<h2 id="86-Exception-Safety">6 Exception Safety</h2>
+<p>Exception safety: The ability of a program to maintain the validity of its state and avoid resource leaks when an exception occurs.</p>
+<p>When an exception is thrown, an exception-safe function does not leak any resources and does not allow data corruption.</p>
+<p>Exception safety is typically categorized into the following levels (from weakest to strongest):</p>
+<ul>
+<li><p>Basic guarantee: If an operation fails and throws an exception, the program&#39;s state remains valid. No data corruption occurs, and all invariants are preserved. No resource leaks occur (e.g., memory, file handles, locks, etc.). However, the program&#39;s state is not guaranteed to be predictable or identical to its state before the operation.</p>
+</li>
+<li><p>Strong guarantee: If an operation fails and throws an exception, the program&#39;s state is rolled back to its state before the operation, as if the operation never happened. This ensures an &quot;all-or-nothing&quot; change to the program&#39;s state (similar to the atomicity of database concurrency control). No resource leaks occur. It provides the highest level of logical consistency and simplifies error handling.</p>
+</li>
+<li><p>No-throw guarantee: The function guarantees that it will not throw any exceptions. It either completes successfully or fails without throwing an exception (e.g., by returning an error code or setting an error state). This is the strongest guarantee, simplifying error handling for the caller since no try-catch is needed.</p>
+</li>
+</ul>
+<blockquote>
+<p>The exception safety guarantee provided by a function is typically only as strong as the weakest guarantee among all the functions it calls.</p>
+</blockquote>
+<h2 id="87-Summary">7 Summary</h2>
+<p>When designing exceptions, the following principles should be followed:</p>
+<ul>
+<li><p>Exceptions should be used to indicate error situations that prevent the program from proceeding normally, rather than for normal control flow.</p>
+</li>
+<li><p>Exceptions are a mechanism for handling errors, not an excuse for writing poor code. When other language features (such as RAII) can be used to simplify resource management, they should be prioritized.</p>
+</li>
+</ul>
+<p>Purpose of the C++ exception mechanism:</p>
+<ul>
+<li><p>Enables dynamic propagation of error information</p>
+</li>
+<li><p>Ensures that objects on the stack are properly destroyed during exception propagation</p>
+</li>
+<li><p>Can be used to terminate functions that are unable to continue execution</p>
+</li>
+<li><p>Particularly suitable for handling cases where constructors cannot complete their tasks</p>
+</li>
+</ul>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-7/" rel="prev"><span>← Previous chapter</span>Chapter 7 Templates</a>
+  <a href="../chapter-9/" rel="next"><span>Next chapter →</span>Chapter 9 Smart Pointers</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

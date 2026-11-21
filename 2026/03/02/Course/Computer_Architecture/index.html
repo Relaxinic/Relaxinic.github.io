@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Computer Architecture — Relaxinic</title>
+  <link rel="preload" href="../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../course/">Notes</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-03-02">02 Mar 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title">Computer Architecture</h1>
+        </div>
+      </header>
+
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body course-intro">
+<aside class="post-callout">
+  <strong class="callout-title">Warning</strong>
+  These notes are written primarily for my own study needs. They may not be comprehensive or suitable for everyone, so feel free to browse selectively.
+</aside>
+
+<aside class="post-callout">
+  <strong class="callout-title">Acknowledgments</strong>
+  Part of these notes draws inspiration from the excellent Computer Architecture notes written by <a href="https://note.noughtq.top/sys/ca/" target="_blank">NoughtQ</a>. I am also grateful to Professor Kai Bu for his teaching and guidance in the course, which helped shape the understanding reflected in these notes.
+</aside>
+</div>
+<nav class="chapter-index" aria-label="Chapters">
+  <ol class="post-list">
+    <li>
+      <a class="post-link" href="chapter-1/">
+        <span class="post-title">Chapter 1 Fundamentals of Quantitative Design and Analysis</span>
+        <time class="post-date" datetime="2026-03-02">02 Mar 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-2/">
+        <span class="post-title">Chapter 2 Memory Hierarchy Design</span>
+        <time class="post-date" datetime="2026-03-14">14 Mar 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-3/">
+        <span class="post-title">Chapter 3 Instruction-Level Parallelism and Its Exploitation</span>
+        <time class="post-date" datetime="2026-04-14">14 Apr 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-4/">
+        <span class="post-title">Chapter 4 Data-Level Parallelism in Vector, SIMD, and GPU Architectures</span>
+        <time class="post-date" datetime="2026-05-20">20 May 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-5/">
+        <span class="post-title">Chapter 5 Thread-Level Parallelism</span>
+        <time class="post-date" datetime="2026-06-30">30 Jun 2026</time>
+      </a>
+    </li>
+  </ol>
+</nav>
+
+        </div>
+      </div>
+    </article>
+<script type="application/json" id="chapter-anchors">{"Chapter-1-Fundamentals-of-Quantitative-Design-and-Analysis":"chapter-1/","11-Computer-Architecture":"chapter-1/","12-Quantitative-Principles-of-Computer-Design":"chapter-1/","Chapter-2-Memory-Hierarchy-Design":"chapter-2/","21-Memory-Hierarchy":"chapter-2/","Memory-Technologies":"chapter-2/","Techniques-for-Higher-Bandwidth":"chapter-2/","Four-Memory-Hierarchy-Questions":"chapter-2/","Block-Placement":"chapter-2/","Block-Identification":"chapter-2/","Block-Replacement":"chapter-2/","Write-Strategy":"chapter-2/","22-Cache":"chapter-2/","Performance":"chapter-2/","Impact-of-Caches-on-Processor-Performance":"chapter-2/","Out-of-Order-Execution-Processors":"chapter-2/","Basic-Optimizations":"chapter-2/","Larger-Block-Size":"chapter-2/","Larger-Caches":"chapter-2/","Higher-Associativity":"chapter-2/","Multilevel-Caches":"chapter-2/","Giving-Priority-to-Read-Misses-over-Writes":"chapter-2/","Avoiding-Address-Translation-During-Indexing-of-the-Cache":"chapter-2/","Advanced-Optimizations":"chapter-2/","Small-and-Simple-First-Level-Caches":"chapter-2/","Way-Prediction":"chapter-2/","Pipelined-Access-and-Multibanked-Caches":"chapter-2/","Nonblocking-Caches":"chapter-2/","Critical-Word-First-and-Early-Start":"chapter-2/","Merging-Write-Buffer":"chapter-2/","Compiler-Optimizations":"chapter-2/","Hardware-Prefetching-of-Instructions-and-Data":"chapter-2/","Compiler-Controlled-Prefetching":"chapter-2/","Using-HBM-to-Extend-the-Memory-Hierarchy":"chapter-2/","23-Virtual-Memory":"chapter-2/","Four-Memory-Hierarchy-Questions-Revisited":"chapter-2/","Techniques-for-Fast-Address-Translation":"chapter-2/","Page-Size":"chapter-2/","Protection":"chapter-2/","24-The-Design-of-Memory-Hierarchies":"chapter-2/","Protection-Virtualization-and-Instruction-Set-Architecture":"chapter-2/","Autonomous-Instruction-Fetch-Units":"chapter-2/","Speculation-and-Memory-Access":"chapter-2/","Special-Instruction-Caches":"chapter-2/","Coherency-of-Cached-Data":"chapter-2/","Chapter-3-Instruction-Level-Parallelism-and-Its-Exploitation":"chapter-3/","31-Introduction":"chapter-3/","Dependences-in-Instructions":"chapter-3/","Data-Dependences":"chapter-3/","Name-Dependences":"chapter-3/","Data-Hazards":"chapter-3/","Control-Dependences":"chapter-3/","32-Basic-Compiler-Techniques-Loop-Unrolling-and-Scheduling":"chapter-3/","33-Advanced-Branch-Prediction":"chapter-3/","Correlating-Branch-Predictors":"chapter-3/","Tournament-Predictors":"chapter-3/","Tagged-Hybrid-Predictors":"chapter-3/","34-Dynamic-Scheduling":"chapter-3/","Scoreboarding":"chapter-3/","Tomasulos-Algorithm":"chapter-3/","35-Hardware-Based-Speculation":"chapter-3/","36-Multiple-Issue":"chapter-3/","Using-Static-Scheduling":"chapter-3/","Using-Dynamic-Scheduling-and-Speculation":"chapter-3/","37-Advanced-Techniques-for-Instruction-Delivery-and-Speculation":"chapter-3/","Increasing-Instruction-Fetch-Bandwidth":"chapter-3/","Branch-Target-Buffers":"chapter-3/","Specialized-Branch-Predictors":"chapter-3/","Implementation-Issues-and-Extensions-of-Speculation":"chapter-3/","Speculation-Support-Register-Renaming-vs-Reorder-Buffers":"chapter-3/","The-Challenge-of-More-Issues-per-Clock":"chapter-3/","How-Much-to-Speculate":"chapter-3/","Speculating-Through-Multiple-Branches":"chapter-3/","Challenge-of-Energy-Efficiency":"chapter-3/","Address-Aliasing-Prediction":"chapter-3/","38-Cross-Cutting-Issues":"chapter-3/","Hardware-vs-Software-Speculation":"chapter-3/","Speculative-Execution-and-the-Memory-System":"chapter-3/","39-Multithreading-Exploiting-Thread-Level-Parallelism-to-Improve-Uniprocessor-Throughput":"chapter-3/","Chapter-4-Data-Level-Parallelism-in-Vector-SIMD-and-GPU-Architectures":"chapter-4/","41-Vector-Architecture":"chapter-4/","RV64V-Extension":"chapter-4/","Vector-Execution-Time":"chapter-4/","Optimizations":"chapter-4/","Multiple-Lanes":"chapter-4/","Vector-Length-Registers":"chapter-4/","Predicate-Registers":"chapter-4/","Memory-Banks":"chapter-4/","Stride":"chapter-4/","Gather-Scatter":"chapter-4/","Programming-Vector-Architecture":"chapter-4/","42-SIMD-Instruction-Set-Extensions-for-Multimedia":"chapter-4/","Roofline-Visual-Performance-Model":"chapter-4/","43-Detecting-and-Enhancing-Loop-Level-Parallelism":"chapter-4/","Finding-Dependences":"chapter-4/","Eliminating-Dependent-Computations":"chapter-4/","44-Cross-Cutting-Issues":"chapter-4/","Energy-and-DLP":"chapter-4/","Banked-Memory-and-Graphics-Memory":"chapter-4/","Strided-Accesses-and-TLB-Misses":"chapter-4/","Chapter-5-Thread-Level-Parallelism":"chapter-5/","51-Introduction":"chapter-5/","Multiprocessor-Architecture":"chapter-5/","Challenges-of-Parallel-Processing":"chapter-5/","52-Centralized-Shared-Memory-Architectures":"chapter-5/","Multiprocessor-Cache-Coherence":"chapter-5/","Basic-Schemes-for-Enforcing-Coherence":"chapter-5/","Snooping-Coherence-Protocols":"chapter-5/","Basic-Implementation-Techniques":"chapter-5/","A-Simple-Protocol":"chapter-5/","Extensions-to-the-Basic-Coherence-Protols":"chapter-5/","Limitations-in-SMPs-and-Snooping-Protocols":"chapter-5/","Implementing-Snooping-Cache-Coherence":"chapter-5/","53-Distributed-Shared-Memory-and-Directory-Based-Coherence":"chapter-5/","Directory-Based-Cache-Coherence-Protocols":"chapter-5/","An-Example-Directory-Protocol":"chapter-5/","54-Synchronization":"chapter-5/","Basic-Hardware-Primitives":"chapter-5/","Implementing-Locks-Using-Coherence":"chapter-5/","Barrier-Synchronization":"chapter-5/","55-Models-of-Memory-Consistency":"chapter-5/","The-Programmers-View":"chapter-5/","Relaxed-Consistency-Models":"chapter-5/","56-Cross-Cutting-Issues":"chapter-5/","Compiler-Optimization-and-the-Consistency-Model":"chapter-5/","Using-Speculation-to-Hide-Latency-in-Strict-Consistency-Model":"chapter-5/","Inclusion-and-Its-Implementation":"chapter-5/"}</script>
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

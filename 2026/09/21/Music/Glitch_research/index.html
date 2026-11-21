@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Glitch Music | Excerpt — Relaxinic</title>
+  <link rel="preload" href="../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../" data-section="music">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../music/">Music</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Music</span>
+          <time datetime="2026-09-21">21 Sept 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title">Glitch Music | Excerpt</h1>
+        </div>
+      </header>
+
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<p>This article is an excerpt from the literature on glitch music.</p>
+
+<section class="excerpt-section" aria-labelledby="beauty-of-malfunction">
+  <h2 id="beauty-of-malfunction">Glitch: The Beauty of Malfunction</h2>
+  <p class="excerpt-byline">Torben Sangild</p>
+  <ul>
+    <li>The aesthetic experience of glitch is an opportunity for relating to technology in everyday life.</li>
+    <li>In oceanic glitch this premise is taken in a quasi-organic direction, softening the rigidity towards a sensibility of its own. Oval’s music often surprises the listener with unpredictable, sudden bursts of sound, stumbling chaotically into the music before finding its place in the complex overall flow, with or without a beat.</li>
+    <li>Its gesture would be considered a non-gesture in acoustic music, a secondary sound, a touch or strike too vague to be taken seriously. And it would not even be heard in techno.</li>
+    <li>Minimal click focuses on sounds that are rarely recognized in everyday life; the forgotten secondary sounds of electronic equipment. They are withdrawn from their concrete environment and inserted in an abstract, empty sound space, where they are endowed with a new relative autonomy, and perceived as music.</li>
+    <li>
+      <p>Martin Heidegger’s theory of technology focuses on téchne as a way of being in the world. Technology is never neutral. It is a way of dealing in and with life, and the important thing is to have a free relation to technology, which implies not merely regarding it as a tool. A tool (e.g., a hammer) is transparent in the sense that we think of it as purely functional. When it breaks, however, we become aware of its construction and design; the tool becomes unfamiliar, no longer an unquestioned extension of ourselves, and its téchne is revealed.</p>
+      <p>Theodor Adorno seems to have had the same idea already in 1928 in specific relation to music technology, when he wrote, “There is only one point at which the gramophone interferes with both the work and the interpretation. This occurs when the mechanical spring wears out...only when gramophonic reproduction breaks down are its objects transformed. Or else one removes the records and lets the spring play out in the dark.”</p>
+    </li>
+    <li>The artist is then no longer merely a user, but becomes a creative techno agent, a deconstructionist of sorts. He speaks the language of technology rather than being spoken by it, as Heidegger would have said.</li>
+    <li>“it shows up the fake immateriality of the electronic media, collapses the clean, evanescent streams of data back into sensible dirt and grit; pulls the media themselves out into the material world, into temporal, kinesthetic and affective experience.” Glitch music is a heretical media art in this vein. And even on the level of critical import, it is still a question of sensibility towards technology.</li>
+    <li>Glitch displays the fragility and vulnerability of technology. It points to the dialectic moments of irrationality embedded in rational computers.</li>
+    <li>Glitch music focuses on these dialectic moments of irrationality, inefficacy and absurdity in digital technology, finding a delicate beauty there.</li>
+    <li>Evolution depends on errors and imperfections.</li>
+    <li>The glitch in the oyster is thereby transformed into a pearl.</li>
+  </ul>
+</section>
+
+<section class="excerpt-section" aria-labelledby="glitches-bugs-and-hisses">
+  <h2 id="glitches-bugs-and-hisses">Glitches, Bugs, and Hisses: The Degeneration of Musical Recordings and the Contemporary Musical Work</h2>
+  <p class="excerpt-byline">Eliot Bates</p>
+  <ul>
+    <li>Fidelity, or faithfulness to the source, was the goal.</li>
+    <li>Thus, the urban sound environment is filled with a mix of unintentional machine-produced sounds (byproducts of the industrial era) and intentional machine-produced sounds (byproducts of commercial audio recording and distribution networks).</li>
+    <li>Since contemporary listenings no longer appear to be historically situated moments, perhaps electronic music “history” would benefit from an alternative history structured like a palimpsest, where elements never disappear but are constantly overlaid.</li>
+    <li>Our minds have become nodes in the expanding space of the Internet, connecting freely with other nodes in a rhizomatic manner. Comparing this fluidic, smooth space with the linear space of the audio compact disc, we find that a linear model of time has been imposed onto an inherently non-linear medium.</li>
+    <li>Glitch music may appear to be new, since the label was coined only in the late 1990s, but it echoes paths of compositional exploration already taken by musique concrète, dub, drum and bass, as well as acid house composers.</li>
+    <li>In one context, glitch is considered bad—that which arrests the flow of music; whereas in certain subversive and manipulated contexts, glitch is considered good—the arresting quality of music itself.</li>
+    <li>Glitch composition is a meta-discursive practice: rather than writing new music inspired by older recordings, it constructs new music inspired by the technological conditions and limitations in which those recordings emerged.</li>
+  </ul>
+</section>
+
+<section class="excerpt-section" aria-labelledby="glitch-music">
+  <h2 id="glitch-music">Glitch Music</h2>
+  <p class="excerpt-byline">Robert Anthony do Amaral Oliveira</p>
+  <p class="excerpt-note" role="note">Note: Since the original text is in Portuguese, I used ChatGPT to translate it into Chinese for reading. Please forgive any translation errors.</p>
+  <ul lang="zh-CN">
+    <li>音乐创作的焦点不再是乐谱，而是录音媒介本身。这种范式的转变，即录音技术的发展所带来的音乐实践的变革，使得“音频文化”这一术语应运而生，它正是与这种音乐实践的断裂密切相关，允许我们直接干预媒介载体，并将声音视为一个可操纵的对象。</li>
+  </ul>
+</section>
+</div>
+
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

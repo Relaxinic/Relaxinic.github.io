@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 10 Virtual Memory — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  <link rel="stylesheet" href="../../../../../../media/katex/katex.min.css">
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Operating System</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-11-21">21 Nov 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-10-Virtual-Memory">Chapter 10 Virtual Memory</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#101-Background">1 Background</a></li>
+    <li><a href="#102-Demand-Paging">2 Demand Paging</a>
+      <ul class="toc-subsections">
+        <li><a href="#Basic-Concepts">2.1 Basic Concepts</a></li>
+        <li><a href="#Free-Frame-List">2.2 Free-Frame List</a></li>
+        <li><a href="#Pereformance">2.3 Pereformance</a></li>
+      </ul>
+    </li>
+    <li><a href="#103-Copy-on-Write">3 Copy-on-Write</a></li>
+    <li><a href="#104-Page-Replacement">4 Page Replacement</a>
+      <ul class="toc-subsections">
+        <li><a href="#Basic">4.1 Basic</a></li>
+        <li><a href="#FIFO">4.2 FIFO</a></li>
+        <li><a href="#Optimal">4.3 Optimal</a></li>
+        <li><a href="#LRU">4.4 LRU</a></li>
+        <li><a href="#LRU-Approximation">4.5 LRU-Approximation</a></li>
+        <li><a href="#Counting-Based">4.6 Counting-Based</a></li>
+        <li><a href="#Page-Buffering">4.7 Page-Buffering</a></li>
+        <li><a href="#Applications">4.8 Applications</a></li>
+      </ul>
+    </li>
+    <li><a href="#105-Allocations-of-Frames">5 Allocations of Frames</a>
+      <ul class="toc-subsections">
+        <li><a href="#Minimum-Number-of-Frames">5.1 Minimum Number of Frames</a></li>
+        <li><a href="#Allocation-Algorithms">5.2 Allocation Algorithms</a></li>
+        <li><a href="#Global-vs-Local-Allocation">5.3 Global v.s. Local Allocation</a></li>
+        <li><a href="#Non-Uniform-Memory-Access">5.4 Non-Uniform Memory Access</a></li>
+      </ul>
+    </li>
+    <li><a href="#106-Thrashing">6 Thrashing</a>
+      <ul class="toc-subsections">
+        <li><a href="#Cause-of-Thrashing">6.1 Cause of Thrashing</a></li>
+        <li><a href="#Working-Set-Model">6.2 Working-Set Model</a></li>
+        <li><a href="#Page-Fault-Frequency">6.3 Page-Fault Frequency</a></li>
+      </ul>
+    </li>
+    <li><a href="#107-Memory-Compression">7 Memory Compression</a></li>
+    <li><a href="#108-Allocating-Kernel-Memory">8 Allocating Kernel Memory</a>
+      <ul class="toc-subsections">
+        <li><a href="#Buddy-System">8.1 Buddy System</a></li>
+        <li><a href="#Slab-Allocation">8.2 Slab Allocation</a></li>
+      </ul>
+    </li>
+    <li><a href="#109-Other-Considerations">9 Other Considerations</a>
+      <ul class="toc-subsections">
+        <li><a href="#Prepaging">9.1 Prepaging</a></li>
+        <li><a href="#Page-Size">9.2 Page Size</a></li>
+        <li><a href="#TLB-Reach">9.3 TLB Reach</a></li>
+        <li><a href="#Program-Structure">9.4 Program Structure</a></li>
+        <li><a href="#IO-Interlock-and-Page-Locking">9.5 I/O Interlock and Page Locking</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<p>Virtual memory is a technique that allows the execution of a process without it being entirely in memory. A major advantage of this technique is that it allows programs to be larger than physical memory, because virtual memory abstracts main memory into a very large and uniform storage array.</p>
+<h2 id="101-Background">1 Background</h2>
+<p>We do not need to place the entire program in memory for execution, for example in the following cases:</p>
+<ul>
+<li><p>Code in the program used to handle infrequent errors</p>
+</li>
+<li><p>Data structures such as arrays and lists are often allocated more memory than they actually need</p>
+</li>
+<li><p>Some options or features in the program are rarely used</p>
+</li>
+</ul>
+<p>If parts of a program can be executed in memory, the following benefits are obtained (for both users and the system):</p>
+<ul>
+<li><p>Programs are no longer constrained by available physical memory; users can write programs on a very large virtual memory, thereby simplifying the programming task</p>
+</li>
+<li><p>Because each program occupies less physical memory, more programs can be executed simultaneously, increasing CPU utilization and throughput without increasing response or turnaround time</p>
+</li>
+<li><p>Less I/O is needed to load or swap parts of programs, so programs run faster</p>
+</li>
+</ul>
+<p>The following figure shows the relationship between virtual memory and physical memory</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C10/1.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>A process&#39;s virtual address space is the logical (or virtual) view of how a process is stored in memory.</p>
+<ul>
+<li><p>The heap space grows upward and is used for dynamic memory allocation</p>
+</li>
+<li><p>The stack space grows downward and is used for successive function calls</p>
+</li>
+<li><p>There is a large space (or hole) between the heap and the stack, so the virtual address space is a sparse address space; this characteristic is beneficial because when the stack or heap segment grows, the hole can be filled; and this hole can be used during program execution to hold dynamic link libraries (or possibly other shared objects)</p>
+</li>
+</ul>
+<p>In addition to separating logical memory from physical memory, virtual memory allows files and memory to be shared by multiple processes. This brings the following benefits:</p>
+<ul>
+<li><p>System libraries such as the standard C library can be shared by multiple processes by mapping shared objects into the virtual address space</p>
+</li>
+<li><p>Memory can be shared between processes</p>
+</li>
+<li><p>When creating a process, pages can be shared through the fork() system call, thereby speeding up process creation</p>
+</li>
+</ul>
+<h2 id="102-Demand-Paging">2 Demand Paging</h2>
+<p>Demand paging is a commonly used technique in virtual memory, where pages can be loaded on demand during execution; pages that are never accessed will not be loaded into physical memory.</p>
+<h3 id="Basic-Concepts">2.1 Basic Concepts</h3>
+<p>When using demand paging, it is necessary to know whether a page is in memory or in secondary storage, so some hardware support is required. The valid bit introduced earlier can be useful here, but the concept of &quot;valid&quot; needs to be redefined: a page is valid only when it is legal and located in memory. So even if a page is legal, if it is in secondary storage, it is not valid.</p>
+<p>When an invalid page is accessed, the MMU triggers a page fault. The OS handles a page fault as follows:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C10/4.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ol>
+<li><p>Check the process&#39;s internal table (usually located in the PCB) to determine whether the current reference is a valid or invalid memory access.</p>
+</li>
+<li><p>If the reference is invalid, terminate the process; if the reference is valid but the page has not yet been brought into memory, bring it in.</p>
+</li>
+<li><p>Find a free frame (obtained from the free-frame list).</p>
+</li>
+<li><p>Schedule a secondary storage operation to read the required page into the newly allocated frame.</p>
+</li>
+<li><p>When the read operation completes, modify the process&#39;s internal table and page table to indicate that the required page is now in memory.</p>
+</li>
+<li><p>Restart the instruction that was interrupted by the trap; the process can now access the required page (as if the page had always been in memory).</p>
+</li>
+</ol>
+<p>Pure demand paging: pages are not placed into memory unless required.</p>
+<p>Therefore, when a process first starts executing, it has no pages, and page faults may occur repeatedly before the required pages are gradually loaded into memory.</p>
+<p>In theory, some programs may access several new pages of memory on each instruction execution (one page for the instruction and multiple pages for data), so it is possible for every instruction to cause multiple page faults, which would obviously severely degrade system performance. In practice, however, this behavior rarely occurs because programs tend to exhibit locality of reference.</p>
+<p>Hardware that supports demand paging includes:</p>
+<ul>
+<li><p>Page table: each entry can mark a page as valid/invalid through a special value of the valid bit or protection bit.</p>
+</li>
+<li><p>Secondary memory: memory that holds pages not in main memory, usually a high-speed disk or NVM device; the portion used for swapping is the swap space.</p>
+</li>
+</ul>
+<p>A key requirement of demand paging is the ability to restart an instruction after a page fault. Because the state of the interrupted process is saved when the page fault occurs, it must be possible to restart the process at the same location and in the same state. In most cases, this requirement is easy to satisfy. One major difficulty is that an instruction may have modified values in multiple locations.</p>
+<ul>
+<li><p>For example, the MVC (move character) instruction of the IBM System 360/370 can move up to 256 bytes from one location to another (possibly overlapping) location.</p>
+</li>
+<li><p>If either block (source or destination) crosses a page boundary, a page fault may occur after part of the move has completed.</p>
+</li>
+<li><p>In addition, if the source and destination blocks overlap, the source block may already have been modified, in which case the instruction cannot simply be restarted.</p>
+</li>
+</ul>
+<p>Solutions to this problem include:</p>
+<ul>
+<li><p>Microcode computes and attempts to access both ends of both blocks; if a page fault is going to occur, it will occur during this step (before anything has been modified).</p>
+</li>
+<li><p>Temporary registers are used to store the values at the locations to be overwritten; if a page fault occurs, all old values will be written back to memory before the trap occurs.</p>
+</li>
+</ul>
+<h3 id="Free-Frame-List">2.2 Free-Frame List</h3>
+<p>To handle page faults, the OS maintains a free-frame list containing all free frames (also used when expanding the stack and heap segments). The OS usually allocates free frames using a technique called zero-fill-on-demand, that is, clearing the original contents of a frame before allocating it.</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C10/5.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Pereformance">2.3 Pereformance</h3>
+<p>Demand paging greatly affects the performance of computer systems. To understand this, first calculate the effective access time required for demand paging. Let <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mi>a</mi></mrow><annotation encoding="application/x-tex">ma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">ma</span></span></span></span> be the memory access time, and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">p</span></span></span></span> be the probability of a page fault occurring (<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn><mo>≤</mo><mi>p</mi><mo>≤</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">0 \le p \le 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7804em;vertical-align:-0.136em;"></span><span class="mord">0</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8304em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">p</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>), then the effective access time is:</p>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>effective access time</mtext><mo>=</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>p</mi><mo stretchy="false">)</mo><mo>×</mo><mi>m</mi><mi>a</mi><mo>+</mo><mi>p</mi><mo>×</mo><mtext>page fault time</mtext></mrow><annotation encoding="application/x-tex">\text{effective access time} = (1 − p) \times ma + p \times \text{page fault time}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord text"><span class="mord">effective access time</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">p</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">ma</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">p</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">page fault time</span></span></span></span></span></p>
+<p>So we also need to know the time required to handle a page fault. The following are the main components affecting this time: page-fault interrupt handling, reading the page, and restarting the process.</p>
+<p>The first and third points can be reduced to a few hundred instructions by carefully writing code. The key is the second point, which is greatly related to the storage device (queuing time waiting to use the device is not considered here). If <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mi>a</mi></mrow><annotation encoding="application/x-tex">ma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">ma</span></span></span></span> is on the order of nanoseconds, while disk access time is on the order of milliseconds, then it is obvious that the effective access time will be directly proportional to the page-fault rate. Therefore, in demand paging, reducing the page-fault rate is very important.</p>
+<p>The handling and overall use of swap space must also be considered.</p>
+<p>Input/output to swap space is usually faster than input/output to the file system.</p>
+<p>One way to improve paging throughput is to copy the entire file image to swap space when the process starts, and then perform demand paging from swap space (obviously the copy cost is too high).</p>
+<p>The method actually used is to initially perform demand paging on the file system, and write pages to swap space when they are replaced.</p>
+<p>Some systems try to limit the amount of swap space used by performing demand paging on binary executable files. But when page replacement occurs, these frames are directly overwritten. With this method, the file system appears to be backing store. However, swap space must still be used to handle pages unrelated to files (called anonymous memory).</p>
+<h2 id="103-Copy-on-Write">3 Copy-on-Write</h2>
+<p>Process creation using the fork() system call may initially bypass the need for demand paging through the use of a technique similar to page sharing. This technique provides rapid process creation and minimizes the number of pages that must be allocated to new processes. This technique is called copy-on-write (COW), which allows the parent process and child process to share the same pages. These shared pages that need to be modified are marked as copy-on-write pages; when a process writes to such a page, a copy of this shared page is created, and the write operation occurs only on this copy.</p>
+<p>Some UNIX versions provide a variant of the fork() system call called vfork() (virtual memory fork).</p>
+<p>Unlike fork() with copy-on-write, when using vfork(), the parent process is suspended, and the child process uses the parent process&#39;s address space.</p>
+<p>Special care must be taken when using vfork(), because any changes made by the child process will be seen by the parent process. vfork() is generally used in cases where the child process immediately calls exec() after creation. It is much more efficient than fork().</p>
+<h2 id="104-Page-Replacement">4 Page Replacement</h2>
+<h3 id="Basic">4.1 Basic</h3>
+<ol>
+<li><p>If there is no free frame, find a frame that is currently unused and release it.</p>
+</li>
+<li><p>The release operation can be implemented by writing the contents of the frame to swap space and modifying the page table to indicate that the page is no longer in memory.</p>
+</li>
+<li><p>The process can now place the page in the frame that was just released.</p>
+</li>
+</ol>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C10/8.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Combining existing page replacement strategies, we modify the original page fault handling process as follows:</p>
+<ol>
+<li><p>Find the location of the required page in secondary storage.</p>
+</li>
+<li><p>Find a free frame. If there is a free frame, use it; if not, use a page replacement algorithm to select a victim frame, write the victim frame to secondary storage (if necessary), and modify the page table and frame table.</p>
+</li>
+<li><p>Read the required page into the newly freed frame; modify the page table and frame table.</p>
+</li>
+<li><p>Continue executing the process from the point where the page fault occurred.</p>
+</li>
+</ol>
+<p>Note that if there is no free frame, two page transfers are required, which doubles the page fault handling time and increases the effective access time. We can reduce this overhead by using a modify bit (or dirty bit).</p>
+<ul>
+<li><p>When any byte of a page is written, the hardware sets the modify bit, indicating that the page has been modified.</p>
+</li>
+<li><p>When selecting a page to be replaced, the modify bit needs to be checked. If the modify bit is set, the page must be written to secondary storage; if the modify bit is not set, it does not need to be written to secondary storage, and its contents can be overwritten directly.</p>
+</li>
+</ul>
+<p>This scheme can significantly reduce the time required to handle page faults, because when a page has not been modified, it can cut the I/O time in half.</p>
+<p>When choosing a replacement algorithm, we usually want to obtain the lowest page fault rate. One evaluation method is to run the algorithm on a specific sequence of memory references and count the number of page faults. This sequence is called a reference string. A reference string can be generated artificially (using a random number generator, etc.) or obtained by tracing a specific system and recording the address of each memory reference.</p>
+<p>However, the latter usually produces a large amount of data. To reduce the amount of data, we use two facts:</p>
+<ul>
+<li><p>For a given page size, we consider only page numbers rather than complete addresses.</p>
+</li>
+<li><p>If page p is to be referenced, then any immediately following reference to page p will never cause a page fault; that is, after the first reference, page p will remain in memory.</p>
+</li>
+</ul>
+<p>The following graph shows the relationship between the number of frames and the number of page faults:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C10/9.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="FIFO">4.2 FIFO</h3>
+<p>The simplest page replacement algorithm is the first-in, first-out (FIFO) algorithm. Implementation methods include:</p>
+<ul>
+<li><p>Keep track of the time for each page; when a page needs to be replaced, choose the oldest one among them.</p>
+</li>
+<li><p>In fact, there is no need to keep track of the time for each page. You can create a FIFO queue to maintain the pages in memory. The page to be replaced is at the front of the queue, and new pages are inserted at the back of the queue.</p>
+</li>
+</ul>
+<p>Although this algorithm is easy to understand and implement, it performs poorly because it is very likely to evict a variable that was initialized a long time ago but will be heavily used after a long time.</p>
+<p>The unexpected situation in which the number of page faults increases as the number of allocated frames increases is called Belady&#39;s anomaly.</p>
+<h3 id="Optimal">4.3 Optimal</h3>
+<p>The algorithm that can achieve the lowest page fault rate and will never exhibit Belady&#39;s anomaly is the optimal page replacement algorithm, called OPT or MIN. Its idea is to replace the page that will not be used for the longest time (considering future usage).</p>
+<p>Unfortunately, this algorithm is difficult to implement because in practice it is impossible to know the future information of the reference string in advance. Therefore, this algorithm is only used for comparative studies.</p>
+<h3 id="LRU">4.4 LRU</h3>
+<p>If recent past is used as an approximate value of near future, it replaces the most unused page so far (considering past usage). The method is the least recently used (LRU) algorithm.</p>
+<p>LRU strategy is a commonly used page replacement algorithm, and it performs well. The main problem of LRU replacement is how to achieve it: it may require great hardware support and need to determine the order of the frames sorted by the last use time. There are the following two feasible implementation methods:</p>
+<p><strong>Counter(counter)</strong></p>
+<ul>
+<li><p>Associate a time-of-use field for each page table item and add a logical clock or counter to the CPU, which will increase each time memory reference.</p>
+</li>
+<li><p>Whenever a page is referenced, the content of the clock register will be copied to the usage time field in the page table item of the page.</p>
+</li>
+<li><p>In this way, we can always get the &quot;time&quot; of the last quote on each page.</p>
+</li>
+<li><p>The replaced page will be the page with the smallest time value.</p>
+</li>
+<li><p>This scheme needs to search the page table to find the LRU page and write it to the memory at each memory access (to the usage time field in the page table)</p>
+</li>
+<li><p>When the page table is changed (due to CPU scheduling), these times must also be maintained.</p>
+</li>
+<li><p>At the same time, the problem of clock overflow must be considered.</p>
+</li>
+</ul>
+<p><strong>Stack</strong></p>
+<ul>
+<li><p>Maintain a stack with a record page number. Whenever a page is quoted, it will be removed from the stack and put at the top.</p>
+</li>
+<li><p>In this way, the recently used page is always at the top of the stack, and the least used page is always at the bottom.</p>
+</li>
+<li><p>Since the entry must be removed from the middle of the stack, it is best to use a two-way linked list with head pointers and tail pointers. In the worst case, six pointers need to be changed to remove a page X and put it at the top of the stack (two pointers of X, one pointer for each page before and after X, one pointer and a head pointer on the top page of the original stack). The cost of each update is slightly higher, but there is no need to search. The tail pointer points to the bottom of the stack, that is, the LRU page.</p>
+</li>
+<li><p>This method is especially suitable for LRU replacement algorithms implemented by software or microcode.</p>
+</li>
+</ul>
+<p>There will be no Belady exception in LRU replacement. It and the optimal page replacement algorithm belong to the stack algorithm, that is, it can be proved that the memory page set of n frames is always a subset of the page set in memory with n + 1 frames (therefore, when the number of frames increases, the original page in memory can still be retained, so it is not It will increase the number of page errors).</p>
+<h3 id="LRU-Approximation">4.5 LRU-Approximation</h3>
+<p>From the above analysis, it is not difficult to see that implementing LRU is very costly, so few computer systems provide a true LRU page replacement algorithm. However, most systems provide a reference bit: it is cleared to zero during initialization; when a page is referenced, this bit is set by the hardware. We can use the reference bit to implement an approximate LRU algorithm.</p>
+<h4 id="Additional-Reference-Bits-Algorithm">Additional-Reference-Bits Algorithm</h4>
+<p>We can obtain additional page information by periodically recording the reference bit.</p>
+<p>Keep one byte (8 bits) for each page.</p>
+<p>After a fixed time interval, a timer interrupt transfers control to the OS; the OS places each page&#39;s reference bit in the most significant bit of its 8-bit byte, shifts the other bits one position to the right, and discards the least significant bit.</p>
+<p>The 8-bit number in the shift register represents the history of page usage over the past 8 time periods.</p>
+<p>A shift register of 00000000 indicates that the page was not used during the eight time periods.</p>
+<p>For a page used at least once in each period, the value of its shift register is 11111111.</p>
+<p>If this byte is interpreted as an unsigned integer, then the page with the smallest number (meaning it has been used the least in the most recent 8 time periods) is the LRU page that can be replaced.</p>
+<p>Note: These numbers are not guaranteed to be unique. If multiple minimum values occur, either all pages with the minimum value can be replaced, or the FIFO method can be used to select among them.</p>
+<h4 id="Second-Chance-Algorithm">Second-Chance Algorithm</h4>
+<p>The second-chance replacement algorithm is a FIFO replacement algorithm.</p>
+<p>When selecting a page, we check its reference bit. If the value of the reference bit is 0, page replacement is performed; but if the value of the reference bit is 1, the page is given a second chance, and we continue to select the next FIFO page.</p>
+<p>When a page gets a second chance, its reference bit is cleared, and its arrival time is reset to the current time.</p>
+<p>Therefore, a page that gets a second chance will not be replaced until all other pages have been replaced (or given a second chance).</p>
+<p>Furthermore, if a page is used frequently enough to keep its reference bit set, it will never be replaced.</p>
+<p>One way to implement this algorithm (sometimes called the clock algorithm) is to use a circular queue.</p>
+<ol>
+<li><p>The pointer points to the next page to be replaced.</p>
+</li>
+<li><p>When a frame is needed, the pointer moves forward until it finds a page whose reference bit is 0.</p>
+</li>
+<li><p>During this process, it clears the reference bits it scans to 0.</p>
+</li>
+<li><p>Once a page meeting the requirement is found, that page is replaced; the new page is inserted into the circular queue at the position of the original victim page.</p>
+</li>
+</ol>
+<p>In the worst case, when all bits are set to 1, the pointer will traverse the entire queue, giving every page a second chance, and at this point the algorithm degenerates to FIFO replacement.</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C10/24.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h4 id="Enhanced-Second-Chance-Algorithm">Enhanced Second-Chance Algorithm</h4>
+<p>We can enhance the second-chance algorithm by treating the reference bit and the modification bit as an ordered pair. These two bits form four categories:</p>
+<ol>
+<li><p>(0, 0): Neither used nor modified -&gt; the most suitable page to replace</p>
+</li>
+<li><p>(0, 1): Not used recently, but modified -&gt; less suitable for replacement, because its contents must be written to swap space before replacement</p>
+</li>
+<li><p>(1, 0): Used recently, but not modified -&gt; may be used again</p>
+</li>
+<li><p>(1, 1): Used recently and modified -&gt; may be used again, and its contents must be written to swap space before replacement</p>
+</li>
+</ol>
+<p>Each page belongs to one of these four categories.</p>
+<p>When page replacement is needed, we use the same scheme as the clock algorithm, but at this point we check the category to which the page belongs.</p>
+<p>We replace the first page encountered in the lowest non-empty category; multiple scans of the circular queue may be needed to find a page to replace.</p>
+<p>The main difference between this algorithm and the simpler clock algorithm is that priority is given to pages that have been modified, in order to reduce the number of required I/O operations.</p>
+<h3 id="Counting-Based">4.6 Counting-Based</h3>
+<p>We can also use a counter to record the number of references to each page to implement page replacement:</p>
+<p><strong>Least frequently used (LFU) page replacement algorithm</strong>: replace the page with the fewest references.</p>
+<p>The reason for choosing this kind of page is that a page in active use should have a relatively large reference count.</p>
+<p>However, a problem arises when a page is heavily used during the initial phase of a process but is never used again afterward: because it was once heavily used, it has a large count, and even if it is no longer needed, it still remains in memory.</p>
+<p>One solution is to shift the count right by 1 bit at regular intervals, thereby forming an exponentially decaying average use count.</p>
+<p><strong>Most frequently used (MFU) page replacement algorithm</strong></p>
+<p>Its design is based on the argument that the page with the fewest references may have just been brought in and has not yet been used.</p>
+<p>However, neither of these two replacement methods is a common approach, because they are costly to implement and do not approximate the OPT replacement well.</p>
+<h3 id="Page-Buffering">4.7 Page-Buffering</h3>
+<p>The system typically maintains a pool of free frames; when a page fault occurs, a victim frame is selected as before.</p>
+<ul>
+<li><p>However, before writing out the victim page, the needed page is read into a free frame from the pool.</p>
+</li>
+<li><p>This process allows the process to restart as quickly as possible without waiting for the victim page to be written out.</p>
+</li>
+<li><p>When the victim page is later written out, its frame is added to the free frame pool.</p>
+</li>
+</ul>
+<p>An extension of this idea is to maintain a list of modified pages.</p>
+<ul>
+<li><p>Whenever the paging device is idle, a modified page is selected and written to secondary storage, and then its modified bit is reset.</p>
+</li>
+<li><p>This scheme increases the probability that, when a victim page is selected, the page is clean and does not need to be written out.</p>
+</li>
+</ul>
+<p>Another modification is to keep a set of free frames but remember the page that each frame contains.</p>
+<ul>
+<li><p>Since the contents of a frame are not modified when it is written to secondary storage, if the old page is needed again before that frame is reused, it can be reused directly from the free frame pool without requiring I/O.</p>
+</li>
+<li><p>When a page fault occurs, first check whether the needed page is in the free frame pool; if not, a free frame must be selected and the page read into it.</p>
+</li>
+</ul>
+<h3 id="Applications">4.8 Applications</h3>
+<p>In some cases, applications that access data through the OS&#39;s virtual memory perform worse than when the OS does not provide buffering.</p>
+<p>A typical example is a database, which provides its own memory management and I/O buffering.</p>
+<p>Another example is that data warehouses often perform large-scale sequential storage reads, followed by computation and writes.</p>
+<p>The LRU algorithm will evict old pages and retain new pages, whereas the application is more likely to read older pages rather than newer ones (because it starts sequential reading again).</p>
+<p>In this case, MFU would actually be more effective than LRU.</p>
+<p>Such applications understand their memory usage and storage usage better than an OS implementing a general-purpose algorithm.</p>
+<p>Furthermore, if the OS is performing I/O buffering and the application is also doing so, then twice the memory will be used for a set of I/O operations.</p>
+<p>Due to these issues, some OSes allow specific programs to use a secondary storage partition as a large array of sequential logical blocks without any file system data structures. This array is sometimes called a raw disk; I/O to this array is called raw I/O, and it can bypass all file system services.</p>
+<p>Note that although some applications are more efficient when implementing their own specialized storage services on raw partitions, most applications perform better when using regular file system services.</p>
+<h2 id="105-Allocations-of-Frames">5 Allocations of Frames</h2>
+<h3 id="Minimum-Number-of-Frames">5.1 Minimum Number of Frames</h3>
+<p>The frame allocation strategy is constrained by multiple factors. For example, the number of allocated frames must not exceed the maximum number of frames (unless page sharing exists), and there is also a minimum requirement for the number of allocated frames. The former is obvious, so let us look at what the latter is about.</p>
+<p>One reason for determining the minimum allocation amount is performance considerations. Obviously, the fewer frames allocated to each process, the higher the page fault rate will be, thereby reducing program execution speed. Therefore, there must be enough frames to hold all the pages.</p>
+<p>The minimum number of frames depends on the computer architecture (different addressing modes, etc.), while the maximum number depends on the available physical memory.</p>
+<h3 id="Allocation-Algorithms">5.2 Allocation Algorithms</h3>
+<p>If we want to allocate a total of m frames to n processes, the simplest method is equal allocation, that is, each process gets m / n frames.</p>
+<p>The second method is based on an observation: different processes require different amounts of memory. For example, some processes require far fewer frames than the average, so using the previous method would waste many frames. To solve this problem, we use a method called proportional allocation, which allocates memory based on process size. Let the virtual memory size of process <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">p_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> be <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>s</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">s_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>, and let the total number of available frames be <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi></mrow><annotation encoding="application/x-tex">m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">m</span></span></span></span>. Define <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi><mo>=</mo><mo>∑</mo><msub><mi>s</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">S = \sum s_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop op-symbol small-op" style="position:relative;top:0em;">∑</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> as the total size. Then the number of frames allocated to process <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>p</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">p_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> is approximately:</p>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>a</mi><mi>i</mi></msub><mo>=</mo><msub><mi>s</mi><mi>i</mi></msub><mi mathvariant="normal">/</mi><mi>S</mi><mo>×</mo><mi>m</mi></mrow><annotation encoding="application/x-tex">a_i = s_i / S \times m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">a</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">m</span></span></span></span></p>
+<p>It is necessary to ensure that <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>a</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">a_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">a</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> is an integer greater than the minimum number of frames required by the instruction set and does not exceed <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi></mrow><annotation encoding="application/x-tex">m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">m</span></span></span></span>.</p>
+<p>In the first two allocation algorithms, the specific allocation will also change with the degree of multiprogramming. Moreover, regardless of which algorithm is used, high-priority and low-priority processes are treated equally, but obviously we want high-priority processes to receive more memory in order to speed up execution. One solution is: in proportional allocation, the proportion of frames no longer depends on process size, but is based on process priority, or a combination of both.</p>
+<h3 id="Global-vs-Local-Allocation">5.3 Global v.s. Local Allocation</h3>
+<p>Another factor affecting frame allocation is page replacement. We can divide page replacement into two major categories:</p>
+<p>Global replacement: allows a process to select a victim frame from the frames of all processes, even if that frame belongs to another process; therefore, one process can preempt the frames of other processes.</p>
+<p>Local replacement: each process can select only from its own set of frames.</p>
+<p>One problem with the global replacement algorithm is that a process&#39;s memory pages depend not only on that process&#39;s paging behavior but also on the paging behavior of other processes. Therefore, even the same process can have different execution results. The local replacement algorithm does not have this problem, but it may block a process because it does not provide it with other less frequently used memory pages. Therefore, global replacement usually has higher throughput and thus has become the most commonly used method.</p>
+<p>Next we consider only global page replacement strategies. This method can satisfy all memory requests from the free frame list, but instead of starting to select victim pages before free memory drops to zero, it triggers page replacement when free memory drops below a certain threshold, ensuring that there is always enough free memory to satisfy new requests. The process is as follows:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C10/15.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>When it drops below the threshold, a kernel routine (called the reaper) is triggered and begins to reclaim pages from all processes.</p>
+<p>The reaper routine can adopt any of the page replacement algorithms introduced earlier, but some approximate LRU algorithm is commonly used.</p>
+<p>When the amount of free memory reaches the maximum threshold, the reaper process suspends and continues only when free memory drops to the minimum threshold.</p>
+<p>In Linux, if the amount of free memory becomes very, very low, a routine called the &quot;out-of-memory (OOM) killer&quot; selects a process to terminate, thereby freeing its memory.</p>
+<p>Each process has an OOM score; a higher score means the process is more likely to be terminated by the out-of-memory killer.</p>
+<p>The OOM score is calculated from the proportion of memory being used by the process; the higher the proportion, the higher the score.</p>
+<h3 id="Non-Uniform-Memory-Access">5.4 Non-Uniform Memory Access</h3>
+<p>Until now, we have assumed that all main memory is equal; however, in non-uniform memory access (NUMA), the situation is different. In such systems, each CPU has its own local memory, and the CPUs are organized through a shared system interconnect. Obviously, a CPU accessing its own local memory will be faster than accessing the local memory of other CPUs.</p>
+<p>Therefore, managing which frames are placed in which locations greatly affects the performance of NUMA systems. If all memory is still treated equally, a CPU may spend longer waiting. So for NUMA, our goal is to make the allocated memory frames as close as possible to the CPU on which the process is running (that is, to minimize latency).</p>
+<p>At the same time, the scheduler must track the CPU on which each process last ran, so that the virtual memory system can try to allocate frames to each process as close as possible to the process&#39;s CPU, thereby improving cache hit rates and reducing memory access time.</p>
+<p>If threads are also considered, the situation becomes even more complex. Linux&#39;s approach is:</p>
+<ul>
+<li><p>Have the kernel identify the hierarchy of scheduling domains</p>
+</li>
+<li><p>The CFS scheduler does not allow threads to migrate between different domains, thereby avoiding memory access penalties</p>
+</li>
+<li><p>Linux also maintains a separate free frame list for each NUMA node, thereby ensuring that threads allocate memory from the node on which they are running</p>
+</li>
+</ul>
+<h2 id="106-Thrashing">6 Thrashing</h2>
+<p>If a process does not have enough frames, it will soon experience page faults, and at this point it must replace some pages. However, since all pages are in use, it must replace a page that will be needed again very soon, so it will soon experience page faults again. Then it needs to replace pages again, page faults occur again, and this cycle repeats. This situation is called thrashing. At this time, a process spends more time on page swapping than on execution, that is, CPU utilization is extremely low while disk utilization is extremely high, which obviously leads to serious performance problems.</p>
+<h3 id="Cause-of-Thrashing">6.1 Cause of Thrashing</h3>
+<p>To increase CPU utilization and stop thrashing, the degree of multiprogramming must be reduced. Therefore, we adopt a local replacement algorithm (or priority replacement algorithm). In this case, if a process thrashes, it will not steal pages from other processes, thereby preventing other processes from thrashing.</p>
+<p>But this is not enough. To prevent thrashing, the process must be provided with enough frames. One strategy is to define a locality model for a process during execution.</p>
+<p>A &quot;locality&quot; is a set of pages that are actively used, defined by the program structure and data structures.</p>
+<p>A process is usually composed of multiple different localities, and these localities may overlap.</p>
+<p>For example, a function call creates a locality.</p>
+<p>The following figure shows how the locality of a process changes over time (a set of pages enclosed in curly braces is a locality):</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C10/17.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Suppose a process is allocated enough frames to accommodate its current locality. It will incur page faults for the pages in its locality until all these pages are in memory; after that, no more page faults will occur until its locality changes.</p>
+<p>If enough frames are not allocated to accommodate the size of the current locality, the process will experience frequent page faults because it cannot keep all the pages in use in memory.</p>
+<h3 id="Working-Set-Model">6.2 Working-Set Model</h3>
+<p>The working-set model is based on the assumption of locality. The parameter <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi></mrow><annotation encoding="application/x-tex">\Delta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">Δ</span></span></span></span> is used to define the size of the working-set window, in order to detect references to the most recent <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi></mrow><annotation encoding="application/x-tex">\Delta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">Δ</span></span></span></span> pages; these pages are the working set, that is, the set of pages currently being actively used. Therefore, the working set is an approximation of locality.</p>
+<p>The accuracy of the working set depends on the choice of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi></mrow><annotation encoding="application/x-tex">\Delta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">Δ</span></span></span></span>.</p>
+<ul>
+<li><p>If <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi></mrow><annotation encoding="application/x-tex">\Delta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">Δ</span></span></span></span> is too small, it cannot contain the complete locality.</p>
+</li>
+<li><p>If <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi></mrow><annotation encoding="application/x-tex">\Delta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">Δ</span></span></span></span> is too large, multiple localities may overlap.</p>
+</li>
+</ul>
+<p>The most important property of the working set is its size. Suppose the working-set size of each process is <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi><mi>S</mi><msub><mi>S</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">WSS_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0576em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>; then <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mo>∑</mo><mi>W</mi><mi>S</mi><msub><mi>S</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">D = \sum WSS_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop op-symbol small-op" style="position:relative;top:0em;">∑</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0576em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> is the total number of frames required. If <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>&gt;</mo><mi>m</mi></mrow><annotation encoding="application/x-tex">D &gt; m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7224em;vertical-align:-0.0391em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">m</span></span></span></span> (the total number of available frames), then thrashing will occur.</p>
+<p>Once <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi></mrow><annotation encoding="application/x-tex">\Delta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">Δ</span></span></span></span> is determined, using the working-set model is very simple.</p>
+<p>The OS monitors the working set of each process and provides enough frames for the working set to satisfy its working-set size.</p>
+<p>If there are enough extra frames, then other processes can be initiated.</p>
+<p>If the working-set size increases beyond the total number of available frames, then the OS will select a process and suspend it; the pages of that process will be written out, and its frames will be reallocated to other processes, after which the process will be restarted.</p>
+<p>The working-set strategy can avoid thrashing while allowing the degree of multiprogramming to be as high as possible, thereby optimizing CPU utilization.</p>
+<p>The difficulty of this model lies in tracking the working set. We can approximate the working-set model using a timer interrupt at fixed intervals and a reference bit.</p>
+<p>Suppose <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Δ</mi></mrow><annotation encoding="application/x-tex">\Delta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">Δ</span></span></span></span> = 10,000 references; then the timer interrupt can be triggered every 5,000 references.</p>
+<p>When an interrupt occurs, copy and clear the reference bit of each page.</p>
+<p>Therefore, when a page fault occurs, the current reference bit and two in-memory bits can be checked to determine which pages have been used in the most recent 5,000 references.</p>
+<p>If a page has been used, then at least one bit is set, indicating that it is in the working set; if it has not been used, none of the bits are set.</p>
+<p>The above arrangement is not accurate because we do not know exactly which of the 5,000 references occurred. However, uncertainty can be reduced by increasing the number of history bits and the interrupt frequency, although this brings higher cost.</p>
+<h3 id="Page-Fault-Frequency">6.3 Page-Fault Frequency</h3>
+<p>We want to control the level of the page fault rate because:</p>
+<p>Too high -&gt; the process needs more frames</p>
+<p>Too low -&gt; the process may have been allocated too many frames</p>
+<p>So we need to set an upper bound and a lower bound for the required page fault rate, as shown in the figure:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C10/19.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>If the page fault rate exceeds the upper bound, allocate more frames to the process.</p>
+<p>If the page fault rate is below the lower bound, remove some frames owned by the process.</p>
+<p>If the page fault rate is too high and there are no available frames, it may be necessary to select some processes and swap them out to backing storage.</p>
+<h2 id="107-Memory-Compression">7 Memory Compression</h2>
+<p>An alternative to paging is memory compression. With this approach, instead of swapping modified pages to swap space, the system compresses multiple pages into a single page, thereby enabling the system to reduce memory usage without performing page swapping.</p>
+<p>Since mobile devices typically do not support paging, memory compression is an important part of memory management in most mobile operating systems.</p>
+<p>Although memory compression does require allocating free frames to hold compressed pages, the results of compression algorithms show that this approach can indeed significantly save memory usage. However, in any form of data compression, there is always a trade-off between the speed of the compression algorithm and the reduction achieved by the compression implementation (i.e., the compression ratio). In addition, multiple cores help enable parallel execution of compression algorithms.</p>
+<h2 id="108-Allocating-Kernel-Memory">8 Allocating Kernel Memory</h2>
+<p>Typically, the OS allocates kernel memory from a free memory pool that is different from the one used to satisfy general user processes. This is because:</p>
+<p>The kernel may request memory for data structures of varying sizes, and sometimes the size may be less than a single page. Therefore, the kernel must use memory carefully and try to minimize waste caused by fragmentation. This is very important because many operating systems do not perform paging system handling for kernel code or data.</p>
+<p>Some hardware devices interact directly with physical memory, so they may require memory that exists in physically contiguous pages.</p>
+<p>The following introduces some strategies for managing free memory allocated to kernel processes.</p>
+<h3 id="Buddy-System">8.1 Buddy System</h3>
+<p>The buddy system allocates memory from fixed-size segments composed of physically contiguous pages. Memory is allocated from this segment using a power-of-2 allocator, which satisfies requests in units of power-of-2 sizes (4 KB, 8 KB, 16 KB, and so on). For larger memory requests, it rounds up to the next highest power of 2.</p>
+<p>One advantage of the buddy system is that adjacent buddies can quickly form a larger segment through coalescing. For example, in the above example, when <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>C</mi><mi>L</mi></msub></mrow><annotation encoding="application/x-tex">C_L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">L</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> is freed, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>C</mi><mi>L</mi></msub><mo separator="true">,</mo><msub><mi>C</mi><mi>R</mi></msub></mrow><annotation encoding="application/x-tex">C_L, C_R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">L</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> can coalesce into a 64 KB segment <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>B</mi><mi>L</mi></msub></mrow><annotation encoding="application/x-tex">B_L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0502em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">L</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>. Then <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>B</mi><mi>L</mi></msub></mrow><annotation encoding="application/x-tex">B_L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0502em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">L</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>B</mi><mi>R</mi></msub></mrow><annotation encoding="application/x-tex">B_R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0502em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> can also coalesce into a 128 KB segment, eventually returning to a 256 KB segment.</p>
+<p>However, an obvious disadvantage of this system is that rounding up to the next highest power of 2 is very likely to cause fragmentation within the allocated segment. In fact, there is no guarantee that no more than 50% of the allocated unit will be wasted due to internal fragmentation.</p>
+<h3 id="Slab-Allocation">8.2 Slab Allocation</h3>
+<p>The second strategy is called slab allocation.</p>
+<p>A slab consists of one or more physically contiguous pages.</p>
+<p>A cache contains one or more slabs. Each kernel data structure has a unique cache, such as a separate cache for process descriptors, a separate cache for file objects, and so on.</p>
+<p>A cache contains instantiated objects of the kernel data structure.</p>
+<p>The following figure shows the relationship among these three:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C10/23.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>When a cache is created, some initial objects marked as free are allocated to that cache.</p>
+<p>The number of objects in a cache depends on the size of the associated slab.</p>
+<p>Initially, all objects in the cache are marked as free.</p>
+<p>When a new kernel data structure object is needed, the allocator can allocate any free object from the cache to satisfy the request; objects allocated from the cache are marked as used.</p>
+<p>In Linux, a slab may be in one of the following states:</p>
+<ul>
+<li><p>Full: all objects in the slab are marked as used</p>
+</li>
+<li><p>Empty: all objects in the slab are marked as free</p>
+</li>
+<li><p>Partial: the slab contains both used and free objects</p>
+</li>
+</ul>
+<p>The slab allocator first tries to use free objects in a partial slab to satisfy the request. If none exist, it allocates a free object from an empty slab. If no empty slab is available, it allocates a new slab from contiguous physical pages, assigns it to the cache, and then allocates memory for the object in this slab.</p>
+<p>The benefits of the slab allocator include: no memory wasted due to fragmentation, and memory requests can be satisfied quickly.</p>
+<p>The latest Linux distributions provide two new types of kernel memory allocators: SLOB and SLUB.</p>
+<p>SLOB: an allocator designed for systems with a limited amount of memory, maintaining three object lists: small (&lt; 256 B), medium (&lt; 1024 B), and large (&lt; 1 page).</p>
+<p>SLUB: replaces SLAB as the default kernel allocator of Linux, greatly reducing overhead compared with SLAB.</p>
+<h2 id="109-Other-Considerations">9 Other Considerations</h2>
+<p>In paging systems, in addition to the replacement algorithms and allocation strategies mainly discussed above, the following factors also need to be considered.</p>
+<h3 id="Prepaging">9.1 Prepaging</h3>
+<p>To reduce the large number of page faults that occur when a process starts, all or some of the pages required by the process can be preloaded before the pages are referenced.</p>
+<p>However, if the preloaded pages are not used, I/O and memory are wasted.</p>
+<p>Suppose <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi></mrow><annotation encoding="application/x-tex">s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">s</span></span></span></span> pages are preloaded, and a proportion <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span> of the pages are used. It is necessary to consider whether the benefit of the page faults saved by <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>⋅</mo><mi>α</mi></mrow><annotation encoding="application/x-tex">s \cdot \alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4445em;"></span><span class="mord mathnormal">s</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span> is greater than the cost of preloading <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>⋅</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>α</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">s \cdot (1 - \alpha)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4445em;"></span><span class="mord mathnormal">s</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mclose">)</span></span></span></span> unnecessary pages.</p>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi><mo>→</mo><mn>0</mn><mo>⇒</mo></mrow><annotation encoding="application/x-tex">\alpha \rightarrow 0 \Rightarrow</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">⇒</span></span></span></span> prepaging losses</p>
+<h3 id="Page-Size">9.2 Page Size</h3>
+<p>The choice of page size must consider the following factors:</p>
+<p>Fragmentation -&gt; page size <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>↓</mo></mrow><annotation encoding="application/x-tex">\downarrow</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mrel">↓</span></span></span></span></p>
+<p>Table size -&gt; page size <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>↑</mo></mrow><annotation encoding="application/x-tex">\uparrow</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mrel">↑</span></span></span></span></p>
+<p>I/O overhead -&gt; page size <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>↑</mo></mrow><annotation encoding="application/x-tex">\uparrow</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mrel">↑</span></span></span></span></p>
+<p>Locality -&gt; page size <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>↓</mo></mrow><annotation encoding="application/x-tex">\downarrow</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mrel">↓</span></span></span></span>, to obtain precise locality</p>
+<h3 id="TLB-Reach">9.3 TLB Reach</h3>
+<p>TLB reach is the amount of memory accessible from the TLB.</p>
+<p>TLB reach = TLB size × page size</p>
+<p>Ideally, the working set of each process is stored in the TLB; otherwise, a high frequency of page faults will occur.</p>
+<p>Increasing the page size may lead to increased fragmentation, because not all applications need such large pages.</p>
+<p>Solution: provide multiple page sizes, so that applications that need large pages can use larger page sizes without increasing fragmentation.</p>
+<h3 id="Program-Structure">9.4 Program Structure</h3>
+<p>TLB reach is the amount of memory accessible from the TLB.</p>
+<p>TLB reach = TLB size × page size</p>
+<p>Ideally, the working set of each process is stored in the TLB; otherwise, a high frequency of page faults will occur.</p>
+<p>Increasing the page size may lead to increased fragmentation, because not all applications need such large pages.</p>
+<p>Solution: provide multiple page sizes, so that applications that need large pages can use larger page sizes without increasing fragmentation.</p>
+<h3 id="IO-Interlock-and-Page-Locking">9.5 I/O Interlock and Page Locking</h3>
+<p>I/O interlock: sometimes memory pages must be locked.</p>
+<p>Consider I/O: pages used to copy files from a device must be locked to prevent them from being evicted by the page replacement algorithm.</p>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-9/" rel="prev"><span>← Previous chapter</span>Chapter 9 Main Memory</a>
+  
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

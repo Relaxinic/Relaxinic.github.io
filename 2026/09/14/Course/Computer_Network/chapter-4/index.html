@@ -1,0 +1,1003 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 4 Network Layer — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  <link rel="stylesheet" href="../../../../../../media/katex/katex.min.css">
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Computer Network</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-10-26">26 Oct 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-4-Network-Layer">Chapter 4 Network Layer</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#41-Internet-Protocol">1 Internet Protocol</a>
+      <ul class="toc-subsections">
+        <li><a href="#IPv4-Addresses-and-Their-Addressing-Methods">1.1 IPv4 Addresses and Their Addressing Methods</a></li>
+        <li><a href="#IPv4-address-and-MAC-address">1.2 IPv4 address and MAC address</a></li>
+        <li><a href="#Address-Resolution-Protocol-ARP">1.3 Address Resolution Protocol (ARP)</a></li>
+        <li><a href="#Header-Format-of-IPv4-Datagrams">1.4 Header Format of IPv4 Datagrams</a></li>
+      </ul>
+    </li>
+    <li><a href="#42-Static-Routing-Configuration">2 Static Routing Configuration</a></li>
+    <li><a href="#43-Internet-Routing-Protocols">3 Internet Routing Protocols</a>
+      <ul class="toc-subsections">
+        <li><a href="#Classification-of-Routing">3.1 Classification of Routing</a></li>
+        <li><a href="#Hierarchical-Routing-Protocols">3.2 Hierarchical Routing Protocols</a></li>
+        <li><a href="#Routing-Information-Protocol-RIP">3.3 Routing Information Protocol (RIP)</a></li>
+        <li><a href="#Open-Shortest-Path-First-Protocol-OSPF">3.4 Open Shortest Path First Protocol (OSPF)</a></li>
+        <li><a href="#Border-Gateway-Protocol-BGP">3.5 Border Gateway Protocol (BGP)</a></li>
+        <li><a href="#Basic-Operation-of-a-Router">3.6 Basic Operation of a Router</a></li>
+      </ul>
+    </li>
+    <li><a href="#44-Internet-Control-Message-Protocol-ICMP">4 Internet Control Message Protocol (ICMP)</a>
+      <ul class="toc-subsections">
+        <li><a href="#Message-Types">4.1 Message Types</a></li>
+        <li><a href="#Typical-Applications">4.2 Typical Applications</a></li>
+      </ul>
+    </li>
+    <li><a href="#45-Virtual-Private-Networks-and-Network-Address-Translation">5 Virtual Private Networks and Network Address Translation</a>
+      <ul class="toc-subsections">
+        <li><a href="#Virtual-Private-Network-VPN">5.1 Virtual Private Network (VPN)</a></li>
+        <li><a href="#Network-Address-Translation-NAT">5.2 Network Address Translation (NAT)</a></li>
+      </ul>
+    </li>
+    <li><a href="#46-IP-Multicast">6 IP Multicast</a>
+      <ul class="toc-subsections">
+        <li><a href="#IP-Multicast-Addresses-and-Multicast-Groups">6.1 IP Multicast Addresses and Multicast Groups</a></li>
+        <li><a href="#Hardware-Multicast-on-a-LAN">6.2 Hardware Multicast on a LAN</a></li>
+        <li><a href="#Protocols-Related-to-IP-Multicast">6.3 Protocols Related to IP Multicast</a></li>
+        <li><a href="#Internet-Group-Management-Protocol-IGMP">6.4 Internet Group Management Protocol (IGMP)</a></li>
+        <li><a href="#Multicast-Routing-Protocols-MRPs">6.5 Multicast Routing Protocols (MRPs)</a></li>
+        <li><a href="#Mobile-IP">6.6 Mobile IP</a></li>
+      </ul>
+    </li>
+    <li><a href="#47-IPv6">7 IPv6</a>
+      <ul class="toc-subsections">
+        <li><a href="#Datagram-Header">7.1 Datagram Header</a></li>
+        <li><a href="#Extension-Headers">7.2 Extension Headers</a></li>
+        <li><a href="#IPv6-Addresses">7.3 IPv6 Addresses</a></li>
+        <li><a href="#Transition-from-IPv4-to-IPv6">7.4 Transition from IPv4 to IPv6</a></li>
+        <li><a href="#Internet-Control-Message-Protocol-Version-6-ICMPv6">7.5 Internet Control Message Protocol Version 6 (ICMPv6)</a></li>
+      </ul>
+    </li>
+    <li><a href="#48-Software-Defined-Networking">8 Software-Defined Networking</a></li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<p>The main task of the network layer is to transmit packets from the source host to the destination host through multiple networks and multiple links. This task can be divided into two important functions: packet forwarding and routing.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/150.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The network layer provides two types of services to the upper layer:</p>
+<p><strong>Connection-oriented virtual circuit service</strong></p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/151.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>The core idea is that &quot;reliable communication should be guaranteed by the network itself.&quot;</p>
+</li>
+<li><p>A connection called a virtual circuit (VC) must first be established in the network layer to ensure all network resources required by both communicating parties.</p>
+</li>
+<li><p>The two communicating parties send packets along the established virtual circuit. A virtual circuit indicates that this is a logical connection; packets are transmitted along this logical connection in a store-and-forward manner, rather than establishing a true physical connection. The header of a packet uses the complete destination host address only during the connection establishment phase; afterward, the header of each packet only needs to carry a virtual circuit identifier.</p>
+</li>
+<li><p>After communication ends, the previously established virtual circuit needs to be released.</p>
+</li>
+<li><p>If this communication method also uses a reliable transport network protocol, the sent packets can ultimately arrive at the receiver correctly (error-free, in order, without loss, and without duplication).</p>
+</li>
+<li><p>Many wide area packet-switched networks use the connection-oriented virtual circuit service, but the Internet uses the connectionless datagram service.</p>
+</li>
+</ul>
+<p><strong>Connectionless datagram service</strong></p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/152.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>The core idea is that &quot;reliable communication should be guaranteed by the user hosts.&quot;</p>
+</li>
+<li><p>There is no need to establish a network layer connection, so after communication ends there is no connection to release.</p>
+</li>
+<li><p>Each packet may take a different path, so the header of each packet must carry the complete address of the destination host.</p>
+</li>
+<li><p>Packets transmitted by this communication method may have bit errors, be lost, duplicated, or arrive out of order.</p>
+</li>
+<li><p>Because the network itself does not provide end-to-end reliable transmission services, routers in the network can be made relatively simple, greatly reducing network cost.</p>
+</li>
+<li><p>In addition, this design philosophy operates flexibly and can adapt to a variety of applications.</p>
+</li>
+</ul>
+<h2 id="41-Internet-Protocol">1 Internet Protocol</h2>
+<p>The Internet Protocol (IP) is the core protocol in the network layer of the TCP/IP architecture.</p>
+<h3 id="IPv4-Addresses-and-Their-Addressing-Methods">1.1 IPv4 Addresses and Their Addressing Methods</h3>
+<p>An IPv4 address is a globally unique 32-bit identifier assigned to each interface of every host (or router) on the Internet, and it is allocated by the Internet Corporation for Assigned Names and Numbers (ICANN).</p>
+<p>IPv4 addresses use dotted-decimal notation to make them easier for users to use.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/154.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The addressing method initially adopted was classful addressing. An IPv4 address can be split into two parts:</p>
+<ul>
+<li><p>Network number: identifies the network to which the interface of the host (or router) is connected. Within the same network, the network numbers of the IPv4 addresses of the interfaces of different hosts (or routers) must be the same, indicating that they belong to the same network.</p>
+</li>
+<li><p>Host number: identifies the interface of the host (or router). Within the same network, the host numbers of the IPv4 addresses of the interfaces of different hosts (or routers) must be different so as to distinguish the interfaces of the hosts (or routers).</p>
+</li>
+</ul>
+<p>There are 5 classes of IPv4 addresses:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/155.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>Class A, Class B, and Class C addresses are all unicast addresses, and only unicast addresses can be assigned to the interfaces of hosts (or routers) in a network.</p>
+</li>
+<li><p>An address whose host number is all 0s is a network address and cannot be assigned to the interfaces of hosts (or routers).</p>
+</li>
+<li><p>An address whose host number is all 1s is a broadcast address and cannot be assigned to the interfaces of hosts (or routers).</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/156.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/361.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<hr>
+<p>As more small and medium-sized networks joined the Internet, the shortcomings of the IPv4 classful addressing method—being insufficiently flexible and easily causing a large amount of waste of IPv4 address resources—became exposed. Therefore, the subnetting addressing method was introduced to improve it.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/157.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>A subnet mask can indicate how many bits have been borrowed from the host number portion of a classful IPv4 address as the subnet number. Similar to an IPv4 address, a subnet mask is also composed of 32 bits.</p>
+<ul>
+<li><p>Multiple consecutive 1 bits starting from the left correspond to the network number and subnet number in the IPv4 address.</p>
+</li>
+<li><p>The subsequent multiple consecutive 0 bits correspond to the host number in the IPv4 address.</p>
+</li>
+</ul>
+<p>By performing a bitwise logical AND operation on the subnetted IPv4 address and the corresponding subnet mask, the network address of the subnet to which the IPv4 address belongs can be obtained.</p>
+<p><img loading="lazy" src="https://note.noughtq.top/web/cn/images/158.png" style="max-width: 40%; display: block; margin: 0 auto;">1</p>
+<p>The default subnet mask refers to the subnet mask used when no subnetting is performed.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/159.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<hr>
+<p>The address mask used by the classless addressing method is similar to the subnet mask used for subnetting, and consists of 32 bits. A sequence of consecutive 1 bits starting from the left corresponds to the network prefix in the IPv4 address, and the following sequence of consecutive 0 bits corresponds to the host number in the IPv4 address.</p>
+<p>For simplicity, a slash / can be appended after a classless addressing address, followed by the number of bits occupied by the network prefix. This notation is called slash notation.</p>
+<p>In fact, classless inter-domain routing (CIDR) groups multiple consecutive classless IPv4 addresses with the same network prefix into a CIDR address block. As long as any one of the addresses is known, all of the following details of the address block can be determined: the smallest address in the address block, the largest address in the address block, the number of addresses in the address block, the number of networks of a certain class (Class A, Class B, Class C) aggregated in the address block, and the address mask.</p>
+<p>Using the classless addressing method, CIDR address blocks of an appropriate size can be allocated according to customer needs, so the IPv4 address space can be allocated more efficiently.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/160.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Another benefit of using the classless addressing method is route aggregation (also called constructing a supernet).</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/161.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The longer the network prefix, the smaller the address block, and the more specific the route.</p>
+<p>If a router finds that multiple routing entries match when looking up the table to forward a packet, it selects the routing entry with the longest network prefix. This is called longest prefix matching, because such a route is more specific.</p>
+<h3 id="IPv4-address-and-MAC-address">1.2 IPv4 address and MAC address</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/164.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Changes in IPv4 addresses and MAC addresses during datagram transmission:</p>
+<ul>
+<li><p>During packet transmission, the source IP address and destination IP address of the packet remain unchanged.</p>
+</li>
+<li><p>During packet transmission, the source MAC address and destination MAC address of the packet change link by link (or network by network).</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/165.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The result of table lookup forwarding can indicate the IP address of the next-hop router for the IP datagram, but it cannot indicate the MAC address corresponding to that IP address. Therefore, when the IP datagram is encapsulated into a frame at the data link layer, the destination MAC address field in the frame header cannot be filled in. This problem needs to be solved using the Address Resolution Protocol in the network layer.</p>
+<h3 id="Address-Resolution-Protocol-ARP">1.3 Address Resolution Protocol (ARP)</h3>
+<p>The Address Resolution Protocol (ARP) is used to resolve the IP addresses of hosts within a local area network to their corresponding MAC physical addresses.</p>
+<p>The record types in the ARP cache table are divided into:</p>
+<ul>
+<li><p>Dynamic: automatically obtained through ARP, with a default lifetime of 2 min</p>
+</li>
+<li><p>Static: manually configured, with lifetimes that vary across operating systems; for example, they may not exist after a system restart or may remain valid after a system restart</p>
+</li>
+</ul>
+<p>The correspondence between IP addresses and MAC addresses in the ARP cache table is not permanent, for example, when a host replaces its network card with a new one</p>
+<p>Since the main purpose of the ARP protocol is to resolve the IP addresses used at the network layer into the MAC addresses used at the data link layer, some textbooks classify the ARP protocol as belonging to the network layer, while others classify it as belonging to the data link layer; both approaches are acceptable</p>
+<p>In addition to the ARP request messages and response messages introduced in this lesson, the ARP protocol also has other types of messages, such as gratuitous ARP, which is used to check for IP address conflicts</p>
+<p>Since the ARP protocol was formulated very early (November 1982), network security issues were not taken into consideration at the time; therefore, the ARP protocol has no security verification mechanism and is subject to problems such as ARP spoofing and attacks</p>
+<h3 id="Header-Format-of-IPv4-Datagrams">1.4 Header Format of IPv4 Datagrams</h3>
+<p>The header format and contents of an IPv4 datagram are the foundation for implementing the various functions of the IPv4 protocol.</p>
+<p>In the TCP/IP standards, various data formats are often described in units of 32 bits (i.e., 4 bytes).</p>
+<p>The fixed part refers to the part that every IPv4 datagram must contain.</p>
+<p>The header of some IPv4 datagrams, in addition to containing the 20-byte fixed part, also contains some optional fields to add functionality to the IPv4 datagram.</p>
+<p>The following describes the meaning and functions of each field or combination of fields in the IPv4 datagram header:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/173.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Version: The length is 4 bits, used to indicate the version of the IP protocol.</p>
+<ul>
+<li><p>The versions of the IP protocol used by both communicating parties must be the same.</p>
+</li>
+<li><p>The version number of the IP protocol currently widely used is 4 (i.e., IPv4).</p>
+</li>
+</ul>
+<p>Internet header length (IHL):</p>
+<ul>
+<li><p>The length is 4 bits. The value of this field is in units of 4 bytes and is used to indicate the header length of an IPv4 datagram.</p>
+</li>
+<li><p>The minimum value is 0101 in binary, i.e., 5 in decimal, which, multiplied by the 4-byte unit, indicates that the IPv4 datagram header contains only the 20-byte fixed part.</p>
+</li>
+<li><p>The maximum value is 1111 in binary, i.e., 15 in decimal, which, multiplied by the 4-byte unit, indicates that the IPv4 datagram header contains the 20-byte fixed part and a variable part of up to 40 bytes.</p>
+</li>
+</ul>
+<p>Differentiated services:</p>
+<ul>
+<li><p>The length is 8 bits. Different values of this field can be used to provide different levels of quality of service.</p>
+</li>
+<li><p>In the old standard, this field was called type of service, but in practice it was never used; in 1998, the IETF renamed this field differentiated services.</p>
+</li>
+<li><p>This field takes effect only when differentiated services are used; under normal circumstances, this field is not used.</p>
+</li>
+</ul>
+<p>Total length:</p>
+<ul>
+<li><p>The length is 16 bits. The value of this field is in bytes and is used to indicate the length of the IPv4 datagram (header length + payload length).</p>
+</li>
+<li><p>The maximum value is 16 binary 1s, i.e., 65535 in decimal (IPv4 datagrams of such length are rarely transmitted).</p>
+</li>
+</ul>
+<p>IPv4 datagram fragmentation: When the length of an IPv4 datagram exceeds the MTU (maximum transmission unit), it cannot be encapsulated into a frame, and the original IPv4 datagram needs to be fragmented into several smaller IPv4 datagrams.</p>
+<ul>
+<li><p>Identification: The length is 16 bits. All fragments of the same IPv4 datagram should have the same identification. The IP software maintains a counter. Each time an IPv4 datagram is generated, the counter value is incremented by 1, and this value is assigned to the identification field.</p>
+</li>
+<li><p>Flag</p>
+<ul>
+<li><p>Lowest bit (more fragment, MF): MF=1 indicates that there are more fragments after this fragment; MF=0 indicates that there are no more fragments after this fragment.</p>
+</li>
+<li><p>Middle bit (don&#39;t fragment, DF): DF=1 indicates that fragmentation is not allowed; DF=0 indicates that fragmentation is allowed. The highest bit is a reserved bit and must be set to 0.</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>Time to Live (TTL)</p>
+<ul>
+<li><p>It is 8 bits long, and its value was initially in seconds, so the maximum time to live of an IPv4 datagram was initially 255 s; when a router forwards an IPv4 datagram, it subtracts from the value of this field in its header the time the datagram spent on the router, and if the result is not 0, it forwards it; otherwise, it discards it. Later, it was changed to use hop count as the unit.</p>
+</li>
+<li><p>Purpose: to prevent incorrectly routed IPv4 datagrams from circulating endlessly in the Internet.</p>
+</li>
+</ul>
+<p>Protocol:</p>
+<ul>
+<li><p>It is 8 bits long and is used to indicate what kind of PDU the data payload of the IPv4 datagram is.</p>
+</li>
+<li><p>Some commonly used protocols and their corresponding protocol field values: ICMP: 1 / IGMP: 2 / TCP: 6 / UDP: 17 / IPv6: 41 / OSPF: 89</p>
+</li>
+</ul>
+<p>Header checksum:</p>
+<ul>
+<li><p>It is 16 bits long and is used to detect whether errors have occurred in the header of an IPv4 datagram during transmission.</p>
+</li>
+<li><p>Each time an IPv4 datagram passes through a router, the values of some fields in its header (such as TTL, flags, and fragment offset) may change, so the router must recalculate the header checksum.</p>
+</li>
+<li><p>Calculation method:</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/175.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>The above checksum calculation method is used not only for the IP protocol but also for UDP and TCP at the transport layer, and is often called the Internet checksum; although the error-detection performance of this checksum is inferior to CRC, it is easier to implement in software.</p>
+</blockquote>
+<p>Source address: It is 32 bits long and is used to fill in the IPv4 address of the source host sending the IPv4 datagram.</p>
+<p>Destination address: It is 32 bits long and is used to fill in the IPv4 address of the destination host receiving the IPv4 datagram.</p>
+<p>Fragment offset: It is 13 bits long, and the value of this field is in units of 8 bytes; it is used to indicate how far the data payload of a fragmented IPv4 datagram is offset from its position in the original IPv4 datagram.</p>
+<p>Options:</p>
+<ul>
+<li><p>The length ranges from 1 byte to 40 bytes, and it is used to support functions such as troubleshooting, measurement, and security measures.</p>
+</li>
+<li><p>Although the options field increases the functionality of IPv4 datagrams, it also makes the header length of IPv4 datagrams variable, which increases the overhead for every router in the Internet to process IPv4 datagrams.</p>
+</li>
+<li><p>In practice, this field is rarely used.</p>
+</li>
+</ul>
+<p>Padding: It is used to ensure that the header length of an IPv4 datagram is an integer multiple of 4 bytes, using all-zero padding.</p>
+<h2 id="42-Static-Routing-Configuration">2 Static Routing Configuration</h2>
+<p>Static route configuration refers to users or network operations personnel using the relevant commands of a router to manually configure the routing table for the router. This approach is simple and has low overhead, but it cannot promptly adapt to changes in network conditions (traffic, topology, etc.), so it is generally used only in small-scale networks.</p>
+<p>Performing static route configuration requires careful consideration and cautious operation; otherwise, the following problems may occur:</p>
+<ul>
+<li><p>Incorrect configuration of route entries, which may even lead to routing loops</p>
+</li>
+<li><p>Summarized route entries may introduce nonexistent networks</p>
+</li>
+</ul>
+<h2 id="43-Internet-Routing-Protocols">3 Internet Routing Protocols</h2>
+<h3 id="Classification-of-Routing">3.1 Classification of Routing</h3>
+<p>Static routing (described in detail earlier)</p>
+<p>Dynamic routing</p>
+<ul>
+<li><p>Routers automatically obtain routing information through routing protocols</p>
+</li>
+<li><p>Dynamic routing is more complex and has higher overhead, but it can better adapt to changes in network conditions</p>
+</li>
+<li><p>Dynamic routing is suitable for large-scale networks</p>
+</li>
+</ul>
+<h3 id="Hierarchical-Routing-Protocols">3.2 Hierarchical Routing Protocols</h3>
+<p>The Internet is the largest Internet in the world. The routing selection protocol it adopts has the following three main characteristics:</p>
+<p>Adaptive: The Internet adopts dynamic routing selection, which can better adapt to changes in network status.</p>
+<p>Distributed: Routers on the Internet jointly complete the acquisition and update of routing information through mutual information interaction.</p>
+<p>Hierarchy: Divide the entire Internet into many smaller autonomous systems (AS). Different types of routing selection protocols are adopted inside and outside the autonomous system, and routing selection is carried out separately.</p>
+<p>Exterior Gateway Protocol (EGP) and Interior Gateway Protocol (IGP) are merely category names for routing protocols, not specific routing protocols.</p>
+<p>The term &quot;gateway&quot; is used in the names Exterior Gateway Protocol and Interior Gateway Protocol because early RFC documents of the Internet did not use the term &quot;router&quot; but instead used the term &quot;gateway.&quot;</p>
+<h3 id="Routing-Information-Protocol-RIP">3.3 Routing Information Protocol (RIP)</h3>
+<p>Routing Information Protocol (RIP) was one of the first interior gateway protocols to be widely used. It is a distance-vector protocol. Every router in an AS maintains a record of its distance to every other network in the AS; this set of distances is called a distance vector (D-V).</p>
+<p>RIP uses hop count to measure the distance to a destination network:</p>
+<ul>
+<li><p>The distance from a router to a directly connected network is defined as 1.</p>
+</li>
+<li><p>The distance to a network that is not directly connected is the number of routers passed through plus 1.</p>
+</li>
+<li><p>The maximum RIP distance is 15, and a distance of 16 means unreachable. Therefore, RIP is suitable only for small internetworks.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/181.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>RIP considers a good route to be a short route, that is, one passing through the fewest routers. When several routes to the same destination have equal RIP distances, equal-cost load balancing can distribute traffic evenly among them.</p>
+<p>RIP has three important characteristics:</p>
+<ul>
+<li><p>With whom information is exchanged: only neighboring routers.</p>
+</li>
+<li><p>What information is exchanged: the router&#39;s own routing table. Each entry contains the destination network, the shortest RIP distance, and the next-hop router.</p>
+</li>
+<li><p>When information is exchanged: periodically, and through triggered updates. When the topology changes, routers promptly advertise the updated routing information to their neighbors to accelerate convergence.</p>
+</li>
+</ul>
+<p>The basic operation is as follows:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/182.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>When a router starts, it knows only that its RIP distance to each directly connected network is 1.</p>
+</li>
+<li><p>Each router periodically exchanges and updates routing information with its neighbors.</p>
+</li>
+<li><p>After several exchanges and updates, each router knows the shortest distance and next hop to every network in the AS. This is called convergence.</p>
+</li>
+</ul>
+<p>The following example illustrates the distance-vector algorithm and should be understood.</p>
+<blockquote>
+<p>D modifies the routing table received from C.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/183.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>D updates its own routing table.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/184.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Reasons for updating or retaining the entries:</p>
+<ul>
+<li><p>N2: the next hop is unchanged, so the latest information must replace the old entry.</p>
+</li>
+<li><p>N3: a new destination network has been discovered, so add the entry.</p>
+</li>
+<li><p>N6: the next hop differs and the new route is better, so update the entry.</p>
+</li>
+<li><p>N8: the next hop differs and the RIP distance is equal, so add the route for equal-cost load balancing.</p>
+</li>
+<li><p>N9: the next hop differs and the new route is worse, so retain the old entry.</p>
+</li>
+</ul>
+<p>Besides these update rules, the algorithm includes timing parameters. A router sends routing updates to all neighbors approximately every 30 seconds. If an entry receives no update for 180 seconds by default, it is marked invalid by setting its RIP distance to 16. If no update arrives after a further interval, such as 120 seconds, the entry is deleted.</p>
+<p>RIP has the problem that bad news travels slowly, also called the routing-loop or count-to-infinity problem.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/185.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Measures to reduce its impact include:</p>
+<ul>
+<li><p>Limit the maximum RIP distance to 15, with 16 indicating unreachable.</p>
+</li>
+<li><p>Send triggered updates immediately when the routing table changes, rather than relying only on periodic updates.</p>
+</li>
+<li><p>Split horizon: never advertise a route back to the neighbor from which it was learned.</p>
+</li>
+<li><p>Poisoned reverse: a route may be advertised back to the neighbor from which it was learned, but its distance is set to infinity, thereby poisoning the route.</p>
+</li>
+</ul>
+<p>RIPv2, published in November 1998 in RFC 2453, became an Internet standard. Compared with RIPv1, it supports variable-length subnet masks and CIDR, provides a simple authentication procedure, and supports multicast.</p>
+<p>RIP messages are encapsulated using UDP and use UDP port 520. From the perspective of encapsulation, RIP belongs to the application layer of the TCP/IP architecture. Its central function, routing, belongs to the network layer.</p>
+<p>Advantages:</p>
+<ul>
+<li><p>Simple implementation and low router overhead.</p>
+</li>
+<li><p>Updates announcing a shorter route propagate quickly: good news travels fast.</p>
+</li>
+</ul>
+<p>Disadvantages:</p>
+<ul>
+<li><p>The maximum distance of 15 limits the size of an AS.</p>
+</li>
+<li><p>Neighbors exchange complete routing tables, so overhead increases with network size.</p>
+</li>
+<li><p>Slow propagation of bad news leads to long convergence times.</p>
+</li>
+</ul>
+<h3 id="Open-Shortest-Path-First-Protocol-OSPF">3.4 Open Shortest Path First Protocol (OSPF)</h3>
+<p>Open Shortest Path First (OSPF) was developed to overcome RIP&#39;s disadvantages. It is a link-state protocol. Open means that it is publicly published rather than controlled by a particular vendor; shortest path first refers to its use of Dijkstra&#39;s shortest-path algorithm.</p>
+<p>Link-state information describes which routers are adjacent to the current router and the costs of the corresponding links. Costs can represent expense, distance, delay, bandwidth, and other factors determined by network administrators. Link-state information and the shortest-path algorithm together prevent routing loops. OSPF does not impose RIP&#39;s network-size limit and provides efficient updates and fast convergence.</p>
+<p>Neighboring routers establish and maintain neighbor relationships by exchanging hello packets. These are encapsulated directly in IP datagrams sent to multicast address 224.0.0.5. The IP protocol field is 89, indicating an OSPF payload. Hello packets are sent every 10 seconds; if none is received from a neighbor for 40 seconds, that neighbor is considered unreachable. Each router maintains a neighbor table.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/186.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Each OSPF router generates link-state advertisements (LSAs) containing the link states of its directly connected networks and neighboring routers. LSAs are encapsulated in link-state update (LSU) packets and distributed by reliable flooding.</p>
+<p>In flooding, a router sends an LSU to all its neighbors. Each receiving router forwards it to its other neighbors, excluding the upstream router. Reliability means that received updates are acknowledged. Duplicate updates need not be forwarded again, but must still be acknowledged.</p>
+<p>Every OSPF router maintains a link-state database (LSDB). As routers flood LSUs carrying their LSAs, the databases eventually become consistent.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/187.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Each router performs shortest-path-first calculations using its LSDB, determines its shortest paths to other routers, and constructs its routing table.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/188.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>OSPF packet types:</p>
+<ul>
+<li><p>Hello: discovers neighbors and maintains their reachability.</p>
+</li>
+<li><p>Database description: gives a neighbor summary information about all link-state entries in the sender&#39;s database.</p>
+</li>
+<li><p>Link-state request: requests detailed information about particular link-state entries.</p>
+</li>
+<li><p>Link-state update: floods link-state information to update the system.</p>
+</li>
+<li><p>Link-state acknowledgment: acknowledges link-state updates.</p>
+</li>
+</ul>
+<p>The basic operation is illustrated below.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/189.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>In a multiaccess network with <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span> routers, establishing relationships directly with every other router would require exchanges with <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">n - 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> routers. To reduce the number of hello and link-state update exchanges, OSPF elects a designated router (DR) and a backup designated router (BDR). Other routers exchange the relevant information through the DR and BDR rather than establishing full exchange relationships with one another.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/190.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>To support very large networks, OSPF divides an AS into smaller areas. Flooding of link-state information is confined to each area rather than the entire AS, reducing overall traffic. An area should not be too large; it should generally contain no more than 200 routers. Although areas introduce more types of exchanged information and make OSPF more complex, they greatly reduce routing-information traffic within each area and allow larger ASes.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/191.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Router categories in the figure:</p>
+<ul>
+<li><p>AS boundary router (ASBR): R6.</p>
+</li>
+<li><p>Backbone routers (BBRs): R3, R4, R5, R6, and R7.</p>
+</li>
+<li><p>Internal routers (IRs): R1 and R2 in area 1, R8 in area 2, and R9 in area 3.</p>
+</li>
+<li><p>Area border routers (ABRs): R3, R4, and R7.</p>
+</li>
+</ul>
+<h3 id="Border-Gateway-Protocol-BGP">3.5 Border Gateway Protocol (BGP)</h3>
+<blockquote>
+<p>BGP is an application-layer protocol. It is discussed here because its purpose is closely related to the network layer, even though its mechanisms have clear application-layer characteristics.</p>
+</blockquote>
+<p>Border Gateway Protocol (BGP) belongs to the EGP category and provides routing between ASes. Different ASes may measure route costs differently, so a uniform cost metric cannot be used to find a globally optimal route. Inter-AS routing must also consider political, economic, security, and other policies configured by network administrators; these policies are not themselves routing protocols. BGP seeks a reasonably good route that reaches the destination without loops, rather than a globally optimal route.</p>
+<p>When configuring BGP, an AS administrator selects at least one router as a BGP speaker. Two speakers are generally connected through a shared network, and speakers are often BGP border routers. Speakers that exchange routing information over a TCP connection are called neighbors or peers.</p>
+<p>A BGP speaker must also run its AS&#39;s IGP, such as RIP or OSPF. Speakers exchange network-reachability information: the sequence of ASes traversed to reach a network. They apply their policies to the received information and choose suitable routes, constructing a tree-like, loop-free AS connectivity graph.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/192.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>BGP is suitable for the Internet&#39;s multilevel structure.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/193.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>BGP-4 is specified in RFC 4271, which defines four message types:</p>
+<ul>
+<li><p>OPEN: establishes a relationship with a neighboring speaker and initializes communication.</p>
+</li>
+<li><p>KEEPALIVE: periodically confirms a neighbor&#39;s connectivity.</p>
+</li>
+<li><p>UPDATE: advertises a route and lists routes to withdraw.</p>
+</li>
+<li><p>NOTIFICATION: reports detected errors.</p>
+</li>
+</ul>
+<h3 id="Basic-Operation-of-a-Router">3.6 Basic Operation of a Router</h3>
+<p>A router is a special-purpose computer with multiple input and output ports. Its task is to forward packets.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/194.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>A routing table generally maps destination networks to next hops and is organized to optimize calculations following topology changes.</p>
+</li>
+<li><p>A forwarding table is derived from the routing table and should optimize lookups.</p>
+</li>
+</ul>
+<p>A router may run no routing protocol when all routes are static, one protocol in a small or medium-sized network, or several protocols at a network boundary. Switching-fabric speed is critical to forwarding performance. The three basic implementations use memory, a bus, or an interconnection network; the achievable forwarding rate increases in that order.</p>
+<h2 id="44-Internet-Control-Message-Protocol-ICMP">4 Internet Control Message Protocol (ICMP)</h2>
+<p>The network layer of the TCP/IP architecture uses Internet Control Message Protocol (ICMP) to forward IP datagrams more effectively and improve their chances of successful delivery. Hosts and routers use it to send error reports and queries. ICMP messages are encapsulated in IP datagrams.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/195.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Message-Types">4.1 Message Types</h3>
+<p>Error-reporting messages report problems to hosts or routers.</p>
+<p>Destination unreachable: sent to the source when a router or host cannot deliver an IP datagram. The code field further distinguishes 13 cases, including destination network, host, protocol, or port unreachable, and destination network or host unknown.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/196.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Source quench: sent when a router or host discards a datagram because of congestion, informing the source that it should reduce its sending rate.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/197.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Time exceeded: when a router receives a datagram addressed elsewhere, it subtracts 1 from the TTL. If the result is nonzero, it forwards the datagram. If the result is zero, it discards the datagram and sends a time-exceeded message to the source. A destination also discards the fragments already received and sends a time-exceeded message if all fragments fail to arrive within the prescribed reassembly time.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/198.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Parameter problem: when a router or destination host uses the header checksum to discover that a transmission error has occurred in the received IP datagram&#39;s header, it discards the datagram and sends this message to the source.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/199.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Redirect: a router informs a host that future datagrams should be sent to another router to reach the destination through a better route.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/200.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>ICMP error reports should not be sent:</p>
+<ul>
+<li><p>In response to another error-reporting message.</p>
+</li>
+<li><p>For fragments other than the first fragment of an IP datagram.</p>
+</li>
+<li><p>For IP datagrams with multicast addresses.</p>
+</li>
+<li><p>For IP datagrams with special addresses, such as 127.0.0.0 or 0.0.0.0.</p>
+</li>
+</ul>
+<p>Query messages ask hosts or routers for information.</p>
+<ul>
+<li><p>Echo request and reply: a host or router sends a request to a particular destination, which returns an ICMP echo reply. These messages test reachability and obtain information about the destination&#39;s status.</p>
+</li>
+<li><p>Timestamp request and reply: request the current date and time from a host or router. An ICMP timestamp reply contains a 32-bit field whose integer value represents the number of seconds elapsed since January 1, 1900. These messages are used for clock synchronization and time measurement.</p>
+</li>
+</ul>
+<h3 id="Typical-Applications">4.2 Typical Applications</h3>
+<p>Packet Internet Groper (PING) tests connectivity between hosts or routers. It is an example of an application directly using network-layer ICMP and bypassing the transport layer. It uses echo requests and replies. Some hosts and servers ignore incoming echo requests to guard against malicious attacks.</p>
+<p>Traceroute discovers the routers traversed from a source to a destination. Its command and implementation differ by operating system:</p>
+<ul>
+<li><p>UNIX traceroute uses UDP at the transport layer and ICMP error-reporting messages at the network layer.</p>
+</li>
+<li><p>Windows tracert directly uses network-layer ICMP, including echo request/reply messages and error reports.</p>
+</li>
+</ul>
+<blockquote>
+<p>Example: hop 1.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/201.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Hop 2.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/202.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Hop 3.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/203.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h2 id="45-Virtual-Private-Networks-and-Network-Address-Translation">5 Virtual Private Networks and Network Address Translation</h2>
+<h3 id="Virtual-Private-Network-VPN">5.1 Virtual Private Network (VPN)</h3>
+<p>A virtual private network (VPN) uses the public Internet as the communication medium between an organization&#39;s private networks. The organization may independently assign private IP addresses to its internal hosts. These addresses are valid only internally and do not require an application to an Internet address-management organization.</p>
+<p>RFC 1918 reserves three CIDR blocks for private addressing:</p>
+<ul>
+<li><p>10.0.0.0–10.255.255.255, or 10/8.</p>
+</li>
+<li><p>172.16.0.0–172.31.255.255, or 172.16/12.</p>
+</li>
+<li><p>192.168.0.0–192.168.255.255, or 192.168/16.</p>
+</li>
+</ul>
+<p>Internet routers do not forward datagrams destined for private addresses; ISPs configure their routers to enforce this. Although an IP datagram may traverse multiple networks and routers, the logical connection can appear to be a direct point-to-point link. This is called IP tunneling.</p>
+<ul>
+<li><p>Intranet VPN: connects the internal networks of different departments in one organization.</p>
+</li>
+<li><p>Extranet VPN: allows an external organization, usually a partner, to join an organization&#39;s VPN.</p>
+</li>
+<li><p>Remote-access VPN: an employee working elsewhere connects to the Internet and runs VPN software to establish a tunnel between the employee&#39;s PC and the company, allowing access to private-network resources.</p>
+</li>
+</ul>
+<blockquote>
+<p>Example.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/204.gif" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Network-Address-Translation-NAT">5.2 Network Address Translation (NAT)</h3>
+<p>Network address translation (NAT), proposed in 1994, alleviates IPv4 address-space exhaustion. It allows many users of internal private addresses to share a small number of external global addresses when accessing Internet hosts and resources.</p>
+<p>The router connecting the private network to the Internet must run NAT software and have at least one valid external global IP address, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi mathvariant="normal">I</mi><mi mathvariant="normal">P</mi></mrow><mi>G</mi></msub></mrow><annotation encoding="application/x-tex">\mathrm{IP}_G</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord mathrm">IP</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">G</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>. When private hosts communicate with the Internet, the NAT router translates their internal addresses into <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi mathvariant="normal">I</mi><mi mathvariant="normal">P</mi></mrow><mi>G</mi></msub></mrow><annotation encoding="application/x-tex">\mathrm{IP}_G</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord mathrm">IP</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">G</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>.</p>
+<p>The most basic NAT procedure is illustrated below.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/205.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Limitation: if a NAT router has <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span> global IP addresses, basic NAT allows at most <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span> internal hosts to access the Internet simultaneously. If there are more hosts, they must take turns using the limited global addresses.</p>
+</blockquote>
+<p>Combining NAT with transport-layer port numbers gives network address and port translation (NAPT). Many internal hosts can then share one global IP address and communicate simultaneously with different Internet hosts. Many home routers that connect smart devices to the Internet are actually NAPT routers and often do not run a routing protocol.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/206.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/207.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>NAT and NAPT greatly alleviate IPv4 address shortages but are not completely transparent to applications. Communication generally has to originate inside the private network, so an internal private-address host cannot directly act as an Internet server. Applications such as P2P that need externally initiated communication may require special NAT-traversal techniques.</p>
+</blockquote>
+<h2 id="46-IP-Multicast">6 IP Multicast</h2>
+<p>Multicast provides one-to-many communication. Compared with traditional one-to-one unicast, it can greatly save network resources, especially when a multicast group has many members. Multicast over the Internet is called IP multicast.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/208.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="IP-Multicast-Addresses-and-Multicast-Groups">6.1 IP Multicast Addresses and Multicast Groups</h3>
+<p>IPv4 uses Class D addresses as multicast addresses. They can be destination addresses but not source addresses. Each Class D address identifies a multicast group; all hosts receiving datagrams through the same IP multicast address constitute that group.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/209.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Group membership can change at any time: a host may join or leave freely. Neither the number nor the geographical distribution of members is restricted, and a host may belong to several groups. A nonmember can also send datagrams to a group. Delivery is best effort and is not guaranteed to reach every member.</p>
+<p>IPv4 multicast addresses are further divided into reserved or permanent multicast addresses, globally available multicast addresses, and administratively scoped multicast addresses, as described in RFC 3330.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/210.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>IP multicast includes hardware multicast confined to a local area network and multicast across the Internet. Because most hosts access the Internet through LANs, the final stage of Internet multicast still uses LAN hardware multicast to deliver datagrams to all local group members.</p>
+<h3 id="Hardware-Multicast-on-a-LAN">6.2 Hardware Multicast on a LAN</h3>
+<p>An IPv4 multicast address can be mapped to a multicast MAC address. The IP multicast datagram is then encapsulated in a MAC frame whose destination address is the mapped multicast MAC address. This makes it possible to implement local IP multicast through hardware multicast. When a host is configured with its group&#39;s IP multicast address, the system generates the corresponding LAN multicast MAC address according to the mapping rules.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/211.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>IANA uses Ethernet multicast addresses from 01-00-5E-00-00-00 through 01-00-5E-7F-FF-FF, from its IEEE-registered address block, to map IPv4 multicast addresses. Their first 25 bits are fixed and the remaining 23 vary, giving <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>23</mn></msup></mrow><annotation encoding="application/x-tex">2^{23}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8141em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">23</span></span></span></span></span></span></span></span></span></span></span></span> addresses.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/212.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The first 5 of the 28 variable bits in an IPv4 multicast address cannot be mapped into the MAC address. Consequently, the mapping is not one-to-one.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/213.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>A receiving host must therefore also filter the datagram in network-layer software and discard multicast datagrams that it does not want to receive.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/214.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Protocols-Related-to-IP-Multicast">6.3 Protocols Related to IP Multicast</h3>
+<p>Internet multicast requires multicast routers to forward datagrams across multiple networks. A multicast router examines the destination multicast address and forwards the datagram toward LANs containing members of that group. Two kinds of protocols are involved:</p>
+<ul>
+<li><p>Internet Group Management Protocol (IGMP): informs the multicast router on a local LAN whether a host, or more precisely a process on a host, has joined or left a group. IGMP operates only on the local network. It does not reveal the total number of members or the networks across which they are distributed.</p>
+</li>
+<li><p>Multicast routing protocols (MRPs): establish a multicast forwarding tree between routers for each group. The tree connects the source to all routers with group members. Datagrams are flooded along this tree, then delivered to local members through hardware multicast.</p>
+</li>
+</ul>
+<p>Different groups require different forwarding trees. These trees must adapt dynamically to membership changes even when the network topology has not changed, making multicast routing more complex than unicast routing such as RIP or OSPF. A host need not belong to a group to send multicast datagrams to it. A forwarding tree may also pass through routers without local group members, such as R2 below, to reach all members.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/215.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Internet-Group-Management-Protocol-IGMP">6.4 Internet Group Management Protocol (IGMP)</h3>
+<p>IGMP has three message types:</p>
+<ul>
+<li><p>Membership report.</p>
+</li>
+<li><p>Membership query.</p>
+</li>
+<li><p>Leave group.</p>
+</li>
+</ul>
+<p>IGMP messages are encapsulated in IP datagrams.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/216.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The basic operation includes joining a group, monitoring membership changes, and leaving a group.</p>
+<blockquote>
+<p>Joining a group: different MAC addresses.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/217.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Joining a group: identical MAC addresses.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/218.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/219.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/220.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Monitoring membership changes:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/221.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/222.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>A network may contain several multicast routers, but they do not all need to send periodic membership queries. One is elected as the querier; the others passively receive the responses and update their group lists. A router withdraws from the election when it hears a query whose source IP address is smaller than its own. Ultimately, the multicast router with the smallest IP address becomes the querier.</p>
+<p>IGMPv2 adds an option to IGMPv1: a host leaving a group may proactively send a leave-group message rather than wait for a query, allowing the router to detect departures sooner.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/223.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Multicast-Routing-Protocols-MRPs">6.5 Multicast Routing Protocols (MRPs)</h3>
+<p>The main task of a multicast routing protocol is to establish a forwarding tree connecting the source and routers with members of a group. There are two approaches.</p>
+<p>Source-based tree routing uses a separate tree rooted at the source. A typical algorithm is reverse path multicasting (RPM), which has two steps:</p>
+<ul>
+<li><p>Use reverse path broadcasting (RPB) to build a broadcast forwarding tree. Reverse path means treating the source as the destination when calculating shortest paths.</p>
+</li>
+<li><p>Prune downstream routers without group members to obtain a multicast forwarding tree.</p>
+</li>
+</ul>
+<p>Flooding can be used to construct a broadcast forwarding tree.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/224.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The tree generated by RPB has no loops, preventing broadcast packets from circulating indefinitely. On receiving a broadcast packet, a router first checks whether it arrived along the shortest path from the source. If so, the router forwards it through all interfaces except the incoming interface; otherwise, it discards it. If several neighboring routers provide equally short paths to the source, only one is selected: the path through the neighbor with the smallest IP address.</p>
+<blockquote>
+<p>Example.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/225.gif" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Group-shared tree routing uses a core-based distributed spanning-tree algorithm. Each group designates a core router as the root of a shared tree connecting all its member routers. Other member routers unicast join messages toward the core. A join message is forwarded until it reaches a router already on the multicast tree or reaches the core itself. The path followed by the message defines a branch from the joining edge router toward the core, and this branch is grafted onto the existing tree.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/226.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Mobile-IP">6.6 Mobile IP</h3>
+<p>Mobile IP, developed by the IETF and described in RFC 3344, lets a mobile host retain its original IP address while roaming between networks. It also provides mechanisms allowing stationary hosts to send datagrams correctly to mobile hosts.</p>
+<ul>
+<li><p>Home network: the network to which a mobile host connects by default or initially registers for access.</p>
+</li>
+<li><p>Home address or permanent address: the host&#39;s address on its home network, which remains unchanged throughout mobile communication.</p>
+</li>
+<li><p>Home agent: the entity on the home network that performs mobility-management functions for the mobile host. It is usually a router on that network, with its agent functions implemented at the network layer.</p>
+</li>
+<li><p>Foreign or visited network: the network in which the mobile host is currently roaming.</p>
+</li>
+<li><p>Foreign agent: the entity assisting the mobile host with mobility management on the foreign network, usually a router.</p>
+</li>
+<li><p>Care-of address: a temporary address belonging to the foreign network and supplied to the mobile host by the foreign agent.</p>
+</li>
+</ul>
+<p>Agent discovery and registration:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/227.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Mobile host A contacts the foreign agent through agent discovery, obtains a care-of address, and registers its home address and home-agent address with the foreign agent. The foreign agent records the permanent address and registers the care-of address with the home agent; the mobile host may also register directly.</p>
+<p>The home agent records the care-of address, receives datagrams on behalf of the absent mobile host, and forwards them through an IP tunnel to the foreign network. While the mobile host is away, the home agent answers ARP requests for the host with its own MAC address, using proxy ARP. It also sends ARP broadcasts claiming the mobile host&#39;s address so that other hosts and routers quickly update their ARP caches and send the host&#39;s datagrams to the home agent.</p>
+<p>Sending datagrams from a stationary host to a mobile host:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/228.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>When the foreign agent and mobile host are different devices, the care-of address is the foreign agent&#39;s address. It is neither the source address of the mobile host&#39;s outgoing original datagrams nor the destination address of its incoming original datagrams; it is only the exit address of the home-agent-to-foreign-agent tunnel. Mobile hosts using the same foreign agent can share this care-of address.</p>
+<p>After decapsulating a tunneled datagram, the foreign agent looks up the MAC address associated with the mobile host&#39;s permanent address in its registration table. It encapsulates the datagram in a frame addressed to that MAC address and delivers it to the host.</p>
+<p>Sending datagrams from a mobile host to a stationary host:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/229.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Mobile host A sends the datagram normally. Since IP routing does not depend on its source address in this procedure, the datagram is routed directly to stationary host B without passing through the home agent. The mobile host may use the foreign agent as its default router or obtain another foreign-network router&#39;s address through agent discovery and use that router instead.</p>
+<p>Co-located care-of address:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/230.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Triangular routing:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/231.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Even if a more efficient path exists between a stationary and mobile host, datagrams to the mobile host first go through the home agent. This makes forwarding inefficient. One solution equips the stationary host with a communication agent. That agent obtains the care-of address from the home agent and then tunnels datagrams directly to the foreign agent, bypassing the home agent. This increases complexity and requires changes at the stationary host, so it is no longer transparent to that host.</p>
+<h2 id="47-IPv6">7 IPv6</h2>
+<p>The main changes introduced by IPv6 are:</p>
+<ul>
+<li><p>A larger address space: IPv4&#39;s 32-bit addresses are extended to 128 bits, which should not be exhausted in the foreseeable future with reasonable addressing.</p>
+</li>
+<li><p>An expanded addressing hierarchy: more levels can reflect the Internet topology more accurately and provide greater flexibility in addressing and routing design.</p>
+</li>
+<li><p>A flexible header format: incompatible with the IPv4 header, with optional extension headers providing more functions and more efficient router processing. Routers do not process extension headers other than hop-by-hop options.</p>
+</li>
+<li><p>Improved options: packets may contain new kinds of optional control information rather than being restricted to IPv4&#39;s fixed options.</p>
+</li>
+<li><p>Continued protocol expansion: new functions can be added as technology and applications develop.</p>
+</li>
+<li><p>Plug-and-play support: hosts and routers can automatically configure IPv6 addresses and other parameters without requiring DHCP.</p>
+</li>
+<li><p>Resource preallocation: better quality-of-service support for real-time audio, video, and other applications requiring bandwidth and delay guarantees.</p>
+</li>
+</ul>
+<h3 id="Datagram-Header">7.1 Datagram Header</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/232.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Extension headers are not part of the IPv6 base header. Together with the following data, they constitute the payload.</p>
+</blockquote>
+<p>Compared with the IPv4 header, the IPv6 base header removes unnecessary functions and has only eight fields. Nevertheless, because addresses grow to 128 bits, the base header is 40 bytes long, 20 bytes longer than IPv4&#39;s fixed header. The changes are:</p>
+<ul>
+<li><p>Header length is removed because the base header is always 40 bytes.</p>
+</li>
+<li><p>Differentiated services, formerly type of service, is replaced by traffic class and flow label functions.</p>
+</li>
+<li><p>Total length is replaced by payload length because only the data after the fixed base header has variable length.</p>
+</li>
+<li><p>Identification, flags, and fragment offset move to a fragmentation extension header.</p>
+</li>
+<li><p>TTL is renamed hop limit to match its function.</p>
+</li>
+<li><p>Protocol is replaced by next header.</p>
+</li>
+<li><p>The header checksum is removed to accelerate router processing.</p>
+</li>
+<li><p>Options are implemented through extension headers.</p>
+</li>
+</ul>
+<p>The fields of the IPv6 base header are as follows.</p>
+<p>Version: 4 bits, indicating the IP version; its value is 6 for IPv6.</p>
+<p>Traffic class: 8 bits, distinguishing categories or priorities of IPv6 datagrams. Different traffic-class performance characteristics have been investigated experimentally.</p>
+<p>Flow label: 20 bits. A flow is a sequence of IPv6 datagrams from a particular source to a particular unicast or multicast destination, such as real-time audio or video, for which routers along the path provide the indicated quality of service. Datagrams belonging to one flow share a flow label, which is used for resource allocation. It is particularly useful for real-time traffic; traditional non-real-time traffic can use a value of 0.</p>
+<p>Payload length: 16 bits, giving the number of bytes after the base header, including extension headers and data. Its maximum value is 65535, giving a maximum payload of 65535 bytes in this format.</p>
+<p>Next header: 8 bits, corresponding to IPv4&#39;s protocol or options information. Without extension headers, it identifies the PDU immediately after the base header, such as 6 for TCP or 17 for UDP. With extension headers, it identifies the first extension header.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/233.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Hop limit: 8 bits, preventing indefinite circulation. The source sets a limit of at most 255 hops. Each forwarding router subtracts 1 and discards the datagram when the value reaches 0. Its operation is the same as IPv4&#39;s TTL, but its name more directly reflects its purpose.</p>
+<p>Source address and destination address: 128 bits each, identifying the datagram&#39;s sender and receiver.</p>
+<h3 id="Extension-Headers">7.2 Extension Headers</h3>
+<p>IPv6 moves IPv4-style options to extension headers, normally processed by the source and destination rather than intermediate routers, except for hop-by-hop options. RFC 2460 defines six extension-header types:</p>
+<ul>
+<li><p>Hop-by-hop options.</p>
+</li>
+<li><p>Routing.</p>
+</li>
+<li><p>Fragment.</p>
+</li>
+<li><p>Authentication.</p>
+</li>
+<li><p>Encapsulating security payload.</p>
+</li>
+<li><p>Destination options.</p>
+</li>
+</ul>
+<p>Each consists of several fields and may have a different length. Its first field is an 8-bit next-header field identifying the following extension header. When several extension headers are used, they appear in the order above.</p>
+<h3 id="IPv6-Addresses">7.3 IPv6 Addresses</h3>
+<p>IPv6 uses colon-separated hexadecimal notation. Leading-zero omission and consecutive-zero compression make addresses more concise. Leading-zero omission removes an initial run of zeros within a hexadecimal group. Consecutive-zero compression replaces consecutive zero groups with a double colon.</p>
+<blockquote>
+<p>Example.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/234.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Zero compression may be used only once in an address; otherwise the representation would be ambiguous. Colon-hexadecimal notation can also use a dotted-decimal suffix, which is useful during the transition from IPv4.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/235.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>CIDR slash notation is also used in IPv6.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/236.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>There are three basic destination-address types:</p>
+<ul>
+<li><p>Unicast: traditional point-to-point communication.</p>
+</li>
+<li><p>Multicast: one-to-many communication, delivering a datagram to every computer in a group. IPv6 treats broadcast as a special case of multicast rather than introducing a separate broadcast type.</p>
+</li>
+<li><p>Anycast: delivers a datagram to one member of a group, usually the closest member according to the routing algorithm.</p>
+</li>
+</ul>
+<p>RFC 4291 classifies IPv6 addresses as follows:</p>
+<ul>
+<li><p>Unspecified address: all 128 bits are zero, abbreviated as ::. It cannot be a destination address and is used as a source by a host without a configured standard IPv6 address. There is only one such address.</p>
+</li>
+<li><p>Loopback address: the lowest bit is 1 and the other 127 bits are zero, written as 0:0:0:0:0:0:0:1 or ::1. It serves the same purpose as IPv4 loopback and is unique.</p>
+</li>
+<li><p>Multicast addresses: the highest 8 bits are all ones, written as FF00::/8. They serve the same role as IPv4 multicast addresses and occupy <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mn>256</mn></mrow><annotation encoding="application/x-tex">1/256</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1/256</span></span></span></span> of the IPv6 address space.</p>
+</li>
+<li><p>Link-local unicast addresses: the highest 10 bits are 1111111010, written as FE80::/10. Hosts can use them to communicate on a local network even without Internet access, but not to communicate with Internet hosts. They occupy <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi mathvariant="normal">/</mi><mn>1024</mn></mrow><annotation encoding="application/x-tex">1/1024</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1/1024</span></span></span></span> of the address space.</p>
+</li>
+<li><p>Global unicast addresses: the most widely used category. They use a three-level structure to accelerate routing lookups.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/237.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>The following two topics are included for general understanding and are not expected to be examined.</p>
+</blockquote>
+<h3 id="Transition-from-IPv4-to-IPv6">7.4 Transition from IPv4 to IPv6</h3>
+<p>The enormous number of IPv4 routers prevents an instantaneous transition. Migration must be gradual, and newly deployed systems need mechanisms to receive, forward, and route IPv4 datagrams as well. Two transition strategies are introduced here.</p>
+<p>Dual stack installs both IPv4 and IPv6 protocol stacks on some hosts or routers before the transition is complete. An IPv6/IPv4 host or router has both kinds of address and can communicate with either system. A dual-stack source queries DNS for the destination address and uses IPv4 or IPv6 according to the returned address type.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/238.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Tunneling encapsulates an entire IPv6 datagram as the payload of an IPv4 datagram when entering an IPv4 network. The outer datagram crosses that network. On leaving it, the IPv6 datagram is extracted and forwarded into an IPv6 network.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/239.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Internet-Control-Message-Protocol-Version-6-ICMPv6">7.5 Internet Control Message Protocol Version 6 (ICMPv6)</h3>
+<p>Like IPv4, IPv6 does not guarantee reliable delivery and needs control messages to report errors to the source. ICMPv6 is more complex than ICMPv4 because it incorporates the functions previously provided by ARP and IGMP, bringing these companion network-layer functions into one protocol. ICMPv6 messages are encapsulated in IPv6 datagrams.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/240.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/241.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>ICMPv6 messages report errors, obtain information, discover neighbors, and manage multicast communication. Different RFCs classify the messages differently: RFC 2463 defines six types, RFC 2461 defines five types, and RFC 2710 defines three types.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/242.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h2 id="48-Software-Defined-Networking">8 Software-Defined Networking</h2>
+<p>Software-defined networking (SDN) separates the forwarding plane from the control plane. The concept was proposed by Stanford professor Nick McKeown in 2009 and initially discussed as a new academic network architecture.</p>
+<blockquote>
+<p>He also taught Stanford CS144; publicly available videos of that year&#39;s course can be found on Bilibili.</p>
+</blockquote>
+<p>An SDN controller provides centralized control and a global view. It dynamically computes suitable paths according to applications&#39; network requirements and installs flow tables in switches, enabling efficient, on-demand data transmission.</p>
+<ul>
+<li><p>Northbound interfaces provide access and network-management interfaces upward to vendors or operators.</p>
+</li>
+<li><p>Southbound interfaces manage other vendors&#39; network-management systems or devices below the controller.</p>
+</li>
+<li><p>East–west interfaces connect SDN servers.</p>
+</li>
+</ul>
+<p>Reasons for introducing SDN include the following problems with traditional networks:</p>
+<ul>
+<li><p>Devices pass information to their next-hop neighbors to remove failed links, but this lacks global control and may produce redundant information.</p>
+</li>
+<li><p>The continuous development of IoT causes traffic to grow almost exponentially, increasing device numbers, pressure on infrastructure, and routing convergence time while reducing efficiency.</p>
+</li>
+<li><p>Traditional networks are not programmable, making efficient, on-demand transmission difficult.</p>
+</li>
+<li><p>Hardware, operating systems, and applications are tightly coupled in closed, incompatible systems that are difficult to configure and manage.</p>
+</li>
+</ul>
+<p>SDN combines general-purpose underlying hardware, software-defined functions, and an open-source model. It provides consistent upgrade and management commands and unified configuration methods. Further abstraction of the control plane makes configuration more flexible and moves network management from managing complexity toward extracting simplicity, with greater automation and intelligence. Separating control from data forwarding makes the network programmable.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/358.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>SDN may be understood at three scopes:</p>
+<ul>
+<li><p>Narrow: equivalent to OpenFlow.</p>
+</li>
+<li><p>Broad: separation of control and forwarding.</p>
+</li>
+<li><p>Very broad: separation of management and control. Software scripts send commands to remote switches, but the switches still run traditional Layer 2 and Layer 3 protocols, so control and forwarding remain together.</p>
+</li>
+</ul>
+<p>SDN generally has three layers. The infrastructure layer contains routers, switches, and similar devices.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/359.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Google B4 is a practical example. Data centers are particularly well suited to SDN.</p>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-3/" rel="prev"><span>← Previous chapter</span>Chapter 3 Data link layer</a>
+  <a href="../chapter-5/" rel="next"><span>Next chapter →</span>Chapter 5 Transport Layer</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

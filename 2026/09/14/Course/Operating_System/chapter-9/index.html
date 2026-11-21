@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 9 Main Memory — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Operating System</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-11-08">08 Nov 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-9-Main-Memory">Chapter 9 Main Memory</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#91-Background">1 Background</a>
+      <ul class="toc-subsections">
+        <li><a href="#Basic-Hardware">1.1 Basic Hardware</a></li>
+        <li><a href="#Address-Binding">1.2 Address Binding</a></li>
+        <li><a href="#Logical-vs-Physical-Address-Space">1.3 Logical v.s. Physical Address Space</a></li>
+        <li><a href="#Dynamic-Loading">1.4 Dynamic Loading</a></li>
+        <li><a href="#Dynamic-Linking-and-Shared-Libraries">1.5 Dynamic Linking and Shared Libraries</a></li>
+      </ul>
+    </li>
+    <li><a href="#92-Contiguous-Memory-Allocation">2 Contiguous Memory Allocation</a>
+      <ul class="toc-subsections">
+        <li><a href="#Memory-Protection">2.1 Memory Protection</a></li>
+        <li><a href="#Memory-Allocation">2.2 Memory Allocation</a></li>
+        <li><a href="#Fragmentation">2.3 Fragmentation</a></li>
+      </ul>
+    </li>
+    <li><a href="#93-Paging">3 Paging</a>
+      <ul class="toc-subsections">
+        <li><a href="#Basic-Method">3.1 Basic Method</a></li>
+        <li><a href="#Hardware-Support">3.2 Hardware Support</a></li>
+        <li><a href="#Protection">3.3 Protection</a></li>
+        <li><a href="#Shared-Pages">3.4 Shared Pages</a></li>
+      </ul>
+    </li>
+    <li><a href="#94-Structure-of-Page-Table">4 Structure of Page Table</a>
+      <ul class="toc-subsections">
+        <li><a href="#Hierarchical-Paging">4.1 Hierarchical Paging</a></li>
+        <li><a href="#Hashed-Page-Tables">4.2 Hashed Page Tables</a></li>
+        <li><a href="#Inverted-Page-Tables">4.3 Inverted Page Tables</a></li>
+      </ul>
+    </li>
+    <li><a href="#95-Swapping">5 Swapping</a>
+      <ul class="toc-subsections">
+        <li><a href="#Standard-Swapping">5.1 Standard Swapping</a></li>
+        <li><a href="#Swapping-with-Paging">5.2 Swapping with Paging</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<p>This chapter will introduce various methods for managing memory, each with its own advantages and disadvantages. Multiple factors need to be considered when choosing these methods, especially the hardware design of the system, because most algorithms require hardware support.</p>
+<h2 id="91-Background">1 Background</h2>
+<p>Logically, memory consists of a very large array of bytes, with each byte having a corresponding address. As for a memory unit, it can only see a stream of memory addresses and does not know how they are generated (and we do not care about this either), or what purpose they serve (instruction/data).</p>
+<p>The following discussion will cover several issues related to managing memory: basic hardware, the binding of virtual addresses and physical addresses, and the differences between the two.</p>
+<h3 id="Basic-Hardware">1.1 Basic Hardware</h3>
+<p>The main memory and registers built into the processing unit are the only general-purpose storage devices that the CPU can directly access. Generally speaking, accessing a register requires only one CPU clock cycle, but completing a memory access requires multiple CPU clock cycles. For the latter, the processor usually stalls because the execution of subsequent instructions requires the memory data. However, we cannot tolerate such stalls because this would severely damage performance. The solution is to insert a cache between the CPU and memory to achieve faster access.</p>
+<p>In addition to speed, another issue of concern is ensuring the correctness of operations. This needs to be achieved through protection provided by the hardware, because the OS usually cannot intervene between the CPU and its memory accesses. Specifically, the first thing to do is to ensure that each process has a separate memory space. This can be achieved through the base register and the limit register, which respectively store the smallest valid physical memory address and the size of the memory space.</p>
+<p>Any attempt by a program executing in user mode to access OS memory or other users&#39; memory (that is, access beyond the area delimited by the base register and the limit register) will trigger an OS trap and be treated as a fatal error, thereby protecting memory.</p>
+<p>The base register and the limit register can only be loaded by the OS, and privileged instructions are required. Thus, the OS in kernel mode can access OS memory and user memory without restriction.</p>
+<h3 id="Address-Binding">1.2 Address Binding</h3>
+<p>Addresses in a source program are usually symbolic. The compiler generally binds these symbolic addresses to relocatable addresses, and then the linker or loader binds the relocatable addresses to absolute addresses.</p>
+<p>The operation of binding instructions and data to memory addresses can be accomplished in any one of the following ways:</p>
+<p>Compile time: If it is known at compile time that the process will be in memory, then absolute code is generated; if the starting address of the process changes later, the code must be recompiled.</p>
+<p>Load time: If it is not known at compile time whether the process will be in memory, then the compiler must generate relocatable code, and the final binding is deferred until load time; if the starting address of the process changes later, the code only needs to be reloaded to incorporate this new changed value.</p>
+<p>Execution time: If the process can move within memory segments during execution, then binding must be deferred until run time (most OSs use this method).</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C9/4.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Logical-vs-Physical-Address-Space">1.3 Logical v.s. Physical Address Space</h3>
+<p>The addresses generated by the CPU are usually logical addresses; the address visible to a memory unit, that is, the address loaded into the memory-address register, is a physical address.</p>
+<p>If addresses are bound at compile time and load time, then the logical address = the physical address; if addresses are bound at execution time, then the two are different.</p>
+<p>In the latter case, the logical address is generally called a virtual address.</p>
+<p>All logical addresses generated by a program are called the logical address space; correspondingly, there is also the concept of the physical address space.</p>
+<p>The runtime mapping from virtual addresses to physical addresses is performed by a hardware device called the memory-management unit (MMU).</p>
+<p>At this time, the base register is called the relocation register, and its value R is added to every address sent to memory when the user process generates an address; assuming the virtual address range is [0, max], then the corresponding physical address range is [R, R + max].</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C9/5.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Therefore, a user program will never access a real physical address; it can manipulate only virtual addresses.</p>
+<h3 id="Dynamic-Loading">1.4 Dynamic Loading</h3>
+<p>Currently, the size of a process is limited by physical memory. To achieve higher memory space utilization, dynamic loading can be used. With this technique, routines are loaded only when they are called; all routines are stored on disk in a relocatable load format.</p>
+<p>The advantage of this technique is that routines can be loaded only when needed, which is very useful for situations that require a large amount of code to handle infrequently occurring cases (such as handling errors), because although the program is large, only a small portion is loaded. In addition, this technique does not require special support from the OS, although some library functions may be provided to support dynamic loading.</p>
+<h3 id="Dynamic-Linking-and-Shared-Libraries">1.5 Dynamic Linking and Shared Libraries</h3>
+<p>Dynamic linking libraries (DLLs) are system libraries that are linked to user programs at runtime. With dynamic linking, the linking process is deferred until execution time, thereby reducing the size of the executable image. In addition, DLLs can be shared by multiple processes, so only one instance of a DLL is needed in main memory.</p>
+<p>The concept of DLLs can also be extended to library updates—when a new version of a library is adopted, all programs that reference that library automatically use the new version (without dynamic linking, manual relinking would be required).</p>
+<p>Unlike dynamic loading, dynamic linking requires help from the OS.</p>
+<blockquote>
+<p>Some OSs support only static linking, in which case system libraries are treated as ordinary object modules and are combined by the loader into a binary program image. In this case, each program contains a copy of the library in its executable image, which not only increases size but also wastes memory.</p>
+</blockquote>
+<h2 id="92-Contiguous-Memory-Allocation">2 Contiguous Memory Allocation</h2>
+<p>Memory is usually divided into two parts: one part is allocated to the OS, and the other part is allocated to user processes. In most OSes, the memory allocated to the OS is generally at high addresses.</p>
+<p>In contiguous memory allocation, each process is contained in a separate memory section, and that section is contiguous with the section containing the next process.</p>
+<h3 id="Memory-Protection">2.1 Memory Protection</h3>
+<p>From the previous study, we know that the system uses the relocation register + limit register to prevent a process from accessing memory that does not belong to it. This process is shown below:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C9/6.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>When the CPU scheduler selects a process for execution, the dispatcher loads the values of the relocation register and limit register as part of the context switch.</p>
+<p>This scheme allows the size of the OS to change dynamically, and this flexibility is desirable in many situations.</p>
+<h3 id="Memory-Allocation">2.2 Memory Allocation</h3>
+<p>The simplest memory allocation scheme is the variable-partition scheme:</p>
+<p>Assign variable memory partitions to processes, with each partition containing only one process.</p>
+<p>The OS keeps a table recording which parts of memory are available and which parts are occupied.</p>
+<p>We call a large available block of memory a &quot;hole&quot;; as memory allocation proceeds, multiple holes will appear in memory (the blue areas in the figure below).</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C9/7.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>When existing memory cannot meet the requirements of a process, one of the following methods can be adopted:</p>
+<ul>
+<li><p>Reject the later process and provide an appropriate error message</p>
+</li>
+<li><p>Place the later process in a waiting queue; when memory is released later, the OS checks the waiting queue and determines whether the currently available memory meets the process&#39;s requirements</p>
+</li>
+</ul>
+<p>Generally speaking, the available memory blocks consist of a set of variable-length holes scattered throughout memory.</p>
+<ul>
+<li><p>When a process arrives and needs memory, the OS finds a hole among these holes that is large enough</p>
+</li>
+<li><p>If the hole is too large, it splits the hole into two parts, giving one part to the process and keeping the other part as a hole</p>
+</li>
+<li><p>When a process terminates, it releases its memory block, and that block becomes a hole again</p>
+</li>
+<li><p>The newly created hole merges with adjacent holes into a larger hole</p>
+</li>
+</ul>
+<p>The above process is a dynamic storage-allocation problem. For this problem, the following possible strategies exist:</p>
+<ul>
+<li><p>First fit: allocate the first hole that is large enough</p>
+</li>
+<li><p>Best fit: allocate the smallest hole that can satisfy the requirement</p>
+</li>
+<li><p>Worst fit: allocate the largest hole</p>
+</li>
+</ul>
+<p>Simulation results show that first fit and best fit perform better than worst fit in both time and storage efficiency. The first two are comparable in performance, but first fit is usually faster.</p>
+<h3 id="Fragmentation">2.3 Fragmentation</h3>
+<p>First-fit and best-fit both suffer from the problem of external fragmentation:</p>
+<ul>
+<li><p>When processes are loaded into and removed from memory, free memory space becomes split into multiple small pieces.</p>
+</li>
+<li><p>External fragmentation occurs when the total amount of memory space is sufficient to meet the needs of a process, but the available space is not contiguous (it is divided into multiple holes).</p>
+</li>
+<li><p>Another factor affecting the amount of external fragmentation is which end of a free block is allocated.</p>
+</li>
+<li><p>The severity of the external fragmentation problem depends on the total amount of memory storage and the average process size.</p>
+</li>
+<li><p>Statistics show that for first-fit, even with some optimization techniques, given N allocated blocks, 0.5N blocks are lost to fragmentation; this property is called the 50-percent rule.</p>
+</li>
+</ul>
+<p>For the external fragmentation problem, we have the following solutions:</p>
+<p><strong>Compaction</strong></p>
+<ul>
+<li><p>The goal is to rearrange the contents of memory so that all free memory is placed in one large block.</p>
+</li>
+<li><p>However, this method is not always effective — if relocation is static and is done at assembly or load time, compaction cannot be performed.</p>
+</li>
+<li><p>That is, compaction can be used only when relocation is dynamic and is done at execution time.</p>
+</li>
+<li><p>The simplest compaction algorithm is to move all processes to one end of memory and all holes to the other end, but this is costly.</p>
+</li>
+</ul>
+<p><strong>Paging</strong></p>
+<ul>
+<li><p>It allows the physical address space of a process to be noncontiguous, so as long as memory is available, physical memory can be allocated to a newly arriving process.</p>
+</li>
+<li><p>Paging requires cooperation between the OS and the computer hardware.</p>
+</li>
+<li><p>This method is the most commonly used memory management technique and will be described in detail below.</p>
+</li>
+</ul>
+<p>Memory fragmentation can also occur internally. Physical memory is generally divided into fixed-size blocks, and memory is then allocated in units of blocks. Doing so causes the memory allocated to a process to be slightly larger than the memory it needs, and this unused memory corresponds to the problem of internal fragmentation.</p>
+<h2 id="93-Paging">3 Paging</h2>
+<h3 id="Basic-Method">3.1 Basic Method</h3>
+<p>The basic method for implementing paging is to divide physical memory into fixed-length blocks called &quot;frames&quot; and logical memory into fixed-length blocks called &quot;pages.&quot; When a process executes, its corresponding logical pages are loaded into any available memory frames. Backing storage is likewise divided into fixed-length blocks of the same size as memory frames.</p>
+<p>A logical address is divided into two parts:</p>
+<ul>
+<li><p>Page number p: used as an index into the page table of each process. The page table contains the base address of each frame in physical memory.</p>
+</li>
+<li><p>Page offset d: the location within the referenced frame.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C9/8.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The paging model is as follows:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C9/9.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The steps by which the MMU translates a logical address into a physical address:</p>
+<ol>
+<li><p>Extract the page number p and use it as an index into the page table.</p>
+</li>
+<li><p>Extract the corresponding frame number f from the page table.</p>
+</li>
+<li><p>Replace p in the logical address with f.</p>
+</li>
+</ol>
+<blockquote>
+<p>As can be seen, the offset d remains unchanged.</p>
+</blockquote>
+<p>The page size is defined by the hardware and is usually a power of 2, ranging roughly from 4 KB to 1 GB depending on the specific computer architecture. The reason for using a power of 2 is that it facilitates converting a logical address into a page number and a page offset. If the logical address space size is 2^m and the page size is 2^n bytes, then the high m - n bits of the address are designated as the page number, and the low n bits are the page offset.</p>
+<p>The reader may notice that paging itself is a form of dynamic relocation: each logical address is bound to some physical address by the paging hardware, similar to memory frames using a base (or relocation) register.</p>
+<p>Using a paging scheme avoids external fragmentation, but internal fragmentation may still occur. If a process size is unrelated to the page size, then on average half of each process&#39;s pages will suffer from internal fragmentation. This suggests that a smaller page size may reduce the impact of this problem, but it introduces additional overhead. Moreover, larger pages are more helpful for tasks such as disk I/O. Therefore, in modern computers, common page sizes are 4 KB and 8 KB; and some CPUs and systems support multiple page sizes.</p>
+<p>Each page of a process requires a frame, so if a process requires n pages, then there must be at least n available frames in memory, as shown below:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C9/10.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Paging technology allows a clear separation between the programmer&#39;s view of memory and the actual physical memory: the programmer views memory as a single space containing only a certain program; in reality, user programs are scattered throughout physical memory.</p>
+<p>The bridge that establishes these two understandings is the hardware used for address translation.</p>
+<p>Since the OS manages physical memory, it must keep track of physical memory allocation information, and this information is kept in a simple system-wide data structure called the frame table. Each entry of the frame table corresponds to a physical frame, indicating whether it is free or allocated, and, if allocated, information about the process to which it is allocated.</p>
+<p>The OS maintains a copy of each process&#39;s page table for translating logical addresses into physical addresses. The page table is also used by the CPU dispatcher to define the hardware page table, and thus paging increases context-switch time.</p>
+<h3 id="Hardware-Support">3.2 Hardware Support</h3>
+<p>Since the page table is a preprocessed data structure, a pointer to the page table is stored in a register located in the PCB.</p>
+<p>Page tables are implemented in hardware in various ways. The simplest is to implement the page table using a set of dedicated high-speed hardware registers, which makes address translation very efficient. However, doing so increases context-switch time, because each register must be swapped (saved + restored) during a context switch. This approach is fine if the page table is small enough; but modern CPUs support much larger page tables, so this approach is not reasonable for these machines.</p>
+<p>In practice, page tables are generally stored in main memory, with a page-table base register (PTBR) pointing to the page table. Switching page tables requires only changing this register, thus greatly reducing the impact on context-switch time.</p>
+<p>However, we know that accessing memory takes considerable time; moreover, with paging, each data access requires two memory accesses (access the page table + access physical memory). The standard solution is to introduce a special small cache for fast lookup, called a translation look-aside buffer (TLB).</p>
+<p>TLB entry lookup is part of the modern hardware pipeline and thus incurs no additional performance penalty.</p>
+<p>To achieve lookup within the pipeline, the TLB must be small enough.</p>
+<p>Some CPUs implement separate TLBs for data addresses and instruction addresses, thereby doubling the available TLB entries.</p>
+<p>Current CPUs already have multi-level TLBs.</p>
+<p>The TLB contains only a small number of page-table entries; when the CPU generates a logical address, the MMU checks whether the page number exists in the TLB.</p>
+<ul>
+<li><p>If found, the frame number is immediately available for memory access.</p>
+</li>
+<li><p>If not found (i.e., a TLB miss), address translation must be performed as described earlier, and the page number and frame number must also be added to the TLB for future references.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C9/11.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>If the TLB is full, an entry must be chosen for replacement; the replacement policy can be LRU, RR, or random replacement.</p>
+<p>Some TLBs allow certain entries to be wired down, i.e., they cannot be removed from the TLB; TLB entries for critical kernel code fall into this category.</p>
+<p>Some TLBs store an address-space identifier (ASID) for each entry; each ASID uniquely identifies a process and is used to provide protection for that process&#39;s address space.</p>
+<ul>
+<li><p>When the TLB attempts to resolve a virtual page number, it needs to ensure that the ASID of the currently running process matches the ASID associated with the virtual page; if they do not match, a TLB miss occurs.</p>
+</li>
+<li><p>ASIDs allow the TLB to simultaneously contain page-table entries from different processes.</p>
+</li>
+<li><p>If the TLB does not support ASIDs, then the TLB contents must be flushed each time a new page table is selected, ensuring that the next executing process does not use incorrect translation information.</p>
+</li>
+</ul>
+<blockquote>
+<p>Hit ratio; ma is memory access time, referring to the time required for one main memory access.</p>
+</blockquote>
+<p>Effective memory-access time = hit ratio * ma + (1 - hit ratio) * 2 * ma</p>
+<hr>
+<p>Techniques for speeding up address translation</p>
+<ul>
+<li><p>TLB</p>
+</li>
+<li><p>Keep the page table permanently in memory: this completely avoids page-fault interrupts during table lookup, thereby eliminating the huge worst-case latency and thus speeding up address translation.</p>
+</li>
+</ul>
+<h3 id="Protection">3.3 Protection</h3>
+<p>In memory using paging, protection is implemented by setting protection bits for each frame; these bits are usually placed in the page table. These bits can define the read-write state of a page as read-write or read-only. If an attempt is made to write to a read-only page, a hardware trap is triggered.</p>
+<p>In addition, we can set a valid-invalid bit:</p>
+<ul>
+<li><p>When this bit is set to valid, the associated page is in the process&#39;s logical address space and is therefore a valid page.</p>
+</li>
+<li><p>When this bit is set to invalid, the associated page is not in the process&#39;s logical address space.</p>
+</li>
+</ul>
+<p>The following figure shows the use of the valid bit:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C9/12.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Using the valid bit can sometimes cause internal fragmentation problems.</p>
+<p>Few processes use the entire address range; most of the time, only a small portion of the addresses is available. In this case, creating a page table for every page is rather wasteful, so some systems support a hardware register called the page-table length register (PTLR) to indicate the page table size, which is used to check each logical address to verify whether the address is within the process&#39;s valid range.</p>
+<h3 id="Shared-Pages">3.4 Shared Pages</h3>
+<p>One advantage of paging is that it makes it possible to share common code, which is especially important in a multiprocess environment. Take the Linux system as an example: most user processes require the standard C library libc.</p>
+<p>If each process loads a copy of libc into its own address space, then when the number of processes increases, these copies will occupy a large amount of memory space.</p>
+<p>However, if the code is reentrant, it can be shared, as shown below:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C9/13.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>As can be seen, three processes share the pages corresponding to libc.</p>
+<p>Reentrant code is non-self-modifying code, that is, it does not change during execution, so multiple processes can execute this code simultaneously.</p>
+<p>In addition to runtime libraries such as libc, other heavily used programs can also be shared, such as compilers, window systems, database systems, and so on.</p>
+<h2 id="94-Structure-of-Page-Table">4 Structure of Page Table</h2>
+<h3 id="Hierarchical-Paging">4.1 Hierarchical Paging</h3>
+<p>Most modern computers support very large logical address spaces, so the page table would be very, very large, and therefore the page table cannot be directly allocated contiguously in memory. A simple solution is to divide the page table into smaller blocks (assuming the page size is 4 KB (corresponding to a 12-bit page offset)).</p>
+<p>Assuming the logical address is 32 bits long, we divide the original 20-bit page number into two parts, p1 and p2, representing the outer page table and the inner page table respectively, with each part being 10 bits (two-level page table). The page table structure at this point is as follows:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C9/14.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Address translation is as follows:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C9/15.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Since address translation proceeds from the outside inward, this scheme is also called a forward-mapped page table.</p>
+<p>However, for 64-bit logical addresses, if the page size is still 4 KB, then the original page number length is 52 bits; therefore, if the page number is divided into only two parts, the page table may still occupy a very large amount of space, so further division is needed (for example, three-level / four-level ...).</p>
+<p>But doing so makes the page table structure very complex, which is why in 64-bit architectures this kind of hierarchical page table is usually unsuitable.</p>
+<h3 id="Hashed-Page-Tables">4.2 Hashed Page Tables</h3>
+<p>An alternative approach is to use a hashed page table.</p>
+<ul>
+<li><p>The virtual page number is represented by a hash value.</p>
+</li>
+<li><p>Each entry in the hash table contains a linked list, and all elements in the same linked list have the same hash value.</p>
+</li>
+<li><p>Each element contains 3 fields: the virtual page number, the value of the mapped page frame, and a pointer to the next element in the linked list.</p>
+</li>
+</ul>
+<p>The general idea of the algorithm is:</p>
+<ul>
+<li><p>The virtual page number in the virtual address is hashed onto the hash table.</p>
+</li>
+<li><p>The virtual page number is compared with the first field of the first element in the linked list. If they match, the corresponding page frame (the second field) is used to form the intended physical address; if they do not match, the search continues with the subsequent elements in the linked list.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C9/16.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>A variant of the hashed page table is called the cluster page table. It is similar to the hashed page table, except that each entry in the hash table refers to multiple pages rather than a single page. This structure is useful when the address space is sparse (memory references are not contiguous and are scattered throughout the address space).</p>
+<h3 id="Inverted-Page-Tables">4.3 Inverted Page Tables</h3>
+<p>One disadvantage of page tables is that they may contain thousands of entries, thus occupying a large amount of physical memory just to track usage information of other physical memory. To solve this problem, we introduce the inverted page table.</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C9/17.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Each entry of the inverted page table corresponds to each real page (or frame) of memory, consists of the virtual address of the page located at the actual memory location, and holds the process information for that page.</p>
+<p>Therefore, there is only one page table in the entire system, and there is only one entry for each physical memory page.</p>
+<p>An inverted page table usually requires an address space identifier (ASID), stored within each entry of the page table, to ensure that the logical address of a specific process is mapped to the corresponding physical page frame.</p>
+<p>Although this scheme reduces the amount of memory required to store each page table, it increases the time required to look up the page table when a page reference occurs, because the inverted page table is sorted by physical address, but lookups occur on virtual addresses. To mitigate this problem, a hash table can be used to limit the search to one or a few page table entries. However, each access to the hash table adds an extra memory reference.</p>
+<p>When shared memory exists, the inverted page table cannot be used, because one physical page cannot correspond to multiple shared virtual addresses.</p>
+<h2 id="95-Swapping">5 Swapping</h2>
+<p>A process (or part of a process) can be temporarily swapped from memory to a backing store, and later returned to memory to continue execution, as shown below:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C9/18.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Swapping technology makes it possible for the address spaces of all processes to exceed the actual physical memory size, thereby increasing the degree of multiprogramming.</p>
+<h3 id="Standard-Swapping">5.1 Standard Swapping</h3>
+<p>The standard swap operation allows complete processes to move between main memory and the backing store.</p>
+<p>The backing store must be large enough to hold the entire process that needs to be stored and retrieved, and must provide direct access to memory.</p>
+<p>When a process or part of it is swapped to the backing store, the data structures associated with the process must be written to the backing store.</p>
+<p>For multithreaded processes, the data structures of each thread must also participate in swapping.</p>
+<p>The OS must maintain metadata for swapped-out processes so that context information can be restored when these processes return to memory.</p>
+<p>The advantage of this method is that it enables overcommitment of physical memory, allowing the system to accommodate more processes than the actual physical memory.</p>
+<p>Idle or mostly idle processes are well suited to being swapped to the backing store.</p>
+<h3 id="Swapping-with-Paging">5.2 Swapping with Paging</h3>
+<p>In contemporary OSs, the standard swapping described above is rarely used because the time cost of moving entire processes back and forth between memory and backing store is too high.</p>
+<p>Therefore, most systems adopt a variant approach, namely swapping processes by page.</p>
+<p>In practice, we usually use &quot;swapping&quot; to refer to standard swapping and &quot;paging&quot; to refer to &quot;swapping with paging.&quot;</p>
+<p>The page out operation moves a page from memory to backing store, and the reverse process is called page in.</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C9/19.png" style="max-width: 40%; display: block; margin: 0 auto;">
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-8/" rel="prev"><span>← Previous chapter</span>Chapter 8 Deadlocks</a>
+  <a href="../chapter-10/" rel="next"><span>Next chapter →</span>Chapter 10 Virtual Memory</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

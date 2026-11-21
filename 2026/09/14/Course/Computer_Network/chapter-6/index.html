@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 6 Application Layer — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  <link rel="stylesheet" href="../../../../../../media/katex/katex.min.css">
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Computer Network</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-11-15">15 Nov 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-6-Application-Layer">Chapter 6 Application Layer</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#61-Application-Process-Communication-Models">1 Application-Process Communication Models</a>
+      <ul class="toc-subsections">
+        <li><a href="#ClientServer-CS">1.1 Client/Server (C/S)</a></li>
+        <li><a href="#Peer-to-Peer-P2P">1.2 Peer-to-Peer (P2P)</a></li>
+        <li><a href="#BrowserServer-BS">1.3 Browser/Server (B/S)</a></li>
+      </ul>
+    </li>
+    <li><a href="#62-Dynamic-Host-Configuration-Protocol-DHCP">2 Dynamic Host Configuration Protocol (DHCP)</a></li>
+    <li><a href="#63-Domain-Name-System-DNS">3 Domain Name System (DNS)</a>
+      <ul class="toc-subsections">
+        <li><a href="#Domain-Name-Structure">3.1 Domain-Name Structure</a></li>
+        <li><a href="#Name-Servers">3.2 Name Servers</a></li>
+        <li><a href="#Domain-Name-Resolution">3.3 Domain-Name Resolution</a></li>
+        <li><a href="#DNS-Resource-Records-RRs">3.4 DNS Resource Records (RRs)</a></li>
+      </ul>
+    </li>
+    <li><a href="#64-File-Transfer-Protocol-FTP">4 File Transfer Protocol (FTP)</a></li>
+    <li><a href="#65-E-mail">5 E-mail</a>
+      <ul class="toc-subsections">
+        <li><a href="#Basic-SMTP-Operation">5.1 Basic SMTP Operation</a></li>
+        <li><a href="#E-mail-Message-Format">5.2 E-mail Message Format</a></li>
+        <li><a href="#Multipurpose-Internet-Mail-Extensions-MIME">5.3 Multipurpose Internet Mail Extensions (MIME)</a></li>
+        <li><a href="#Common-Mail-Reading-Protocols">5.4 Common Mail-Reading Protocols</a></li>
+        <li><a href="#Web-Based-E-mail">5.5 Web-Based E-mail</a></li>
+      </ul>
+    </li>
+    <li><a href="#66-World-Wide-Web">6 World Wide Web</a>
+      <ul class="toc-subsections">
+        <li><a href="#Uniform-Resource-Locator-URL">6.1 Uniform Resource Locator (URL)</a></li>
+        <li><a href="#Web-Documents">6.2 Web Documents</a></li>
+        <li><a href="#Hypertext-Transfer-Protocol-HTTP">6.3 Hypertext Transfer Protocol (HTTP)</a></li>
+        <li><a href="#Using-Cookies-to-Record-Information">6.4 Using Cookies to Record Information</a></li>
+        <li><a href="#Web-Caches-and-Proxy-Servers">6.5 Web Caches and Proxy Servers</a></li>
+        <li><a href="#Content-Delivery-Network-CDN">6.6 Content Delivery Network (CDN)</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<p>The application layer is the top layer of the network architecture. It represents the ultimate purpose of designing and building computer networks and is the fastest-developing part of networking. Applications have developed from early text-based e-mail, remote login, file transfer, and newsgroups to the Web that brought Internet access into homes in the 1990s, followed by instant messaging, P2P file sharing, and audio/video applications. Smaller, ubiquitous computing devices and rapidly expanding residential broadband and wireless access provide opportunities for further applications.</p>
+<p>Other application-layer protocols to recognize include:</p>
+<ul>
+<li><p>SSH, Secure Shell, and Telnet, teletype over the network, for remote login.</p>
+</li>
+<li><p>RTP, Real-time Transport Protocol, for real-time data such as audio and video. It uses UDP.</p>
+</li>
+</ul>
+<blockquote>
+<p>Common port-number reference, recommended for review before the exam: <a href="https://zjucomp.net/notes/protocals#%E7%AB%AF%E5%8F%A3%E5%8F%B7%E9%80%9F%E8%AE%B0">https://zjucomp.net/notes/protocals#%E7%AB%AF%E5%8F%A3%E5%8F%B7%E9%80%9F%E8%AE%B0</a></p>
+</blockquote>
+<h2 id="61-Application-Process-Communication-Models">1 Application-Process Communication Models</h2>
+<p>When developing a network application, the first consideration is how its programs are organized across end systems and how they relate to one another. The main models are client/server, peer-to-peer, and browser/server.</p>
+<h3 id="ClientServer-CS">1.1 Client/Server (C/S)</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/291.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Client and server refer to the two communicating application processes: the client requests a service and the server provides it. The server remains running and waits for requests. It has a fixed port number, such as HTTP&#39;s default port 80, and its host has a fixed IP address.</p>
+<p>Server processes can operate in two ways:</p>
+<ul>
+<li><p>Iterative mode: one service process runs at a time, responding to requests in arrival order in a blocking manner.</p>
+</li>
+<li><p>Concurrent mode: multiple service processes run simultaneously, each responding to a particular client, allowing concurrent rather than sequential service.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/346.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>C/S is the traditional and most mature Internet model, used by the Web, e-mail, FTP, and many other applications. Its services are centralized on far fewer servers than there are clients. A server may fail to keep up with numerous client requests, so a computer cluster or server farm is often used to construct a powerful virtual server.</p>
+<h3 id="Peer-to-Peer-P2P">1.2 Peer-to-Peer (P2P)</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/292.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>P2P has no fixed requester or provider. Processes on end systems at the network edge are peers that communicate directly, each both requesting and providing services. Applications include P2P file sharing, instant messaging, P2P streaming, and distributed storage.</p>
+<p>Services are decentralized across many peer computers rather than concentrated on a few servers. These computers are usually individually controlled desktops and laptops in homes, campuses, or offices, rather than machines owned by the service provider. A prominent characteristic is scalability: adding a peer adds both demand and service capacity, so system performance does not decrease as its scale grows. P2P also has a cost advantage because it generally requires neither a large server installation nor large server bandwidth, attracting providers seeking to reduce costs.</p>
+<h3 id="BrowserServer-BS">1.3 Browser/Server (B/S)</h3>
+<p>Browser/server is another application-process communication model.</p>
+<h2 id="62-Dynamic-Host-Configuration-Protocol-DHCP">2 Dynamic Host Configuration Protocol (DHCP)</h2>
+<p>Dynamic Host Configuration Protocol (DHCP) automatically configures network parameters, enabling plug-and-play networking.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/293.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The basic DHCP procedure is illustrated in five stages.</p>
+<blockquote>
+<p>Stage 1.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/294.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Stage 2.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/295.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Stage 3.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/296.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Stage 4.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/297.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Stage 5.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/298.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>DHCP relay agent:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/299.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h2 id="63-Domain-Name-System-DNS">3 Domain Name System (DNS)</h2>
+<p>In 1983, the Internet began using a hierarchical naming tree for host names, or domain names, together with the distributed Domain Name System (DNS). Most names can be resolved locally, and only some resolutions require Internet communication, improving efficiency. Its distributed design means that one computer&#39;s failure does not prevent the entire system from operating. DNS mainly uses UDP, although it also uses TCP in some situations.</p>
+<h3 id="Domain-Name-Structure">3.1 Domain-Name Structure</h3>
+<p>Internet domain names form a hierarchical tree.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/300.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>A name consists of components separated by dots, representing successive levels:</p>
+<blockquote>
+<p>... .third-level-domain.second-level-domain.top-level-domain</p>
+</blockquote>
+<p>Each component contains letters and digits, has at most 63 characters, and is case-insensitive. The lowest level is written at the left and the top level at the right. A complete name is no longer than 255 characters.</p>
+<p>DNS specifies neither how many subordinate domains a domain must contain nor what each level must mean. Each level is managed by the authority for its parent domain, while ICANN manages the top level.</p>
+<p>Top-level domains (TLDs) have three categories:</p>
+<ul>
+<li><p>Country-code domains, following ISO 3166, such as cn for China, us for the United States, and uk for the United Kingdom.</p>
+</li>
+<li><p>Generic domains: com for businesses, net for network-service organizations, org for nonprofit organizations, int for international organizations, edu for educational institutions, gov for government departments, and mil for military departments.</p>
+</li>
+<li><p>The reverse domain arpa: used for reverse resolution from IP addresses to domain names.</p>
+</li>
+</ul>
+<p>Each country determines its own second-level domains below its country-code TLD. For example, Japan uses ac and co for academic and commercial organizations under jp, rather than edu and com.</p>
+<p>China divides second-level domains into two categories:</p>
+<ul>
+<li><p>Category domains: ac for research institutions, com for industrial, commercial, and financial enterprises, edu for educational institutions, gov for government, net for network-service organizations, mil for military organizations, and org for nonprofit organizations.</p>
+</li>
+<li><p>Administrative-region domains: 34 domains for provinces, autonomous regions, and municipalities, such as bj for Beijing, sh for Shanghai, and js for Jiangsu.</p>
+</li>
+</ul>
+<h3 id="Name-Servers">3.2 Name Servers</h3>
+<p>Mappings between domain names and IP addresses are stored in name servers for other applications to query. All information cannot be stored on one server, so DNS distributes it across servers in different locations.</p>
+<p>Root name servers occupy the highest level and know the names and IP addresses of all TLD servers. Although commonly described as 13 root servers, each is actually implemented by a cluster of computers distributed worldwide. A query from a local name server can be routed to a nearby root-server instance, accelerating resolution and using Internet resources more efficiently. A root server normally returns the relevant TLD server&#39;s IP address rather than directly resolving the complete name.</p>
+<p>TLD name servers manage the second-level domains registered under their TLD. Their responses may give the final result or the IP address of a lower-level authoritative server.</p>
+<p>Authoritative name servers manage names within a zone. Every host name must be registered with an authoritative server, which knows the relevant name-to-address mappings and the addresses of subordinate name servers.</p>
+<p>A local name server, sometimes called a default name server, is not part of this hierarchy. A host sends its DNS request to the local server first. The local server acts as a proxy and forwards queries into the hierarchy. An ISP, university, or even a department may operate one. It is usually only a few routers away or on the same LAN, and its IP address must be configured on hosts requiring name resolution.</p>
+<h3 id="Domain-Name-Resolution">3.3 Domain-Name Resolution</h3>
+<p>Recursive query:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/301.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Iterative query:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/302.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Because recursion places a heavy load on queried servers, the usual arrangement is a recursive query from the requesting host to its local name server, followed by iterative queries for the remaining resolution steps.</p>
+<p>Name servers widely use caches to store recently resolved names and records of where their mappings were obtained. This improves efficiency, reduces load on root servers, and reduces DNS traffic. Because mappings may change, each cached item needs an expiration timer and must be removed after a reasonable period, such as two days.</p>
+<p>User hosts also need caches of recently used names and should query a server only when the cache does not contain the name. Many hosts download the complete database of domain names and IP addresses from the local name server at startup and maintain caches of recently used names. Hosts must likewise keep cached information valid.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/303.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Exercise: lkj 100, Q83.</p>
+</blockquote>
+<p>Assume that all domain name servers use iterative query for domain name resolution. When H4 attempts to access the website <a href="http://www.abc.xyz.com">www.abc.xyz.com</a> and the domain name resolution is completed, the possible minimum and maximum number of DNS queries issued by the domain name server 201.1.1.1 are ______.</p>
+<ul>
+<li><p>A: 0, 3.</p>
+</li>
+<li><p>B: 1, 3.</p>
+</li>
+<li><p>C: 0, 4.</p>
+</li>
+<li><p>D: 1, 4.</p>
+</li>
+</ul>
+<p>Answer: C. The minimum is 0 when the cache contains the answer. The maximum is 4, following root → .com → xyz.com → abc.xyz.com. The authoritative server for abc.xyz.com manages names under that domain and can resolve <a href="http://www.abc.xyz.com">www.abc.xyz.com</a> directly; there is no additional <a href="http://www.abc.xyz.com">www.abc.xyz.com</a> server level to query.</p>
+<blockquote>
+<p>Solution source: <a href="https://alidocs.dingtalk.com/i/nodes/Gl6Pm2Db8D3mKkP4t7agGQzbJxLq0Ee4">https://alidocs.dingtalk.com/i/nodes/Gl6Pm2Db8D3mKkP4t7agGQzbJxLq0Ee4</a></p>
+</blockquote>
+<h3 id="DNS-Resource-Records-RRs">3.4 DNS Resource Records (RRs)</h3>
+<ul>
+<li><p>SOA, Start of Authority: specifies authoritative information for a zone, including its primary name server, administrator&#39;s e-mail address, serial number, and zone-refresh timers.</p>
+</li>
+<li><p>A, address: returns a 32-bit IPv4 address.</p>
+</li>
+<li><p>AAAA: returns a 128-bit IPv6 address.</p>
+</li>
+<li><p>MX, mail exchanger: directs a domain to its list of message transfer agents (MTAs).</p>
+</li>
+<li><p>CNAME, canonical name: gives a host-name alias; DNS continues looking up the new name.</p>
+</li>
+<li><p>PTR, pointer: points to a canonical name and is commonly used in reverse DNS lookup.</p>
+</li>
+<li><p>NS, name server: identifies the name servers responsible for a zone.</p>
+</li>
+<li><p>SPF, Sender Policy Framework: encodes which machines in a domain send mail to the Internet, helping recipients check validity.</p>
+</li>
+<li><p>SRV, service: identifies a host providing a particular service in a domain; for example, the Web server for cs.washington.edu might be cockatoo.cs.washington.edu.</p>
+</li>
+<li><p>TXT, text: originally allowed a domain to identify itself with arbitrary text; it is now often used for machine-readable information, commonly SPF information.</p>
+</li>
+</ul>
+<h2 id="64-File-Transfer-Protocol-FTP">4 File Transfer Protocol (FTP)</h2>
+<p>File transfer moves a file from one computer to another, potentially far away, over a network. File Transfer Protocol (FTP) is the most widely used Internet file-transfer protocol. It provides interactive access, lets clients specify file types and formats, and supports permissions, including authorization and a valid password.</p>
+<p>FTP hides computer-system details, making it suitable for file transfer between heterogeneous systems. Depending on the application, an FTP server may need a high-performance, highly reliable server or only an ordinary PC. Typical uses include batch file transfers and uploading the files making up a website to its Web server.</p>
+<ul>
+<li>Active mode: the FTP server initiates the connection to the client when establishing the data channel.</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/304.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li>Passive mode: the FTP server waits for the client to initiate the data connection.</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/305.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h2 id="65-E-mail">5 E-mail</h2>
+<p>E-mail was one of the earliest popular Internet applications and remains an important, practical application. An e-mail system uses the client/server model and has three main components:</p>
+<ul>
+<li><p>User agent: the interface between the user and the mail system, also called e-mail client software.</p>
+</li>
+<li><p>Mail server: the infrastructure that sends and receives mail and maintains user mailboxes. Internet ISPs provide mail servers.</p>
+</li>
+<li><p>Protocols: sending protocols such as SMTP and reading protocols such as POP3 and IMAP.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/306.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Basic-SMTP-Operation">5.1 Basic SMTP Operation</h3>
+<p>The basic operation of Simple Mail Transfer Protocol (SMTP) is shown below.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/307.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Authentication is omitted for simplicity. Reply codes are usually followed by short descriptions, and different SMTP servers may use different descriptions for the same code.</p>
+</blockquote>
+<h3 id="E-mail-Message-Format">5.2 E-mail Message Format</h3>
+<p>The message format is not defined by SMTP. It was separately specified in RFC 822 and updated by RFC 5322 in 2008. An e-mail consists of an envelope and content; the content consists of a header and a body.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/308.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Multipurpose-Internet-Mail-Extensions-MIME">5.3 Multipurpose Internet Mail Extensions (MIME)</h3>
+<p>Basic SMTP carries ASCII text, not executable files or other binary objects. It cannot directly support multimedia messages containing pictures, audio, or video, or many non-English writing systems, including Chinese, Russian, and accented French or German.</p>
+<p>Multipurpose Internet Mail Extensions (MIME) addresses this limitation.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/309.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>It adds five mail-header fields describing the message body.</p>
+</li>
+<li><p>It defines content formats and standardizes multimedia-mail representation.</p>
+</li>
+<li><p>It defines transfer encodings that convert content without allowing the mail system to alter it.</p>
+</li>
+</ul>
+<p>MIME is used not only with SMTP but also with the later ASCII-oriented HTTP protocol.</p>
+<h3 id="Common-Mail-Reading-Protocols">5.4 Common Mail-Reading Protocols</h3>
+<p>Post Office Protocol (POP) uses port 110. POP3, its third version, is an Internet standard. It is a simple protocol with limited functions: users download messages and either delete them from the server or leave copies. It does not let users organize server-side mail through operations such as creating folders and classifying messages.</p>
+<p>Internet Message Access Protocol (IMAP) uses port 143. IMAP4, its fourth version, is described as a proposed Internet standard. It is more powerful than POP3 and lets users manipulate server mailboxes as though they were local. It is therefore an online protocol.</p>
+<h3 id="Web-Based-E-mail">5.5 Web-Based E-mail</h3>
+<p>Users can log in to a mail server&#39;s website with a username and password to compose, send, receive, read, and manage mail. This resembles IMAP operation, but requires only a general-purpose browser rather than a dedicated user agent. Mail websites usually provide powerful, convenient management functions without requiring messages to be downloaded for local organization.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/310.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h2 id="66-World-Wide-Web">6 World Wide Web</h2>
+<p>The World Wide Web (WWW) is not a special computer network. It is a large online information repository and a distributed application running on the Internet. Hyperlinks connect pages on different websites into a logical information network. Tim Berners-Lee at CERN first proposed it in March 1989.</p>
+<p>The graphical browser Mosaic appeared in February 1993, and Netscape Navigator was released in 1995. Common browsers include Chrome, Firefox, Safari, and Opera. The rendering engine, also called the browser engine, parses and displays content. Different engines may render the same page differently, so authors need to test pages with different engines.</p>
+<h3 id="Uniform-Resource-Locator-URL">6.1 Uniform Resource Locator (URL)</h3>
+<p>A Uniform Resource Locator (URL) identifies the location of an Internet resource. Its general form has four components:</p>
+<blockquote>
+<p>protocol://host:port/path</p>
+</blockquote>
+<h3 id="Web-Documents">6.2 Web Documents</h3>
+<p>HTML, Hypertext Markup Language, uses tags to describe a page&#39;s structure and content.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/311.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>CSS, Cascading Style Sheets, describes its visual style.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/312.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>JavaScript is a scripting language, distinct from Java, that controls page behavior.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/313.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Hypertext-Transfer-Protocol-HTTP">6.3 Hypertext Transfer Protocol (HTTP)</h3>
+<p>Hypertext Transfer Protocol (HTTP) defines how a browser, acting as a Web client, requests documents and how a Web server returns them.</p>
+<p>HTTP/1.0 uses nonpersistent connections. Each file request establishes a TCP connection and closes it after the response. Each document incurs <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow></mrow><annotation encoding="application/x-tex">2\mathrm{RTT}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">2</span><span class="mord"><span class="mord mathrm">RTT</span></span></span></span></span> of overhead; if a page references many objects, each object needs this additional time. Browsers reduce delay by opening parallel TCP connections, but this consumes server resources and can impose a heavy burden when many clients are served.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/314.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>HTTP/1.1 uses persistent connections. The server keeps the connection open after a response so the same client can send further requests and receive responses over it. This applies to documents on the same server, not only objects referenced by the same page. Pipelining further improves efficiency: the browser can send several requests before receiving their responses, and the server returns responses in sequence. This saves RTTs, reduces idle connection time, and improves downloading efficiency.</p>
+<p>HTTP messages are text-oriented. Fields are ASCII strings of variable length.</p>
+<p>Request-message format:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/315.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Example request.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/317.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Response-message format:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/316.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Common response status lines include:</p>
+<ul>
+<li><p>HTTP/1.1 202 Accepted: request accepted.</p>
+</li>
+<li><p>HTTP/1.1 400 Bad Request: invalid request.</p>
+</li>
+<li><p>HTTP/1.1 404 Not Found: page not found.</p>
+</li>
+</ul>
+<h3 id="Using-Cookies-to-Record-Information">6.4 Using Cookies to Record Information</h3>
+<p>Early Web applications simply displayed static documents from different servers, so HTTP was designed to be stateless to simplify server design. More complex applications, such as online shopping and e-commerce, require servers to recognize users. Cookies let servers remember users without requiring them to provide an identifier explicitly on every interaction, adding state to otherwise stateless HTTP.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/318.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Web-Caches-and-Proxy-Servers">6.5 Web Caches and Proxy Servers</h3>
+<p>Caching improves Web efficiency. A Web cache may reside on a client or an intermediate system; an intermediate cache is also called a proxy server. It temporarily stores recent requests and responses on local disk. If a new request matches a cached request, it returns the stored response instead of accessing the resource again through its URL. A high cache-hit rate greatly reduces link traffic and Internet-access delay.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/319.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/320.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/321.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Content-Delivery-Network-CDN">6.6 Content Delivery Network (CDN)</h3>
+<p>The content delivery or distribution network (CDN) concept arose from MIT&#39;s work on flash crowds in Web services in 1998. It is a Web caching system that serves content near the network edge and users. Its services have expanded to include static content, streaming media, user-uploaded video, and more.</p>
+<p>Its main advantages are:</p>
+<ul>
+<li><p>Lower response delay and less network congestion.</p>
+</li>
+<li><p>Reduced origin-server overload and protection against DDoS attacks.</p>
+</li>
+<li><p>A distributed architecture with good scalability.</p>
+</li>
+<li><p>Transparency to users.</p>
+</li>
+</ul>
+<p>Providers include dedicated CDN companies such as Akamai, ChinaCache, 21Vianet, and Wangsu; Internet content providers such as Tencent and Baidu; and ISPs such as China Mobile, China Unicom, and China Telecom.</p>
+<p>Key design questions are where to deploy servers, where and what to cache, and how to redirect requests to nearby or less-loaded servers. Clients obtain content from nearby CDN nodes or caches, allowing a Web service to support more clients.</p>
+<p>CDN distribution tree:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/347.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>DNS redirection schedules requests to a nearby or less-loaded CDN server. HTTP redirection lets the content provider or origin server choose the CDN server and return a 30X response whose Location field specifies the new location.</p>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-5/" rel="prev"><span>← Previous chapter</span>Chapter 5 Transport Layer</a>
+  <a href="../chapter-7/" rel="next"><span>Next chapter →</span>Chapter 7 Network Security</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

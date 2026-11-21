@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Computer Network — Relaxinic</title>
+  <link rel="preload" href="../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../course/">Notes</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-09-14">14 Sept 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title">Computer Network</h1>
+        </div>
+      </header>
+
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body course-intro">
+<aside class="post-callout">
+  <strong class="callout-title">Warning</strong>
+  These notes are written primarily for my own study needs. They may not be comprehensive or suitable for everyone, so feel free to browse selectively.
+</aside>
+
+<aside class="post-callout">
+  <strong class="callout-title">Acknowledgments</strong>
+  Part of these notes draws inspiration from the excellent Computer Network notes written by <a href="https://note.noughtq.top/web/cn/review" target="_blank">NoughtQ</a>. I am also grateful to Professor Jinsong Han for his teaching and guidance in the course, which helped shape the understanding reflected in these notes.
+</aside>
+</div>
+<nav class="chapter-index" aria-label="Chapters">
+  <ol class="post-list">
+    <li>
+      <a class="post-link" href="chapter-1/">
+        <span class="post-title">Chapter 1 Overview</span>
+        <time class="post-date" datetime="2026-09-14">14 Sept 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-2/">
+        <span class="post-title">Chapter 2 Physical Layer</span>
+        <time class="post-date" datetime="2026-09-20">20 Sept 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-3/">
+        <span class="post-title">Chapter 3 Data link layer</span>
+        <time class="post-date" datetime="2026-10-04">04 Oct 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-4/">
+        <span class="post-title">Chapter 4 Network Layer</span>
+        <time class="post-date" datetime="2026-10-26">26 Oct 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-5/">
+        <span class="post-title">Chapter 5 Transport Layer</span>
+        <time class="post-date" datetime="2026-11-08">08 Nov 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-6/">
+        <span class="post-title">Chapter 6 Application Layer</span>
+        <time class="post-date" datetime="2026-11-15">15 Nov 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-7/">
+        <span class="post-title">Chapter 7 Network Security</span>
+        <time class="post-date" datetime="2026-11-21">21 Nov 2026</time>
+      </a>
+    </li>
+  </ol>
+</nav>
+
+        </div>
+      </div>
+    </article>
+<script type="application/json" id="chapter-anchors">{"Chapter-1-Overview":"chapter-1/","11-Internet":"chapter-1/","12-Network-instance":"chapter-1/","Network-edge":"chapter-1/","Network-core":"chapter-1/","13-Circuit-switching-packet-switching-and-message-switching":"chapter-1/","Circuit-switching":"chapter-1/","Packet-switching":"chapter-1/","Message-switching":"chapter-1/","14-Definition-and-Classification":"chapter-1/","15-Performance-Metrics":"chapter-1/","16-Architecture":"chapter-1/","Chapter-2-Physical-Layer":"chapter-2/","21-Transmission-Media":"chapter-2/","Guided-Transmission-Media":"chapter-2/","Coaxial-Cable":"chapter-2/","Twisted-pair":"chapter-2/","Fiber-optics":"chapter-2/","Non-guided-transmission-medium":"chapter-2/","22-Transmission-Methods":"chapter-2/","Serial-Transmission-and-Parallel-Transmission":"chapter-2/","Synchronous-transmission-and-asynchronous-transmission":"chapter-2/","Synchronized-transmission":"chapter-2/","Asynchronous-transmission":"chapter-2/","Simplex-half-duplex-and-full-duplex":"chapter-2/","23-Encoding-and-Modulation":"chapter-2/","Basic-Concepts":"chapter-2/","Common-Encoding-Methods":"chapter-2/","Bipolar-Non-Return-to-Zero-Encoding-NRZ":"chapter-2/","Bipolar-return-to-zero-encoding":"chapter-2/","NRZInot-return-to-zero-inverted":"chapter-2/","Manchester-encoding":"chapter-2/","Differential-Manchester-encoding":"chapter-2/","4B5B-Encoding":"chapter-2/","Basic-Bandpass-Modulation-Methods-and-Hybrid-Modulation-Methods":"chapter-2/","24-The-Maximum-Capacity-of-a-Channel":"chapter-2/","Main-Factors-Causing-Signal-Distortion":"chapter-2/","Nyquist-Theorem":"chapter-2/","Shannon-Formula":"chapter-2/","25-Channel-Multiplexing-Technology":"chapter-2/","Basic-Principles":"chapter-2/","Common-Technologies":"chapter-2/","Chapter-3-Data-link-layer":"chapter-3/","31-Three-questions":"chapter-3/","Encapsulation-into-frames-and-transparent-transmission":"chapter-3/","Error-detection":"chapter-3/","Reliable-Transmission":"chapter-3/","32-Point-to-Point-Protocol":"chapter-3/","Frame-Format":"chapter-3/","Transparent-Transmission":"chapter-3/","Error-Detection":"chapter-3/","Working-States":"chapter-3/","33-Shared-Ethernet":"chapter-3/","Network-Adapters-and-MAC-Addresses":"chapter-3/","CSMACD-Protocol":"chapter-3/","Shared-Ethernet-Using-Hubs":"chapter-3/","Extending-Ethernet-at-the-Physical-Layer":"chapter-3/","Extending-Ethernet-at-the-Data-Link-Layer":"chapter-3/","34-Switched-Ethernet":"chapter-3/","Shared-Ethernet-vs-Switched-Ethernet":"chapter-3/","35-Ethernet-MAC-Frame-Format":"chapter-3/","36-Virtual-Local-Area-Network":"chapter-3/","IEEE-8021Q-frames":"chapter-3/","Ethernet-Switches":"chapter-3/","37-80211-Wireless-Local-Area-Network":"chapter-3/","Composition":"chapter-3/","Physical-Layer":"chapter-3/","CSMACA-Protocol":"chapter-3/","MAC-Frame":"chapter-3/","Chapter-4-Network-Layer":"chapter-4/","41-Internet-Protocol":"chapter-4/","IPv4-Addresses-and-Their-Addressing-Methods":"chapter-4/","IPv4-address-and-MAC-address":"chapter-4/","Address-Resolution-Protocol-ARP":"chapter-4/","Header-Format-of-IPv4-Datagrams":"chapter-4/","42-Static-Routing-Configuration":"chapter-4/","43-Internet-Routing-Protocols":"chapter-4/","Classification-of-Routing":"chapter-4/","Hierarchical-Routing-Protocols":"chapter-4/","Routing-Information-Protocol-RIP":"chapter-4/","Open-Shortest-Path-First-Protocol-OSPF":"chapter-4/","Border-Gateway-Protocol-BGP":"chapter-4/","Basic-Operation-of-a-Router":"chapter-4/","44-Internet-Control-Message-Protocol-ICMP":"chapter-4/","Message-Types":"chapter-4/","Typical-Applications":"chapter-4/","45-Virtual-Private-Networks-and-Network-Address-Translation":"chapter-4/","Virtual-Private-Network-VPN":"chapter-4/","Network-Address-Translation-NAT":"chapter-4/","46-IP-Multicast":"chapter-4/","IP-Multicast-Addresses-and-Multicast-Groups":"chapter-4/","Hardware-Multicast-on-a-LAN":"chapter-4/","Protocols-Related-to-IP-Multicast":"chapter-4/","Internet-Group-Management-Protocol-IGMP":"chapter-4/","Multicast-Routing-Protocols-MRPs":"chapter-4/","Mobile-IP":"chapter-4/","47-IPv6":"chapter-4/","Datagram-Header":"chapter-4/","Extension-Headers":"chapter-4/","IPv6-Addresses":"chapter-4/","Transition-from-IPv4-to-IPv6":"chapter-4/","Internet-Control-Message-Protocol-Version-6-ICMPv6":"chapter-4/","48-Software-Defined-Networking":"chapter-4/","Chapter-5-Transport-Layer":"chapter-5/","51-Overview":"chapter-5/","Network-Communication-Between-Processes":"chapter-5/","Two-Important-Protocols":"chapter-5/","Transport-Layer-Port-Numbers":"chapter-5/","Sender-Multiplexing-and-Receiver-Demultiplexing":"chapter-5/","52-Comparison-of-UDP-and-TCP":"chapter-5/","Support-for-Unicast-Multicast-and-Broadcast":"chapter-5/","Handling-Application-Layer-Messages":"chapter-5/","Support-for-Reliable-Data-Transfer":"chapter-5/","Header-Comparison":"chapter-5/","53-Transmission-Control-Protocol":"chapter-5/","Segment-Header-Format":"chapter-5/","Transport-Connection-Management":"chapter-5/","Establishing-a-TCP-Connection":"chapter-5/","Releasing-a-TCP-Connection":"chapter-5/","Flow-Control":"chapter-5/","Congestion-Control":"chapter-5/","Slow-Start-and-Congestion-Avoidance":"chapter-5/","Fast-Retransmit-and-Fast-Recovery":"chapter-5/","Choosing-the-Retransmission-Timeout":"chapter-5/","Karns-Algorithm":"chapter-5/","Chapter-6-Application-Layer":"chapter-6/","61-Application-Process-Communication-Models":"chapter-6/","ClientServer-CS":"chapter-6/","Peer-to-Peer-P2P":"chapter-6/","BrowserServer-BS":"chapter-6/","62-Dynamic-Host-Configuration-Protocol-DHCP":"chapter-6/","63-Domain-Name-System-DNS":"chapter-6/","Domain-Name-Structure":"chapter-6/","Name-Servers":"chapter-6/","Domain-Name-Resolution":"chapter-6/","DNS-Resource-Records-RRs":"chapter-6/","64-File-Transfer-Protocol-FTP":"chapter-6/","65-E-mail":"chapter-6/","Basic-SMTP-Operation":"chapter-6/","E-mail-Message-Format":"chapter-6/","Multipurpose-Internet-Mail-Extensions-MIME":"chapter-6/","Common-Mail-Reading-Protocols":"chapter-6/","Web-Based-E-mail":"chapter-6/","66-World-Wide-Web":"chapter-6/","Uniform-Resource-Locator-URL":"chapter-6/","Web-Documents":"chapter-6/","Hypertext-Transfer-Protocol-HTTP":"chapter-6/","Using-Cookies-to-Record-Information":"chapter-6/","Web-Caches-and-Proxy-Servers":"chapter-6/","Content-Delivery-Network-CDN":"chapter-6/","Chapter-7-Network-Security":"chapter-7/","71-Security-Threats":"chapter-7/","72-Cryptography":"chapter-7/","Symmetric-Key-Cryptosystems":"chapter-7/","Public-Key-Cryptosystems":"chapter-7/","73-Digital-Signatures":"chapter-7/","74-Entity-Authentication":"chapter-7/","75-Key-Distribution":"chapter-7/","Symmetric-Key-Distribution":"chapter-7/","Public-Key-Distribution":"chapter-7/","76-IPSec-Protocol-Suite":"chapter-7/"}</script>
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 7 Network Security — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  <link rel="stylesheet" href="../../../../../../media/katex/katex.min.css">
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Computer Network</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-11-21">21 Nov 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-7-Network-Security">Chapter 7 Network Security</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#71-Security-Threats">1 Security Threats</a></li>
+    <li><a href="#72-Cryptography">2 Cryptography</a>
+      <ul class="toc-subsections">
+        <li><a href="#Symmetric-Key-Cryptosystems">2.1 Symmetric-Key Cryptosystems</a></li>
+        <li><a href="#Public-Key-Cryptosystems">2.2 Public-Key Cryptosystems</a></li>
+      </ul>
+    </li>
+    <li><a href="#73-Digital-Signatures">3 Digital Signatures</a></li>
+    <li><a href="#74-Entity-Authentication">4 Entity Authentication</a></li>
+    <li><a href="#75-Key-Distribution">5 Key Distribution</a>
+      <ul class="toc-subsections">
+        <li><a href="#Symmetric-Key-Distribution">5.1 Symmetric-Key Distribution</a></li>
+        <li><a href="#Public-Key-Distribution">5.2 Public-Key Distribution</a></li>
+      </ul>
+    </li>
+    <li><a href="#76-IPSec-Protocol-Suite">6 IPSec Protocol Suite</a></li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<h2 id="71-Security-Threats">1 Security Threats</h2>
+<p>Security threats are classified as passive or active attacks.</p>
+<p>Passive attacks observe and analyze sensitive information in transmitted data without interfering with it. They include eavesdropping, sniffing, and traffic analysis.</p>
+<p>Active attacks manipulate the data stream in various ways:</p>
+<ul>
+<li><p>Interruption.</p>
+</li>
+<li><p>Modification.</p>
+</li>
+<li><p>Fabrication.</p>
+</li>
+<li><p>Malware, including computer viruses, worms, Trojan horses, logic bombs, backdoors, and rogue software.</p>
+</li>
+<li><p>Denial of service (DoS).</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/348.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Distributed denial of service (DDoS):</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/349.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h2 id="72-Cryptography">2 Cryptography</h2>
+<p>Encryption transforms transmitted data into a form unintelligible to anyone who does not know how to reverse the transformation, thereby preserving confidentiality. Data before encryption is plaintext; afterward it is ciphertext. Decryption reverses the transformation to recover plaintext.</p>
+<p>Encryption and decryption may take keys as parameters. Keys must be protected, but the algorithms can be public. Knowing the algorithm alone should not permit decryption without the key. The encryption and decryption keys may be the same or different, depending on whether a symmetric-key or public-key cryptosystem is used. When they differ, they still have a mathematical relationship.</p>
+<p>General model of data encryption:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/350.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Diffusion and confusion are two central design principles proposed by Shannon in 1949. They resist statistical analysis and mathematical inference, hiding relationships among plaintext, keys, and ciphertext.</p>
+<ul>
+<li><p>Confusion makes the relationship between ciphertext and key complex, preventing key inference through statistical analysis. Substitution is a typical means of achieving it.</p>
+</li>
+<li><p>Diffusion makes each plaintext bit affect several ciphertext bits, so a small plaintext change produces a substantial ciphertext change.</p>
+</li>
+</ul>
+<p>Modern symmetric algorithms such as AES combine both principles. Classical ciphers include substitution ciphers, which replace letters, and transposition ciphers, which rearrange their order.</p>
+<h3 id="Symmetric-Key-Cryptosystems">2.1 Symmetric-Key Cryptosystems</h3>
+<p>A symmetric-key cryptosystem uses the same key for encryption and decryption.</p>
+<p>Data Encryption Standard (DES) was developed by IBM and adopted as a US federal information standard in 1977. Its encryption method is shown below.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/351.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>DES&#39;s confidentiality depends on key secrecy and key length, not on concealing its public algorithm. Searching the 56-bit key space is feasible, so 56-bit DES is no longer regarded as secure.</p>
+<p>Triple DES (3DES) addresses DES&#39;s short key length by performing three DES operations with three keys. It became a US commercial encryption standard in 1985, as cited in RFC 2420. It retains the DES algorithm; when <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>K</mi><mn>1</mn></msub><mo>=</mo><msub><mi>K</mi><mn>2</mn></msub><mo>=</mo><msub><mi>K</mi><mn>3</mn></msub></mrow><annotation encoding="application/x-tex">K_1 = K_2 = K_3</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>, it is equivalent to DES, facilitating gradual migration.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/352.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Advanced Encryption Standard (AES) supports 128-, 192-, and 256-bit keys and can be implemented efficiently in hardware and software. Its modest memory requirements make it suitable for small mobile devices. AES is commonly used with cipher block chaining (CBC) mode.</p>
+<h3 id="Public-Key-Cryptosystems">2.2 Public-Key Cryptosystems</h3>
+<p>In a symmetric system, the two parties must share a key. Agreeing on it in advance complicates management and replacement, while distributing it by messenger is unsuitable for a highly automated, large computer network. A secure key distribution center (KDC) can solve the problem but adds complexity. Public-key cryptography offers another approach.</p>
+<p>Public-key cryptosystems use different encryption and decryption keys. The concept was proposed by Stanford researchers Diffie and Hellman in 1976.</p>
+<ul>
+<li><p>Public key (PK): the publicly available encryption key.</p>
+</li>
+<li><p>Secret or private key (SK): the decryption key that must remain secret.</p>
+</li>
+</ul>
+<p>The recipient provides the key pair, while both the encryption algorithm <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi></mrow><annotation encoding="application/x-tex">E</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">E</span></span></span></span> and decryption algorithm <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi></mrow><annotation encoding="application/x-tex">D</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span></span></span></span> are public. With plaintext <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>X</mi></mrow><annotation encoding="application/x-tex">X</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span></span></span></span>, the encryption/decryption relation is</p>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mrow><mi>S</mi><mi>K</mi></mrow></msub><mo stretchy="false">(</mo><msub><mi>E</mi><mrow><mi>P</mi><mi>K</mi></mrow></msub><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo><mo stretchy="false">)</mo><mo>=</mo><mi>X</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">D_{SK}(E_{PK}(X)) = X.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05764em;">S</span><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0576em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">P</span><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mclose">))</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord">.</span></span></span></span></p>
+<p>For the reversible operations illustrated here, the order can also be exchanged:</p>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>E</mi><mrow><mi>P</mi><mi>K</mi></mrow></msub><mo stretchy="false">(</mo><msub><mi>D</mi><mrow><mi>S</mi><mi>K</mi></mrow></msub><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo><mo stretchy="false">)</mo><mo>=</mo><mi>X</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">E_{PK}(D_{SK}(X)) = X.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0576em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">P</span><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05764em;">S</span><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mclose">))</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord">.</span></span></span></span></p>
+<p>The public key can be used for encryption but does not provide the secret-key decryption operation:</p>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mrow><mi>P</mi><mi>K</mi></mrow></msub><mo stretchy="false">(</mo><msub><mi>E</mi><mrow><mi>P</mi><mi>K</mi></mrow></msub><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo><mo stretchy="false">)</mo><mo mathvariant="normal">≠</mo><mi>X</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">D_{PK}(E_{PK}(X)) \ne X.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">P</span><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0576em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">P</span><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mclose">))</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel"><span class="mrel"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="inner"><span class="mord"><span class="mrel"></span></span></span><span class="fix"></span></span></span></span></span><span class="mspace nobreak"></span><span class="mrel">=</span></span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord">.</span></span></span></span></p>
+<p>The private key cannot feasibly be derived from the public key, and the public key does not allow recovery of encrypted plaintext, so the public key can be distributed openly. This makes key distribution easier. Two mathematical directions are factoring products of large primes and solving discrete logarithms. Related algorithms include RSA, named for Rivest, Shamir, and Adleman; elliptic curve cryptography (ECC); and Diffie–Hellman (D-H).</p>
+<h2 id="73-Digital-Signatures">3 Digital Signatures</h2>
+<p>A digital signature proves a transmitted message&#39;s authentic origin. It must satisfy three requirements:</p>
+<ul>
+<li><p>The receiver can verify the sender&#39;s signature.</p>
+</li>
+<li><p>Nobody, including the receiver, can forge the signature.</p>
+</li>
+<li><p>The sender cannot later deny having signed the message.</p>
+</li>
+</ul>
+<p>There are several signature methods. Public-key algorithms make signatures easier to implement than symmetric-key algorithms.</p>
+<blockquote>
+<p>Example.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/354.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Because public-key operations are computationally expensive, signing an entire message can take considerable time. A more efficient method signs only the message digest.</p>
+<h2 id="74-Entity-Authentication">4 Entity Authentication</h2>
+<p>Entity authentication is the technique by which one communicating party verifies the other&#39;s identity. An entity may be a person, client process, or server process. Here the concern is confirming that the communication partner is the intended entity rather than an impersonator.</p>
+<p>Authentication normally precedes actual data transfer or access control and is an important part of many security protocols. The simplest method uses a username and password; these need encryption to protect against interception.</p>
+<p>Replay attack:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/355.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>A nonce, a large random number that is not reused, helps distinguish a repeated authentication request from a new one and counters replay attacks.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/356.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h2 id="75-Key-Distribution">5 Key Distribution</h2>
+<p>Key distribution is a central issue in cryptographic systems. Keys must be distributed through secure channels, and the system&#39;s security depends on protecting them.</p>
+<ul>
+<li><p>Out-of-band distribution uses highly reliable messengers to deliver keys to communicating users. Keys must be changed periodically. This approach becomes unsuitable as user numbers grow.</p>
+</li>
+<li><p>Automatic in-network distribution distributes keys automatically through the network.</p>
+</li>
+</ul>
+<h3 id="Symmetric-Key-Distribution">5.1 Symmetric-Key Distribution</h3>
+<p>A common method uses a key distribution center (KDC), an institution trusted by the parties. It temporarily assigns a session key to users who need confidential communication.</p>
+<h3 id="Public-Key-Distribution">5.2 Public-Key Distribution</h3>
+<p>Public keys are published, while private keys remain secret. Users can communicate securely if they know one another&#39;s authentic public keys, but publishing keys arbitrarily over a network creates serious risks.</p>
+<p>A trusted institution is therefore needed to bind a public key to its entity, whether a person or machine. This institution is a certification authority (CA). CAs are generally established with government funding. A user can ask a CA to issue a certificate containing the public key and identifying information about its owner, such as a personal name, company name, or IP address.</p>
+<h2 id="76-IPSec-Protocol-Suite">6 IPSec Protocol Suite</h2>
+<p>IPSec has two operating modes: transport mode and tunnel mode.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/357.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Tunnel mode is the more widely used mode. In either mode, the outer IP header remains unencrypted so that Internet routers can read the information needed to forward the protected datagram from source to destination across an insecure Internet.</p>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-6/" rel="prev"><span>← Previous chapter</span>Chapter 6 Application Layer</a>
+  
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

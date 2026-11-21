@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 7 Templates — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Object-Oriented Programing</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-05-24">24 May 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-7-Templates">Chapter 7 Templates</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#71-Function-Templates">1 Function Templates</a></li>
+    <li><a href="#72-Class-Templates">2 Class Templates</a>
+      <ul class="toc-subsections">
+        <li><a href="#Member-Functions">2.1 Member Functions</a></li>
+        <li><a href="#Parameters">2.2 Parameters</a></li>
+        <li><a href="#Static-Members">2.3 Static Members</a></li>
+        <li><a href="#Friends">2.4 Friends</a></li>
+      </ul>
+    </li>
+    <li><a href="#73-Templates-and-Inheritance">3 Templates and Inheritance</a></li>
+    <li><a href="#74-Guidelines">4 Guidelines</a></li>
+    <li><a href="#75-Interfaces-in-C">5 Interfaces in C++</a></li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<p>The core features of templates can be summarized as:</p>
+<ul>
+<li>Code reuse</li>
+<li>Generic programming</li>
+<li>Implicit interfaces</li>
+<li>Compile-time polymorphism</li>
+</ul>
+<hr>
+<p>Basic Components of a Template:</p>
+<ul>
+<li><p>Template Parameters: These are unspecified placeholders when the template is defined, and are assigned specific values or types only when the template is used (instantiated).</p>
+<ul>
+<li>Type Parameters: The keywords <code>class</code> or <code>typename</code> used in declarations (e.g., <code>template &lt;class T&gt;</code> or <code>template &lt;typename T&gt;</code>) are nearly equivalent. <code>T</code> in the template definition represents a pending type, which will be replaced by a concrete type such as <code>int</code>, <code>std::string</code>, or a user-defined class during instantiation.</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>However, <code>typename</code> can also be used to disambiguate dependent names (names that depend on template parameters). Since C++ treats <code>T::somename</code> as a non-type by default, when referencing a name nested inside a template parameter <code>T</code>, the compiler does not know whether it refers to a type or a non-type member. In such cases, using <code>typename</code> indicates that it is a type.</p>
+</blockquote>
+<ul>
+<li><p>Non-type Parameters: These accept compile-time constant values as parameters, which must be determinable at compile time. They can be integer constants, enumeration values, pointers or references to objects, etc.</p>
+</li>
+<li><p>Template Template Parameters: These allow passing a template itself as a parameter to another template.</p>
+</li>
+<li><p>Template instantiation: Simply defining a template does not generate any executable code. Only when a template is instantiated does the compiler generate specific class or function code based on the provided template parameters.</p>
+<ul>
+<li><p>Process: During instantiation, the compiler replaces the template parameters (such as T) in the template definition with actual types (such as int) or values. It then compiles this &quot;filled-in&quot; template code like ordinary code, performing syntax and type checking.</p>
+</li>
+<li><p>Implicit instantiation: The most common form of instantiation. When we use a template like a regular function or class and provide enough information for the compiler to deduce the template parameters, the compiler automatically instantiates it for us.</p>
+</li>
+<li><p>Explicit instantiation: In some cases, even if a specific version of a template is not directly used in the code, we may want to explicitly instruct the compiler to instantiate such a template. This can be useful when organizing large projects, separating compilation, or ensuring that a specific template version is compiled.</p>
+</li>
+</ul>
+</li>
+</ul>
+<pre><code class="language-cpp">// Assume that MyList.h contains the declaration and definition of the MyList template
+// In a certain .cpp file, we can explicitly instantiate:
+template class MyList&lt;double&gt;; 
+// Force the compiler to generate the complete code for the MyList&lt;double&gt; class
+template void print_array&lt;char&gt;(char*, int); 
+// Force generation of code for the print_array&lt;char&gt; function
+</code></pre>
+<ul>
+<li><p>Template specialization: Sometimes, for certain specific types, the general version of a template may be inefficient or even behave incorrectly. In such cases, template specialization is needed, allowing the template to maintain generality while gracefully handling various special cases, making the template more powerful and practical.</p>
+<ul>
+<li>Full specialization: When we provide specific types or values for all parameters of a template, it constitutes full specialization. It provides a completely new implementation for this specific combination of parameters, fully replacing the general template.</li>
+</ul>
+</li>
+</ul>
+<pre><code class="language-cpp">// Generic function template
+template &lt;class T&gt;
+const char* getTypeName(T value) {
+    return &quot;Unknown type&quot;;
+}
+
+// Full specialization for bool
+// Empty angle brackets indicate that this is a full specialization
+template &lt;&gt; 
+const char* getTypeName&lt;bool&gt;(bool value) { 
+    // &lt;bool&gt; indicates specialization for the bool type
+    return &quot;boolean&quot;;
+}
+
+// Generic class template
+template &lt;class T&gt; class Widget { /* General Implementation */ };
+
+// Full specialization of class template for void*
+template &lt;&gt; class Widget&lt;void*&gt; { /* Special implementation for void* */ };
+</code></pre>
+<ul>
+<li>Partial specialization: Only applicable to class templates (function templates do not have partial specialization, but similar effects can be achieved through techniques such as overloading)</li>
+</ul>
+<pre><code class="language-cpp">// Generic class template that accepts two type parameters
+template &lt;class T1, class T2&gt; class DataProcessor { /* ... */ };
+
+// Partial specialization: when the second type parameter is int, the first parameter T1 remains generic
+template &lt;class T1&gt; class DataProcessor&lt;T1, int&gt; { /* ... Special implementation for (T1, int) ... */ };
+
+// Partial specialization: when two type parameters are the same, type T remains generic
+template &lt;class T&gt; class DataProcessor&lt;T, T&gt; { /* ... Special implementation for (T, T) ... */ };
+
+// Partial specialization: for the case where T1 is a pointer type, T2 remains generic
+template &lt;class PointeeType, class T2&gt; class DataProcessor&lt;PointeeType*, T2&gt; { /* ... For (PointeeType*, T2) ... */ };
+</code></pre>
+<h2 id="71-Function-Templates">1 Function Templates</h2>
+<pre><code class="language-cpp">template &lt;class T&gt;
+void swap_values(T &amp;a, T &amp;b) {
+    T temp = a;
+    a = b;
+    b = temp;
+}
+
+// Call
+int x = 5, y = 10;
+swap_values(x, y);
+
+std::string s1 = &quot;hello&quot;, s2 = &quot;world&quot;;
+swap_values(s1, s2);
+</code></pre>
+<p>Sometimes we need (or choose) to explicitly tell the compiler what the template parameters should be, including the following situations:</p>
+<ul>
+<li>The compiler cannot deduce: when the template parameter does not appear in the function parameter list, or when the deduction process is ambiguous (for example, we want to pass a string, but the compiler treats it as a character pointer, which may lead to unexpected consequences if not explicitly specified).</li>
+</ul>
+<pre><code class="language-cpp">template &lt;typename ReturnType&gt; 
+ReturnType create_default_value() {
+    return ReturnType();// Call the default constructor
+}
+int my_int = create_default_value&lt;int&gt;();
+// Must explicitly specify ReturnType as int
+</code></pre>
+<ul>
+<li><p>Overriding inferred results: Sometimes we may want to instantiate a template with a type different from the inferred result (as long as it is compatible).</p>
+</li>
+<li><p>Improving code readability: In certain complex situations, explicitly specifying parameters can make the code&#39;s intent clearer.</p>
+</li>
+</ul>
+<hr>
+<p>When a function call may match an ordinary function or one or more instantiations of function templates, the compiler needs a set of rules to determine which one to call—this process is called overload resolution. The general resolution order is as follows:</p>
+<ol>
+<li><p>Look for an exact match with an ordinary function.</p>
+</li>
+<li><p>Look for an exact match with a function template specialization.</p>
+</li>
+<li><p>Attempt to match a generic function template (if multiple function templates can match, the compiler tries to select the more specialized template).</p>
+</li>
+<li><p>Consider overloads of ordinary functions (such as standard conversions, user-defined conversions).</p>
+</li>
+</ol>
+<h2 id="72-Class-Templates">2 Class Templates</h2>
+<h3 id="Member-Functions">2.1 Member Functions</h3>
+<p>Member functions of a class template are themselves (implicitly) function templates. Their complete definitions (including the function body) are only instantiated by the compiler for a specific class template instance when they are actually called or their address is taken.</p>
+<p>Additionally, there is a more explicit type of member function templates. They provide a generic operation that allows the function to accept all compatible types, avoiding function overloading (and sometimes we cannot determine how many functions to overload).</p>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;string&gt;
+
+class MyContainer {
+private:
+    std::vector&lt;int&gt; data;
+public:
+    // Member function template: allows adding any type that can be converted to int
+    template &lt;typename T&gt;
+    void addElement(T value) {
+        data.push_back(static_cast&lt;int&gt;(value)); // Try to convert
+        std::cout &lt;&lt; &quot;Added element of type &quot; &lt;&lt; typeid(T).name()
+                &lt;&lt; &quot;, value: &quot; &lt;&lt; static_cast&lt;int&gt;(value) &lt;&lt; std::endl;
+    }
+
+    void printElements() const {
+        std::cout &lt;&lt; &quot;Container elements: &quot;;
+        for (int val : data) {
+            std::cout &lt;&lt; val &lt;&lt; &quot; &quot;;
+        }
+        std::cout &lt;&lt; std::endl;
+    }
+};
+
+int main() {
+    MyContainer mc;
+    mc.addElement(10);        // T = int
+    mc.addElement(3.14);      // T = double
+    mc.addElement(&#39;A&#39;);       // T = char
+    mc.addElement(true);      // T = bool
+
+    mc.printElements(); // Output: Container elements: 10 3 65 1
+
+    // mc.addElement(&quot;hello&quot;); 
+    // Compilation error: string cannot be converted to int, reflecting type safety
+    return 0;
+}
+</code></pre>
+<p>Member function templates can also be used to generalize copy constructors and assignment operations, but in this case, a normal copy constructor and copy assignment operator definition must also be retained.</p>
+<h3 id="Parameters">2.2 Parameters</h3>
+<p>Class templates can accept multiple template parameters, which can be either type parameters or non-type parameters.</p>
+<pre><code class="language-cpp">// A simple hash table template that accepts key type, value type, and an optional hash function object type.
+template &lt;
+    class Key,
+    class Value,
+    class HashFunction = std::hash&lt;Key&gt; 
+    // Default template parameters
+&gt;
+class HashTable {
+public:
+    void insert(const Key&amp; k, const Value&amp; v) {
+        HashFunction hasher;
+        size_t hash_value = hasher(k);
+        // ... Actual insertion logic ...
+    }
+    bool find(const Key&amp; k, Value&amp; out_value) const {
+        // ...
+        return false;
+    }
+    // ...
+private:
+    // ... Internal data structures, such as linked lists, arrays, or open addressing tables. ...
+};
+</code></pre>
+<h4 id="Default-Parameters">Default Parameters</h4>
+<p>Template parameters (including type parameters and non-type parameters) can also have default values, so we don&#39;t need to explicitly provide all template parameters.</p>
+<pre><code class="language-cpp">template &lt;class T = int, int DefaultSize = 100&gt;
+class ArrayWrapper {
+    T arr[DefaultSize];
+public:
+    // ...
+};
+
+ArrayWrapper&lt;&gt; default_arr;        
+// Instantiated as ArrayWrapper&lt;int, 100&gt;
+ArrayWrapper&lt;char, 256&gt; char_arr;  
+// Instantiated as ArrayWrapper&lt;char, 256&gt;
+</code></pre>
+<h4 id="Non-type-Parameters">Non-type Parameters</h4>
+<pre><code class="language-cpp">template &lt;class T, int MaxSize&gt;
+class FixedSizeBuffer {
+    T data[MaxSize]; // MaxSize is determined at compile time
+    int current_size;
+public:
+    FixedSizeBuffer() : current_size(0) {}
+    bool push(const T&amp; item) {
+        if (current_size &lt; MaxSize) {
+            data[current_size++] = item;
+            return true;
+        }
+        return false;
+    }
+    // ...
+};
+
+// Template Instantiation
+FixedSizeBuffer&lt;char, 1024&gt; network_packet_buffer;
+</code></pre>
+<p>Whether to use non-type parameters to embed attributes like size depends on the specific scenario, balancing the performance/type safety benefits against the costs in flexibility and code size.</p>
+<h4 id="Complex-Parameters">Complex Parameters</h4>
+<p>Templates can be freely combined and nested, just like ordinary types.</p>
+<p>Template nesting: The instantiation result of one template can itself serve as a parameter for another template.</p>
+<ul>
+<li>Example: <code>Vector&lt; Vector&lt;int&gt; &gt;</code> represents a <code>Vector</code> whose elements are themselves <code>Vector&lt;int&gt;</code> (i.e., a vector of integer vectors, similar to a two-dimensional array).</li>
+</ul>
+<blockquote>
+<p><code>&gt;&gt;</code> will be parsed by the compiler as the right-shift operator, so a space must be added between the two <code>&gt;</code> symbols.</p>
+</blockquote>
+<p>Complex type parameters: Template parameters themselves can be very complex types, such as function pointers, pointers to members, etc.</p>
+<ul>
+<li>Example: <code>Vector&lt; int (*)(double, double) &gt;</code> defines a <code>Vector</code> that stores pointers to functions that &quot;take two <code>double</code> parameters and return an <code>int</code>.&quot;</li>
+</ul>
+<h3 id="Static-Members">2.3 Static Members</h3>
+<p>When a class template contains static data members, each distinct instantiation of the class template has its own independent copy of the static data members.</p>
+<pre><code class="language-cpp">template &lt;class T&gt;
+class ObjectTracer {
+public:
+    static int objects_created_count;
+    ObjectTracer() {
+        objects_created_count++;
+    }
+};
+
+// Definition of static data member (usually placed in the header file as well, because it depends on the template parameter T)
+template &lt;class T&gt;
+int ObjectTracer&lt;T&gt;::objects_created_count = 0; // 初始化为0
+
+void static_member_example() {
+    ObjectTracer&lt;int&gt; int_obj1;
+    ObjectTracer&lt;int&gt; int_obj2;
+    // ObjectTracer&lt;int&gt;::objects_created_count is now 2.
+
+    ObjectTracer&lt;double&gt; double_obj1;
+    // ObjectTracer&lt;double&gt;::objects_created_count is now 1.
+
+    std::cout &lt;&lt; &quot;Int objects created: &quot; &lt;&lt; ObjectTracer&lt;int&gt;::objects_created_count &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;Double objects created: &quot; &lt;&lt; ObjectTracer&lt;double&gt;::objects_created_count &lt;&lt; std::endl;
+}
+</code></pre>
+<h3 id="Friends">2.4 Friends</h3>
+<p>Declaring friend relationships in class templates is more complex than in ordinary classes, because we need to consider whether the friend itself is also a template, and whether the friend relationship applies to a specific instance of the template or to all instances.</p>
+<ul>
+<li><p>Non-template friend functions or friend classes: An ordinary (non-template) function or class can be declared as a friend of a class template (or all its instances).</p>
+<pre><code class="language-cpp">// Ordinary function
+void inspect_internals(const MyTemplatedClass&lt;int&gt;&amp; obj); 
+// Assume that it is only for int version
+
+template &lt;typename T&gt;
+class MyTemplatedClass {
+    T data;
+    // A friend who declares an ordinary function as MyTemplatedClass&lt;T&gt; (all instances)
+    // Note: The signature of this friend function must match the external definition.
+    friend void global_helper_func(MyTemplatedClass&lt;T&gt;&amp; mtc) {
+        // can access mtc.data
+    }
+    // Or if global_helper_func is an existing non-template function
+    // friend void another_global_func(const MyTemplatedClass&lt;T&gt;&amp;);
+
+    // Declare an ordinary class as the friend element of all instances
+    friend class Inspector;
+};
+
+class Inspector {
+public:
+    template &lt;typename T&gt;
+    void examine(const MyTemplatedClass&lt;T&gt;&amp; obj) {
+        // can access obj.data
+    }
+};
+</code></pre>
+</li>
+<li><p>Template as Friend</p>
+<ul>
+<li><p>Constrained Friend: Making a specific instance of a function template or class template a friend of the current class template instance. This typically requires the friend template and the current class template to use the same template parameters.</p>
+</li>
+<li><p>Unconstrained Friend: Making all instances of a function template or class template friends of a particular instance (or all instances) of the current class template.</p>
+</li>
+<li><p>Defining a friend function template directly inside a class template is a common practice, especially for operator overloading.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="73-Templates-and-Inheritance">3 Templates and Inheritance</h2>
+<p>Templates and inheritance are two powerful code reuse mechanisms in C++. They can be combined in various ways to build flexible and well-layered generic code structures. The following are several types of combinations:</p>
+<p>Template classes inheriting from non-template classes: providing a common non-generic base interface or sharing some non-generic functionality for a group of related generic classes.</p>
+<pre><code class="language-cpp">class Identifiable { 
+    // Non-template base class
+    static int next_id;
+protected:
+    int id;
+public:
+    Identifiable() : id(next_id++) {}
+    int get_id() const { return id; }
+};
+int Identifiable::next_id = 0;
+
+template &lt;class AssetType&gt;
+class ManagedAsset : public Identifiable { 
+    // Template class inheriting from a non-template class
+    AssetType asset_data;
+public:
+    ManagedAsset(AssetType data) : asset_data(data) {}
+    AssetType get_asset() const { return asset_data; }
+    // ManagedAsset instances also have id and get_id() methods
+};
+
+// Template instantiation
+ManagedAsset&lt;std::string&gt; text_asset(&quot;important_document.txt&quot;);
+int id = text_asset.get_id();
+</code></pre>
+<p>Template class inherits from class template: Based on an existing generic class, its functionality is extended or specialized through inheritance while maintaining generic characteristics.</p>
+<pre><code class="language-cpp">template &lt;class Item&gt;
+class BaseCollection { // Generic base class
+protected:
+    std::vector&lt;Item&gt; items;
+public:
+    void add(const Item&amp; item) { items.push_back(item); }
+    size_t count() const { return items.size(); }
+};
+
+// Derived template class, inheriting from an instance of the base class template
+// Often, derived templates pass the same template parameters to the base class template.
+template &lt;class Item&gt;
+class SortedCollection : public BaseCollection&lt;Item&gt; { // Inherited from BaseCollection&lt;Item&gt;
+public:
+    // Rewrite the add method to maintain order.
+    void add(const Item&amp; item) {
+        BaseCollection&lt;Item&gt;::add(item); // Calling the base class&#39;s add
+        std::sort(this-&gt;items.begin(), this-&gt;items.end());
+    }
+};
+
+// Template Instantiation
+SortedCollection&lt;int&gt; sorted_numbers;
+sorted_numbers.add(5); sorted_numbers.add(1); sorted_numbers.add(3);
+// At this point, sorted_numbers.items should be {1, 3, 5}
+</code></pre>
+<ul>
+<li><p>In this case, the compiler encounters a special issue when looking up inherited names, known as dependent name lookup. Fortunately, we have the following methods to explicitly tell the compiler to look up these inherited names in the base class:</p>
+<ul>
+<li><p>Use <code>this-&gt;</code> (recommended): Since the type of the <code>this</code> pointer depends on the template parameters, any member accessed via <code>this-&gt;</code> is treated as a dependent name.</p>
+</li>
+<li><p>Use a <code>using</code> declaration: This introduces members from the base class into the scope of the derived class. Once introduced, these members become non-dependent names in the derived class.</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>Non-template classes inheriting from a specific instantiation (specialization) of a class template: This can be done when we need a class of a specific type based on a generic framework; it effectively &quot;solidifies&quot; the generic base class with a concrete type.</p>
+<pre><code class="language-cpp">template &lt;class T&gt;
+class GenericMessageHandler {
+public:
+    virtual void process_message(const T&amp; message) {
+        std::cout &lt;&lt; &quot;Generic handler processing: &quot; &lt;&lt; message &lt;&lt; std::endl;
+    }
+};
+
+struct EmailMessage { std::string from, to, body; };
+// Overload the stream operator for printing.
+std::ostream&amp; operator&lt;&lt;(std::ostream&amp; os, const EmailMessage&amp; msg) {
+    return os &lt;&lt; &quot;Email from &quot; &lt;&lt; msg.from;
+}
+
+
+// EmailHandler is a concrete class that specializes GenericMessageHandler to handle EmailMessage.
+class EmailHandler : public GenericMessageHandler&lt;EmailMessage&gt; {
+public:
+    void process_message(const EmailMessage&amp; message) override { // Rewrite base class methods
+        std::cout &lt;&lt; &quot;Email specific handler: Routing email from &quot;
+                &lt;&lt; message.from &lt;&lt; &quot; to &quot; &lt;&lt; message.to &lt;&lt; std::endl;
+        // ... email Processing Logic ...
+    }
+};
+
+EmailHandler email_processor;
+EmailMessage email = {&quot;sender@example.com&quot;, &quot;receiver@example.com&quot;, &quot;Hello!&quot;};
+email_processor.process_message(email);
+</code></pre>
+<h2 id="74-Guidelines">4 Guidelines</h2>
+<p>Template declarations and definitions should be placed in header files.</p>
+<hr>
+<p>When the C++ compiler processes templates, it typically performs two-phase name lookup:</p>
+<ul>
+<li><p>First phase (at template definition): The compiler checks names that do not depend on template parameters (e.g., global function names, type names defined outside the template). The validity of these names can be determined at the point of template definition.</p>
+</li>
+<li><p>Second phase (at template instantiation): The compiler checks names that depend on template parameters (e.g., <code>T::member_type</code>, or a function call with a parameter type of <code>T</code>). The validity of these names can only be determined after <code>T</code> is replaced with a concrete type.</p>
+</li>
+</ul>
+<p>This has the following implications:</p>
+<ul>
+<li><p>At template definition, if a dependent name (such as <code>T::some_type</code>) is actually a type but the compiler cannot determine it in the first phase, the <code>typename</code> keyword may be needed to explicitly inform the compiler: <code>typename T::some_type</code>.</p>
+</li>
+<li><p>When accessing members of a dependent base class, it may be necessary to use <code>this-&gt;member</code> or <code>Base&lt;T&gt;::member</code>.</p>
+</li>
+</ul>
+<hr>
+<p>Since templates generate a separate copy of code for each distinct combination of template parameters used, if a template is instantiated with many different types, the size of the final executable can increase significantly. This is known as &quot;code bloat.&quot; The following methods can help mitigate code bloat:</p>
+<ul>
+<li><p>Extract non-dependent parts</p>
+</li>
+<li><p>Use non-type template parameters wisely</p>
+</li>
+<li><p>Explicit instantiation (for library developers)</p>
+</li>
+<li><p>Linker optimizations</p>
+</li>
+</ul>
+<hr>
+<p>Jumping directly into writing complex templates can be daunting—following this structured approach can help us design good templates:</p>
+<ol>
+<li><p>First, implement the functionality using concrete types.</p>
+</li>
+<li><p>Write thorough tests for the concrete version.</p>
+</li>
+<li><p>(If needed) Optimize the performance of the concrete version.</p>
+</li>
+<li><p>Review the code to identify parts that need to be &quot;parameterized.&quot;</p>
+<ul>
+<li><p>Which data types are variable? These will become type template parameters T.</p>
+</li>
+<li><p>Are there any constant values in the code that should also be configurable? These can become non-type template parameters.</p>
+</li>
+<li><p>Does the code rely on specific behaviors of the parameter types? For example, does the algorithm need to compare objects of type T (operator&lt;)? Does it need to copy them (copy constructor, copy assignment operator)? Does it need to default-construct them? These are implicit or explicit constraints that generic code imposes on template parameters.</p>
+</li>
+</ul>
+</li>
+<li><p>Convert the concrete version into a template.</p>
+<ul>
+<li><p>Add a <code>template &lt;...&gt;</code> declaration before the function or class definition.</p>
+</li>
+<li><p>Replace the concrete types used in the code with the template parameter T.</p>
+</li>
+<li><p>Ensure that all operations dependent on the template parameters remain valid.</p>
+</li>
+</ul>
+</li>
+<li><p>Test the template version using the previous test cases.</p>
+</li>
+</ol>
+<h2 id="75-Interfaces-in-C">5 Interfaces in C++</h2>
+<blockquote>
+<p>The interface introduced here is not like the <code>interface</code> keyword in languages such as Java or Go (which corresponds to abstract base classes and pure virtual functions in C++), but rather a broader concept at the level of software design and architecture. Specifically, it refers to the conventions and specifications that modules, components, or libraries expose to the outside for interaction and use by other code (usually user or client code). This is somewhat abstract, but that is precisely what &quot;abstraction&quot; means.</p>
+</blockquote>
+<p>In C++, there are interfaces such as public functions, public classes, class templates and function templates, namespaces, header files, and so on.</p>
+<p>When designing these interfaces, the most essential requirement is: make interfaces easy to use correctly and hard to use incorrectly.</p>
+<p>Correct use: consistency of the interface, compatibility with the behavior of built-in types.</p>
+<p>Hard to misuse: create new types, restrict operations on types, constrain object values, eliminate the user&#39;s responsibility for resource management.</p>
+<p>Any interface that requires users to remember to do something has a tendency to be used incorrectly, because users may forget to do it.</p>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-6/" rel="prev"><span>← Previous chapter</span>Chapter 6 Operator Overloading</a>
+  <a href="../chapter-8/" rel="next"><span>Next chapter →</span>Chapter 8 Exception</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 1 Introduction — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Operating System</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-09-14">14 Sept 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-1-Introduction">Chapter 1 Introduction</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#11-What-Operating-System-Do">1 What Operating System Do</a></li>
+    <li><a href="#12-Computer-System-Organization">2 Computer-System Organization</a>
+      <ul class="toc-subsections">
+        <li><a href="#Interrupts">2.1 Interrupts</a></li>
+        <li><a href="#Storage-Structure">2.2 Storage Structure</a></li>
+        <li><a href="#IO-Structure">2.3 I/O Structure</a></li>
+      </ul>
+    </li>
+    <li><a href="#13-Computer-System-Architecture">3 Computer-System Architecture</a>
+      <ul class="toc-subsections">
+        <li><a href="#Single-Processor-Systems">3.1 Single-Processor Systems</a></li>
+        <li><a href="#Multiprocessor-Systems">3.2 Multiprocessor Systems</a></li>
+        <li><a href="#Distributed-System-Clustered-System">3.3 Distributed System &amp; Clustered System</a></li>
+      </ul>
+    </li>
+    <li><a href="#14-Operating-System-Operations">4 Operating-System Operations</a>
+      <ul class="toc-subsections">
+        <li><a href="#Multiprogramming-and-Multitasking">4.1 Multiprogramming and Multitasking</a></li>
+        <li><a href="#Dual-Mode-and-Multimode-Operation">4.2 Dual-Mode and Multimode Operation</a></li>
+        <li><a href="#Timer">4.3 Timer</a></li>
+      </ul>
+    </li>
+    <li><a href="#15-Resource-Management">5 Resource Management</a></li>
+    <li><a href="#16-Three-Conceptual-Pieces">6 Three Conceptual Pieces</a>
+      <ul class="toc-subsections">
+        <li><a href="#Virtualization">6.1 Virtualization</a></li>
+        <li><a href="#Concurrency">6.2 Concurrency</a></li>
+        <li><a href="#Persistence">6.3 Persistence</a></li>
+      </ul>
+    </li>
+    <li><a href="#17-Design-Goals">7 Design Goals</a></li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<h2 id="11-What-Operating-System-Do">1 What Operating System Do</h2>
+<p>A complete computer system consists of the following parts:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C1/1.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Operating system: controls the hardware and coordinates its use among different application programs and among different users.</p>
+<p>We adopt a relatively widely accepted definition: an operating system is a program that is always running on the computer, and this program is usually called the kernel. In addition, there are two other types of programs:</p>
+<ul>
+<li><p>System program: related to the operating system, but not a necessary component of the kernel.</p>
+</li>
+<li><p>Application program: includes all programs unrelated to system operation.</p>
+</li>
+</ul>
+<p>For mobile operating systems, in addition to the kernel, there is also something called middleware, which is a set of software frameworks that provide additional services to application developers.</p>
+<p>In summary, we consider the operating system to include an always-running kernel, middleware frameworks, and system programs. In addition, the focus of the later discussion is still on the kernel.</p>
+<blockquote>
+<p>When a computer is powered on or restarted, the bootstrap program is loaded. The bootstrap program is stored in ROM or EPROM, which are usually called firmware. It initializes various aspects of the system, loads the operating system kernel, and starts executing it.</p>
+</blockquote>
+<h2 id="12-Computer-System-Organization">2 Computer-System Organization</h2>
+<p>A modern general-purpose computer system consists of one or more CPUs and some device controllers (each with a local buffer) connected through a common bus, providing access to components and shared memory.</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C1/2.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The following will introduce three key aspects that keep a system running: interrupts, storage structures, and I/O structures.</p>
+<h3 id="Interrupts">2.1 Interrupts</h3>
+<p>Hardware can trigger an interrupt at any time by sending a signal to the CPU (usually via the system bus). When the CPU is interrupted, it stops what it is currently doing and immediately switches to executing the task at a fixed location (generally the starting address of an interrupt service routine). The timeline of an interrupt is as follows:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C1/3.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The interrupt service routine will call a specific interrupt handler. Since interrupts need to be handled quickly, a table of pointers (addresses) to interrupt routines is used. This table is generally stored in the low-address area of memory and is called the interrupt vector. Its address is then indexed by a unique number, which is provided with the interrupt request, to provide the address of the interrupt service routine for the interrupting device.</p>
+<p>The interrupt architecture must also save the information at the time of the interrupt, and these pieces of information need to be restored after the interrupt routine is completed. If the interrupt routine needs to change the processor state, it must save the current state (by saving the values in the registers and the program counter), and later restore that state before returning. In addition, while handling another interrupt, incoming interrupts are disabled to prevent lost interrupts.</p>
+<blockquote>
+<p>A trap is an interrupt generated by software, arising from an error during program execution or from an explicit user request (called a system call).</p>
+</blockquote>
+<p>The basic interrupt mechanism works as follows:</p>
+<ul>
+<li><p>When the CPU detects that the controller has signaled on the interrupt-request line, it reads the interrupt number and jumps to the interrupt-handler routine by using that interrupt number as an index into the interrupt vector.</p>
+</li>
+<li><p>During execution, the interrupt-handler routine saves any state that will be changed, determines the cause of the interrupt, performs the necessary processing, restores the state, and executes the return_from_interrupt instruction, causing the CPU to return to the execution state from before the interrupt.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C1/4.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>In addition to the simple mechanisms described above, modern operating systems have more sophisticated interrupt-handling features provided by the CPU and interrupt-controller hardware:</p>
+<ul>
+<li><p>Deferring interrupt handling during critical processing</p>
+</li>
+<li><p>Multiple levels of interrupts, so that the operating system can distinguish between high-priority and low-priority interrupts (interrupt priority levels) and respond with an appropriate degree of urgency</p>
+</li>
+</ul>
+<p>In summary, modern operating systems widely use interrupt mechanisms to handle asynchronous events. Device controllers and hardware faults trigger interrupts. Because interrupts are used extremely frequently in time-sensitive processing, efficient interrupt handling is crucial to ensuring system performance.</p>
+<hr>
+<p><strong>Interrupt Types</strong></p>
+<ul>
+<li><p>External Interrupts</p>
+<ul>
+<li><p>Maskable interrupt: An interrupt requested to the processor via the INTR line, mainly from external devices such as hard drives, printers, network cards, etc. This type of interrupt does not affect system operation and can be handled at any time, or even not handled at all.</p>
+</li>
+<li><p>Non-maskable interrupt: An interrupt requested to the CPU via the NMI line. Sources: power failure, hardware circuit faults, etc. &quot;Non-maskable&quot; means it cannot be masked.</p>
+</li>
+</ul>
+</li>
+<li><p>Internal Interrupts</p>
+<ul>
+<li><p>Trap: An intentional, pre-arranged exceptional event. The CPU will invoke a specific program to handle it accordingly, and after handling is complete, return to the instruction following the trap instruction.</p>
+</li>
+<li><p>Fault: A type of unexpected event detected by the CPU when the instruction causing the fault has been executed but has not yet finished executing. When an error occurs, it is handed over to the fault handler for processing. If the error can be corrected, the CPU re-executes the instruction; if it cannot be handled, an error is reported. A common fault is a page fault.</p>
+</li>
+<li><p>Abort: A fatal error occurs during instruction execution that cannot be repaired, and the program cannot continue running and can only be terminated. This is usually caused by some hardware error.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="Storage-Structure">2.2 Storage Structure</h3>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C1/5.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="IO-Structure">2.3 I/O Structure</h3>
+<p>Two I/O methods:</p>
+<ul>
+<li><p>After I/O is started, control is returned to the user program only when the I/O is complete (synchronous). The wait instruction keeps the CPU idle until the next interrupt. Wait loop (memory access contention). At most one outstanding I/O request at a time, and simultaneous I/O processing is not allowed.</p>
+</li>
+<li><p>After I/O is started, control can be returned to the user program without waiting for the I/O to complete (asynchronous). System call: issues a request to the operating system, allowing the user to wait for I/O completion. The device-status table contains an entry for each I/O device, indicating its type, address, and status.</p>
+</li>
+</ul>
+<p>The interrupt-driven I/O loop introduced earlier is OK for small-scale data, but for large-volume data movement such as NVS (nonvolatile storage) I/O, it incurs significant overhead. The solution is to use DMA (direct memory access). After setting up the buffer, pointer, and counter, the device controller can transfer an entire block of data directly between the device and main memory without CPU intervention. Only one interrupt is generated per data block (previously, one interrupt was generated per byte) to notify the device driver that the operation is complete. While the device controller performs these operations, the CPU can do other work.</p>
+<h2 id="13-Computer-System-Architecture">3 Computer-System Architecture</h2>
+<p>Depending on the number and organization of processors, several common types of computer system architectures are introduced below.</p>
+<blockquote>
+<p>CPU: Hardware that executes instructions
+Processor: A physical chip containing a single or multiple CPUs
+Core: The basic computational unit of a CPU
+Multicore: Containing multiple computational cores on the same CPU</p>
+</blockquote>
+<h3 id="Single-Processor-Systems">3.1 Single-Processor Systems</h3>
+<p>Previously, most computer systems had only one processor, which also contained only a single-core CPU, and the core within it was the component that executed instructions and was used for local data storage. In addition to being able to execute general-purpose instruction sets, the core could also execute some special-purpose instruction sets, which came from device-specific processors (with limited instruction sets that do not run processes), including those of disks, keyboards, and graphics controllers, among others.</p>
+<h3 id="Multiprocessor-Systems">3.2 Multiprocessor Systems</h3>
+<p>Multiprocessor systems now dominate the entire field of computing. Traditionally, such systems contain two or more processors, each containing a single-core CPU. These processors share the computer bus and sometimes also share a clock, memory, and peripheral devices. The main advantage of this kind of system is increased throughput, that is, completing more work in a shorter time. It is worth noting that N processors do not bring an N-fold speedup, because there is additional overhead when multiple processors jointly complete a task.</p>
+<p>The most common multiprocessor system is SMP (symmetric multiprocessing), in which each peer CPU processor executes all tasks, including operating system functions and user processes. The figure below shows an SMP architecture containing 2 processors:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C1/7.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The advantage of this architecture is that multiple processes can run simultaneously, meaning that if there are N CPUs, N processes can run without a significant drop in performance. The drawback is that because the CPUs are separate, there can be a situation where one CPU is idle while another CPU is running at full load, resulting in inefficiency. The solution is to reduce the workload disparity among processors by sharing processes and resources (such as memory).</p>
+<p>The current definition of multiprocessor systems also includes multicore systems, which are more efficient than multi-chip designs using only single cores, because communication speed within a chip is higher than between chips, and they are more energy-efficient. The figure below shows a dual-core design on a single chip, and it can be seen that a two-level cache structure is used here.</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C1/8.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Adding too many CPUs to a multiprocessor system will make contention on the system bus become a bottleneck, and performance will instead decline. An improvement is to equip each CPU (or group of CPUs) with its own local memory, accessed through a fast small local bus. These CPUs are connected through a shared system interconnect, so that all CPUs can share one physical address space. This approach is called NUMA (non-uniform memory access), and its architecture diagram is as follows:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C1/9.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The advantage of this architecture is that when a CPU accesses local memory, it is not only fast but also does not cause contention in the system interconnect. Therefore, as the number of processors increases, NUMA systems can become more efficient (which is why NUMA is becoming increasingly popular in servers and HPC). But its drawback is that CPUs must access remote memory through the system interconnect, and the extra time consumed harms performance. Fortunately, the operating system can minimize this loss caused by NUMA through careful CPU scheduling and memory management.</p>
+<h3 id="Distributed-System-Clustered-System">3.3 Distributed System &amp; Clustered System</h3>
+<p><a href="https://www.geeksforgeeks.org/computer-networks/distributed-system-vs-clustered-system/" target="_blank">Reference</a></p>
+<h2 id="14-Operating-System-Operations">4 Operating-System Operations</h2>
+<h3 id="Multiprogramming-and-Multitasking">4.1 Multiprogramming and Multitasking</h3>
+<p>An important characteristic of an operating system is the ability to run multiple programs; in addition, users usually want to run multiple programs at once—the technique for achieving this goal is multiprogramming. It improves CPU utilization by organizing jobs (including code and data) so that the CPU and I/O devices are always working. In a multiprogramming system, a program that is executing is called a process.</p>
+<ul>
+<li><p>The operating system keeps several processes in memory at the same time, selects one of them, and begins executing it.</p>
+</li>
+<li><p>A process may need to wait for certain tasks to complete, such as I/O operations, at which point the CPU can switch to another process and execute it.</p>
+</li>
+<li><p>Eventually, the first process finishes waiting and regains CPU resources.</p>
+</li>
+</ul>
+<p>Multitasking is a logical extension of multiprogramming. In a multitasking system, the CPU executes multiple processes by switching among different processes. This switching occurs extremely frequently, thereby providing users with fast response times and enabling interactive computing. To ensure a reasonable response time (&lt; 1s), a common approach is to use virtual memory, allowing users to run programs larger than actual physical memory. In addition, it abstracts main memory into a large, uniform array of storage, separating the logical memory seen by users from physical memory, so there is no need to worry about actual memory capacity limitations.</p>
+<p>Having multiple processes in memory at the same time requires some form of memory management. In addition, if multiple processes are ready to run at the same time, the system must choose the next process to run. Making this decision is CPU scheduling. Finally, running multiple processes at the same time requires limiting their ability to affect one another at all stages of the operating system, including process scheduling, disk storage, and memory management.</p>
+<h3 id="Dual-Mode-and-Multimode-Operation">4.2 Dual-Mode and Multimode Operation</h3>
+<p>To ensure the correct execution of the system, we must be able to distinguish between the execution of operating system code and user-defined code. The approach taken by most computer systems is to provide hardware support that allows different execution modes to be distinguished. Generally, at least two types of modes are distinguished (dual mode):</p>
+<p>User mode: The CPU can only execute part of the instruction set and cannot directly access hardware resources; it is mainly used to run user programs.</p>
+<p>Kernel mode (also called supervisor/system/privileged mode): The CPU can execute all instructions (including privileged instructions) and can access all hardware resources; it is mainly used to run the operating system kernel.</p>
+<p>The specific operations involved are: memory management, process management, device driver management, and system calls, etc.</p>
+<p>Generally, a mode bit in hardware is used to identify the current state (0 for kernel, 1 for user). When a user application requests a service from the operating system, the system must switch from user mode to kernel mode to complete the request. This process is shown in the figure below:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C1/11.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>There can be multiple modes, for example:</p>
+<ul>
+<li><p>Intel processors have four independent protection rings, where ring 0 is kernel mode and ring 3 is user mode (although rings 1 and 2 can theoretically be used for various operating system services, they are rarely used in practice).</p>
+</li>
+<li><p>The ARMv8 architecture has seven operating modes.</p>
+</li>
+<li><p>CPUs that support virtualization technology usually have a dedicated mode to indicate the virtual machine manager&#39;s (VMM) control state over the system; in this mode, the VMM has higher privileges than user processes but lower than kernel privileges; it needs this privilege level to create and manage virtual machines and to perform related operations by modifying the CPU state.</p>
+</li>
+</ul>
+<p>A system call provides a way for a user program to request that the operating system perform tasks that are exclusive to the operating system on behalf of the user program. The specific manner in which a system call is invoked varies widely, depending on the features provided by the underlying processor. Typically, a system call is implemented in the form of a trap at a specific location in the interrupt vector. Although some systems have a dedicated syscall instruction to initiate a system call, this trap can also be executed through a general-purpose trap instruction.</p>
+<p>When a system call is executed, it is usually treated by the hardware as a software interrupt. Control is transferred through the interrupt vector to the operating system&#39;s service routine, and the mode bit is set to kernel mode. The system call service routine is part of the operating system. The kernel examines the interrupt instruction to determine which system call has occurred (an argument indicates the type of service requested by the user program). Other information needed for the request may be passed through registers, the stack, or memory. The kernel verifies that the arguments are correct and valid, executes the request, and returns control to the instruction following the system call.</p>
+<h3 id="Timer">4.3 Timer</h3>
+<p>Before transferring control to the user, the operating system ensures that the timer is set to interrupt. If the timer interrupts, control will automatically transfer back to the operating system, at which point the system may treat this interrupt as a fatal error or choose to extend the program&#39;s running time. Obviously, instructions that modify the timer&#39;s contents fall within the category of privileged instructions.</p>
+<h2 id="15-Resource-Management">5 Resource Management</h2>
+<blockquote>
+<p>These contents will be introduced in detail in subsequent chapters and are omitted here.</p>
+</blockquote>
+<h2 id="16-Three-Conceptual-Pieces">6 Three Conceptual Pieces</h2>
+<h3 id="Virtualization">6.1 Virtualization</h3>
+<p>The OS takes physical resources and transforms them into a more general, more powerful, and easier-to-use virtual form (which is why the OS is sometimes called a virtual machine).</p>
+<p>The OS provides interfaces (APIs) that can be invoked by users, and generally exposes hundreds of system calls to applications. Since the OS uses these calls to support program execution, memory and device access, and other related operations, we sometimes also say that it provides a standard library to applications.</p>
+<p>Categories:</p>
+<ul>
+<li><p>CPU virtualization: The system has a great many virtual CPUs, thus transforming a single CPU (or a small group of CPUs) into what appears to be an unlimited number of CPUs, so that many programs appear to run at the same time.</p>
+</li>
+<li><p>Memory virtualization: It is as if each running program has its own private memory (a virtual address space), rather than sharing the same physical memory with other running programs (in reality, the OS maps it in some way onto the machine&#39;s physical memory).</p>
+</li>
+</ul>
+<h3 id="Concurrency">6.2 Concurrency</h3>
+<p>This encompasses a series of problems that arise and must be solved when handling multiple things at the same time (that is, concurrently) within the same program.</p>
+<p>Modern multi-threaded programs also have concurrency problems.</p>
+<p>For now, we can regard a thread as a function running in the same memory space as other functions, with multiple threads active at the same time.</p>
+<h3 id="Persistence">6.3 Persistence</h3>
+<p>File system</p>
+<h2 id="17-Design-Goals">7 Design Goals</h2>
+<ul>
+<li><p>Abstraction makes the system convenient and easy to use.</p>
+</li>
+<li><p>Performance</p>
+</li>
+<li><p>Minimize overhead - two types of overhead: extra time (more instructions) or space (disk / memory)</p>
+</li>
+<li><p>Protection: isolation &amp; security</p>
+</li>
+<li><p>Reliability</p>
+</li>
+<li><p>Power-efficiency</p>
+</li>
+<li><p>Mobility</p>
+</li>
+</ul>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  
+  <a href="../chapter-2/" rel="next"><span>Next chapter →</span>Chapter 2 Operating-System Structures</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

@@ -1,0 +1,149 @@
+/* The homepage, section pages and generated articles share the record. */
+@view-transition {
+  navigation: auto;
+}
+
+:root {
+  /* Matches easeOut in home.js. A full turn takes proportionally longer. */
+  --record-flight: 1280ms;
+  --record-crossfade: var(--record-flight);
+  --record-turn: 1536ms;
+  --record-ease: cubic-bezier(0.3333, 1, 0.6667, 1);
+  --record-arrival-angle: 0deg;
+  scrollbar-gutter: stable;
+}
+
+[data-transition-disc] {
+  view-transition-name: record;
+  overflow: clip;
+}
+.quote-layer-front { view-transition-name: foreground-quote; }
+.site-header { view-transition-name: site-header; }
+
+::view-transition { background: var(--surface); }
+::view-transition-group(root),
+::view-transition-group(foreground-quote) { animation: none; }
+::view-transition-group(foreground-quote) { z-index: 1; }
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 2;
+  background: var(--surface);
+}
+
+::view-transition-old(root),
+::view-transition-old(foreground-quote) {
+  animation: 360ms ease-out both page-fade-out;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root),
+::view-transition-new(foreground-quote) {
+  animation: 520ms ease 160ms both page-fade-in;
+  mix-blend-mode: normal;
+}
+
+/* Use matching fade weights so shared content keeps its brightness. */
+:root:active-view-transition-type(post-navigation)::view-transition-image-pair(root) {
+  isolation: isolate;
+}
+:root:active-view-transition-type(post-navigation)::view-transition-old(root) {
+  animation: 520ms ease both page-fade-out;
+  mix-blend-mode: plus-lighter;
+}
+:root:active-view-transition-type(post-navigation)::view-transition-new(root) {
+  animation: 520ms ease both page-fade-in;
+  mix-blend-mode: plus-lighter;
+}
+
+::view-transition-group(record) {
+  /* The document snapshots supply the position and size at both endpoints. */
+  animation-duration: var(--record-flight);
+  animation-timing-function: var(--record-ease);
+}
+
+::view-transition-old(record),
+::view-transition-new(record) {
+  inline-size: 100%;
+  block-size: 100%;
+  mix-blend-mode: normal;
+  transform-origin: center;
+}
+
+/* Blend two aligned images with complementary weights. Their existing
+   opacity interpolates without the dip from normal alpha compositing. */
+::view-transition-image-pair(record) { isolation: isolate; }
+
+:root:active-view-transition-type(favicon-departure) { --record-crossfade: 320ms; }
+:root:active-view-transition-type(travel-disc)::view-transition-old(record) {
+  animation: var(--record-flight) var(--record-ease) both record-travel-out,
+    var(--record-crossfade) var(--record-ease) both page-fade-out;
+  mix-blend-mode: plus-lighter;
+}
+:root:active-view-transition-type(travel-disc)::view-transition-new(record) {
+  animation: var(--record-flight) var(--record-ease) both record-travel-in,
+    var(--record-crossfade) var(--record-ease) both page-fade-in;
+  mix-blend-mode: plus-lighter;
+}
+
+@keyframes record-travel-out {
+  from { rotate: 0deg; scale: 1; }
+  50% { scale: var(--record-travel-scale, 1); }
+  to { rotate: var(--record-sweep, 360deg); scale: 1; }
+}
+@keyframes record-travel-in {
+  from { rotate: calc(var(--record-arrival-angle) - var(--record-sweep, 360deg)); scale: 1; }
+  50% { scale: var(--record-travel-scale, 1); }
+  to { rotate: var(--record-arrival-angle); scale: 1; }
+}
+
+/* Capture both faces on arrival so the swap starts after the record lands. */
+:root:active-view-transition-type(favicon-arrival) {
+  --favicon-reveal: 480ms;
+  --record-travel-scale: 1.12;
+}
+:root:active-view-transition-type(favicon-arrival) .about-mark .disc-face { opacity: 1; }
+:root:active-view-transition-type(favicon-arrival) .about-favicon { view-transition-name: about-favicon; }
+:root:active-view-transition-type(favicon-arrival)::view-transition-new(record) {
+  animation: var(--record-flight) var(--record-ease) both record-travel-in,
+    var(--record-crossfade) var(--record-ease) both page-fade-in,
+    var(--favicon-reveal) ease-in-out var(--record-flight) forwards record-fade-to-favicon;
+}
+::view-transition-group(about-favicon) { animation: none; z-index: 1; }
+::view-transition-new(about-favicon) {
+  animation: var(--favicon-reveal) ease-in-out var(--record-flight) both favicon-fade-in;
+  transform-origin: center;
+}
+@keyframes record-fade-to-favicon {
+  from { opacity: 1; rotate: var(--record-arrival-angle); }
+  to { opacity: 0; rotate: 0deg; }
+}
+@keyframes favicon-fade-in {
+  from { opacity: 0; rotate: var(--record-arrival-angle); }
+  to { opacity: 1; rotate: 0deg; }
+}
+
+/* Reveal the incoming disc at its destination when the source is off screen. */
+:root:active-view-transition-type(reveal-disc, spin-disc)::view-transition-group(record) {
+  animation: none;
+}
+:root:active-view-transition-type(reveal-disc, spin-disc)::view-transition-old(record) {
+  animation: none;
+  opacity: 0;
+}
+:root:active-view-transition-type(reveal-disc)::view-transition-new(record) {
+  --record-reveal-duration: 700ms;
+  --record-sweep: 180deg;
+  animation: var(--record-reveal-duration) ease-out both page-fade-in,
+    var(--record-reveal-duration) var(--record-ease) both record-travel-in;
+}
+:root:active-view-transition-type(spin-disc)::view-transition-new(record) {
+  animation: var(--record-turn) var(--record-ease) both record-spin-360;
+}
+
+@keyframes page-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes page-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes record-spin-360 { from { rotate: 0deg; } to { rotate: 360deg; } }
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition { navigation: none; }
+  [data-transition-disc], .quote-layer-front, .site-header { view-transition-name: none; }
+}

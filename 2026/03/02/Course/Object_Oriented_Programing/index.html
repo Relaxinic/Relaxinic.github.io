@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Object-Oriented Programing — Relaxinic</title>
+  <link rel="preload" href="../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../course/">Notes</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-03-02">02 Mar 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title">Object-Oriented Programing</h1>
+        </div>
+      </header>
+
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body course-intro">
+<aside class="post-callout">
+  <strong class="callout-title">Warning</strong>
+  These notes are written primarily for my own study needs. They may not be comprehensive or suitable for everyone, so feel free to browse selectively.
+</aside>
+
+<aside class="post-callout">
+  <strong class="callout-title">Acknowledgments</strong>
+  Part of these notes draws inspiration from the excellent Object-Oriented Programing notes written by <a href="https://note.noughtq.top/lang/cpp/" target="_blank">NoughtQ</a>. I am also grateful to Professor Yuchi Huo for his teaching and guidance in the course, which helped shape the understanding reflected in these notes.
+</aside>
+</div>
+<nav class="chapter-index" aria-label="Chapters">
+  <ol class="post-list">
+    <li>
+      <a class="post-link" href="chapter-1/">
+        <span class="post-title">Chapter 1 Fundamentals</span>
+        <time class="post-date" datetime="2026-03-02">02 Mar 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-2/">
+        <span class="post-title">Chapter 2 STL Containers</span>
+        <time class="post-date" datetime="2026-03-08">08 Mar 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-3/">
+        <span class="post-title">Chapter 3 Classes and Objects</span>
+        <time class="post-date" datetime="2026-03-17">17 Mar 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-4/">
+        <span class="post-title">Chapter 4 Functions</span>
+        <time class="post-date" datetime="2026-04-02">02 Apr 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-5/">
+        <span class="post-title">Chapter 5 Copying and Moving</span>
+        <time class="post-date" datetime="2026-04-20">20 Apr 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-6/">
+        <span class="post-title">Chapter 6 Operator Overloading</span>
+        <time class="post-date" datetime="2026-05-07">07 May 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-7/">
+        <span class="post-title">Chapter 7 Templates</span>
+        <time class="post-date" datetime="2026-05-24">24 May 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-8/">
+        <span class="post-title">Chapter 8 Exception</span>
+        <time class="post-date" datetime="2026-06-07">07 Jun 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-9/">
+        <span class="post-title">Chapter 9 Smart Pointers</span>
+        <time class="post-date" datetime="2026-06-18">18 Jun 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-10/">
+        <span class="post-title">Chapter 10 Design Concepts</span>
+        <time class="post-date" datetime="2026-06-26">26 Jun 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-11/">
+        <span class="post-title">Chapter 11 Streams</span>
+        <time class="post-date" datetime="2026-06-30">30 Jun 2026</time>
+      </a>
+    </li>
+  </ol>
+</nav>
+
+        </div>
+      </div>
+    </article>
+<script type="application/json" id="chapter-anchors">{"Chapter-1-Fundamentals":"chapter-1/","11-Type-System":"chapter-1/","Type-Alias-with-using":"chapter-1/","Type-Deduction-with-auto":"chapter-1/","stdoptional":"chapter-1/","12-Structs":"chapter-1/","13-Initialization":"chapter-1/","14-Strings":"chapter-1/","15-Reference":"chapter-1/","Pass-by-Reference":"chapter-1/","Structured-Binding-and-Reference":"chapter-1/","Left-Value-Reference":"chapter-1/","Right-Value-Reference":"chapter-1/","Chapter-2-STL-Containers":"chapter-2/","21-Containers":"chapter-2/","Vector":"chapter-2/","Lists":"chapter-2/","Maps":"chapter-2/","22-Iterators":"chapter-2/","Chapter-3-Classes-and-Objects":"chapter-3/","31-Declaration-and-Definition":"chapter-3/","Header-Files-and-Source-Files":"chapter-3/","Access-Control":"chapter-3/","Initialization-and-Clean-Up":"chapter-3/","Getters-and-Setters":"chapter-3/","32-Friends":"chapter-3/","33-Scope-and-Lifetime":"chapter-3/","Local-Objects":"chapter-3/","Global-Objects":"chapter-3/","Static":"chapter-3/","34-Constants-Cannot-be-modified":"chapter-3/","35-Composition":"chapter-3/","36-Inheritance":"chapter-3/","37-Polymorphism":"chapter-3/","Subclassing-and-Subtyping":"chapter-3/","Upcasting":"chapter-3/","Dynamic-Binding-Late-Binding-Runtime-Binding":"chapter-3/","Abstract-Classes":"chapter-3/","38-Inheritance-of-Interface-and-Implementation":"chapter-3/","Chapter-4-Functions":"chapter-4/","41-Parameter-Passing":"chapter-4/","42-Function-Return":"chapter-4/","43-Overloaded-Functions":"chapter-4/","Delegating-Constructors":"chapter-4/","44-Default-Arguments":"chapter-4/","45-Inline-Functions":"chapter-4/","46-Lambda":"chapter-4/","47-Ranges-and-Views":"chapter-4/","Chapter-5-Copying-and-Moving":"chapter-5/","51-Copying":"chapter-5/","Copy-Ctors":"chapter-5/","Shallow-Copy-vs-Deep-Copy":"chapter-5/","Copy-Assignments":"chapter-5/","Important-Rules":"chapter-5/","delete-and-default":"chapter-5/","stdcopy":"chapter-5/","52-Moving":"chapter-5/","Move-Ctors":"chapter-5/","Move-Assignments":"chapter-5/","stdmove":"chapter-5/","std-swap":"chapter-5/","Chapter-6-Operator-Overloading":"chapter-6/","61-Declaration":"chapter-6/","62-General-Design-Guideline":"chapter-6/","63-Details-for-Special-Operators":"chapter-6/","IncrementDecrement-Operators":"chapter-6/","Relation-Operators":"chapter-6/","Stream-Operators":"chapter-6/","Assignment-Operator":"chapter-6/","64-Value-Classes":"chapter-6/","65-Type-Conversion-and-Casting":"chapter-6/","Modern-Casting":"chapter-6/","Chapter-7-Templates":"chapter-7/","71-Function-Templates":"chapter-7/","72-Class-Templates":"chapter-7/","Member-Functions":"chapter-7/","Parameters":"chapter-7/","Default-Parameters":"chapter-7/","Non-type-Parameters":"chapter-7/","Complex-Parameters":"chapter-7/","Static-Members":"chapter-7/","Friends":"chapter-7/","73-Templates-and-Inheritance":"chapter-7/","74-Guidelines":"chapter-7/","75-Interfaces-in-C":"chapter-7/","Chapter-8-Exception":"chapter-8/","81-Throwing-Execption":"chapter-8/","82-Exception-and-Inheritance":"chapter-8/","83-Exception-in-Standard-Library":"chapter-8/","84-Exception-Specifications":"chapter-8/","85-Exception-in-Ctors-and-Dtors":"chapter-8/","86-Exception-Safety":"chapter-8/","87-Summary":"chapter-8/","Chapter-9-Smart-Pointers":"chapter-9/","91-RAII":"chapter-9/","92-Smart-Pointers-in-Standard-Library":"chapter-9/","Custom-Deleter":"chapter-9/","Chapter-10-Design-Concepts":"chapter-10/","101-Coupling":"chapter-10/","102-Cohesion":"chapter-10/","103-Responsibility-Driven-Design":"chapter-10/","104-Refactoring":"chapter-10/","Chapter-11-Streams":"chapter-11/","111-Manipulators":"chapter-11/","112-Stream-Control":"chapter-11/","113-File-Streams":"chapter-11/","114-I0-Stream-Buffers":"chapter-11/"}</script>
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

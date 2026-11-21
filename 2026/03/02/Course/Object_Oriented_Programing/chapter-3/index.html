@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 3 Classes and Objects — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Object-Oriented Programing</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-03-17">17 Mar 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-3-Classes-and-Objects">Chapter 3 Classes and Objects</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#31-Declaration-and-Definition">1 Declaration and Definition</a>
+      <ul class="toc-subsections">
+        <li><a href="#Header-Files-and-Source-Files">1.1 Header Files and Source Files</a></li>
+        <li><a href="#Access-Control">1.2 Access Control</a></li>
+        <li><a href="#Initialization-and-Clean-Up">1.3 Initialization and Clean-Up</a></li>
+        <li><a href="#Getters-and-Setters">1.4 Getters and Setters</a></li>
+      </ul>
+    </li>
+    <li><a href="#32-Friends">2 Friends</a></li>
+    <li><a href="#33-Scope-and-Lifetime">3 Scope and Lifetime</a>
+      <ul class="toc-subsections">
+        <li><a href="#Local-Objects">3.1 Local Objects</a></li>
+        <li><a href="#Global-Objects">3.2 Global Objects</a></li>
+        <li><a href="#Static">3.3 Static</a></li>
+      </ul>
+    </li>
+    <li><a href="#34-Constants-Cannot-be-modified">4 Constants (Cannot be modified)</a></li>
+    <li><a href="#35-Composition">5 Composition</a></li>
+    <li><a href="#36-Inheritance">6 Inheritance</a></li>
+    <li><a href="#37-Polymorphism">7 Polymorphism</a>
+      <ul class="toc-subsections">
+        <li><a href="#Subclassing-and-Subtyping">7.1 Subclassing and Subtyping</a></li>
+        <li><a href="#Upcasting">7.2 Upcasting</a></li>
+        <li><a href="#Dynamic-Binding-Late-Binding-Runtime-Binding">7.3 Dynamic Binding (Late Binding / Runtime Binding)</a></li>
+        <li><a href="#Abstract-Classes">7.4 Abstract Classes</a></li>
+      </ul>
+    </li>
+    <li><a href="#38-Inheritance-of-Interface-and-Implementation">8 Inheritance of Interface and Implementation</a></li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<h2 id="31-Declaration-and-Definition">1 Declaration and Definition</h2>
+<p>A basic <strong>class</strong> should include: </p>
+<ul>
+<li>Constructor</li>
+<li>Private member functions / variables</li>
+<li>Public member functions (user-facing interface)</li>
+<li>Destructor</li>
+</ul>
+<blockquote>
+<p>The keyword <code>this</code> refers to a pointer to the object itself, and is frequently used in the implementation of member functions.</p>
+</blockquote>
+<blockquote>
+<p>special member functions (SMF): code is automatically generated when they are called</p>
+<ul>
+<li>Default constructor: T()</li>
+<li>Destructor: ~T()</li>
+<li>Copy constructor: T(const T&amp;)</li>
+<li>Copy assignment operator: T&amp; operator=(const T&amp;)</li>
+<li>Move constructor: T(T&amp;&amp;)</li>
+<li>Move assignment operator: T&amp; operator=(T&amp;&amp;)</li>
+</ul>
+</blockquote>
+<blockquote>
+<p>If you want all parameters of a function (including the hidden <code>this</code> in member functions) to support type conversion, then the function must be a non-member function.</p>
+</blockquote>
+<h3 id="Header-Files-and-Source-Files">1.1 Header Files and Source Files</h3>
+<p><strong>.h header files are used to define interfaces</strong>: Typically include: function prototypes, class declarations, type definitions, macros, constants, external variables.</p>
+<ul>
+<li><code>#include &quot;xx.h&quot;</code>: First searches the current directory, then looks in system directories</li>
+<li><code>#include &lt;xx.h&gt;</code> / <code>#include &lt;xx&gt;</code>: Directly searches system directories</li>
+</ul>
+<pre><code class="language-cpp">// To prevent the header file content from being included multiple times
+
+#ifndef HEADER_FLAG
+#define HEADER_FLAG
+// Type declaration here...
+#endif // HEADER_FLAG
+</code></pre>
+<p><strong>.cpp source files generally implement functions or classes</strong></p>
+<ul>
+<li>The compiler looks at only one .cpp file at a time and compiles it into a .obj file</li>
+<li>The linker links all .obj files into an executable file</li>
+</ul>
+<h3 id="Access-Control">1.2 Access Control</h3>
+<p>Access specifiers provided by C++:</p>
+<ul>
+<li><code>public</code>: Can be accessed by any object</li>
+<li><code>protected</code>: Can only be accessed within the class and its derived classes</li>
+<li><code>private</code>: Can only be accessed within the class</li>
+</ul>
+<p>Classes default to <code>private</code>, while structs default to <code>public</code></p>
+<pre><code class="language-cpp">class zjuID 
+{
+    private:
+        string name;
+        int idNumber;
+    public:
+        void setName(string n);
+        void setIdNumber(int id);
+        void display();
+};
+</code></pre>
+<blockquote>
+<p>We should declare all member variables as <code>private</code></p>
+</blockquote>
+<h3 id="Initialization-and-Clean-Up">1.3 Initialization and Clean-Up</h3>
+<p><strong>constructor (ctor)</strong>: The name is the same as the class name, and there is no need to specify the return type.</p>
+<pre><code class="language-cpp">// These two types of constructors can coexist simultaneously.
+// `explicit` indicates that this constructor does not allow implicit type conversion
+
+// Type 1: Parameterized Constructor
+// impose additional restrictions
+explicit zjuID::zjuID(std::string name, int idNumber) 
+{
+    this-&gt;name = name;
+    if (idNumber &gt; 0) this-&gt;idNumber = idNumber;
+}
+
+// member initialization list
+explicit zjuID::zjuID(std::string n, int id): name{n}, idNumber{id} {}
+
+// Type 2: Default constructor (no parameters)
+explicit zjuID::zjuID() 
+{
+    name = &quot;Rinic&quot;;
+    idNumber = 1989;
+}
+</code></pre>
+<p><strong>destructor (dtor)</strong>: Function name = <code>~</code> + class name, no parameters required, and similarly no return type</p>
+<ul>
+<li>The order of destruction is the reverse of the order of construction.</li>
+</ul>
+<h3 id="Getters-and-Setters">1.4 Getters and Setters</h3>
+<pre><code class="language-cpp">// getter: Functions for reading member variables
+std::string zjuID::getName() 
+{
+    return this-&gt;name;
+}
+
+// setter: Function to modify member variables
+void zjuID::setIdNumber(int idNumber) 
+{
+    if (idNumber &gt;= 0) this-&gt;idNumber = idNumber;
+}
+</code></pre>
+<h2 id="32-Friends">2 Friends</h2>
+<p><code>Friend</code> declaration within a class allows external classes or functions to access the private or protected members of that class.</p>
+<pre><code class="language-cpp">// Friend function
+class Box 
+{
+private:
+    int length;
+public:
+    Box(int l) : length(l) {}
+    friend void printLength(const Box&amp; b);
+};
+
+void printLength(const Box&amp; b) 
+{
+    std::cout &lt;&lt; &quot;Length is: &quot; &lt;&lt; b.length &lt;&lt; std::endl;
+    // correct
+}
+
+// Friend class
+class Car 
+{
+private:
+    int speed;
+public:
+    Car() : speed(200) {}
+    friend class Engine;
+};
+
+class Engine 
+{
+public:
+    void boost(Car&amp; c) 
+    {
+        c.speed += 100;  
+        // correct
+    }
+};
+</code></pre>
+<h2 id="33-Scope-and-Lifetime">3 Scope and Lifetime</h2>
+<h3 id="Local-Objects">3.1 Local Objects</h3>
+<p><strong>fields</strong>: Variables defined inside a class but outside of functions.</p>
+<p><strong>parameters</strong>: Variables in the declaration of a function or method, used to receive values passed from outside.</p>
+<p><strong>local variables</strong>: Variables defined inside a function or code block, used for temporary calculations or intermediate states.</p>
+<h3 id="Global-Objects">3.2 Global Objects</h3>
+<p>The constructor of global objects needs to be called before entering the <code>main()</code> function, and the destructor is called when <code>main()</code> exits or <code>exit()</code> is invoked.</p>
+<h3 id="Static">3.3 Static</h3>
+<p><strong>non-local static object</strong>: </p>
+<ul>
+<li>Defined in global or namespace scope</li>
+<li>Declared as static variables within a class or file scope</li>
+</ul>
+<p><strong>Static</strong></p>
+<ul>
+<li>Basic meaning: static storage (persistent), restricted access (hidden)</li>
+<li>Usage scenarios<ul>
+<li>Global variables: scope limited to the current file</li>
+<li>Local variables: lifetime spans the entire program runtime</li>
+<li>Member variables/functions: belong to the class itself, declared inside the class, defined outside the class.It does not belong to any object, so the this pointer cannot be used on it.
+<code>cpp class CostEstimate  { private:     static const double cost;     // ... }; const double CostEstimate::cost = 1.35; </code></li>
+</ul>
+</li>
+</ul>
+<h2 id="34-Constants-Cannot-be-modified">4 Constants (Cannot be modified)</h2>
+<p><strong>Modify Variables</strong></p>
+<ul>
+<li>The compiler attempts to avoid creating memory space for <code>const</code> variables, but if the <code>extern</code> keyword is used in front, it forces the compiler to allocate memory space.</li>
+</ul>
+<pre><code class="language-cpp">// Solution for initializing class member variables in the constructor
+class HasArray 
+{
+    enum { size = 100 }; // 1. anonymous enumeration
+    static const int size = 100; // 2. use static keyword
+    int array[size];
+};
+</code></pre>
+<p><strong>Modify Pointers</strong></p>
+<ul>
+<li><code>const int* p1</code> / <code>int const* p1</code>: The value pointed to by <code>p1</code> cannot be modified, but <code>p1</code> itself can be modified.</li>
+<li><code>int* const p2</code>: <code>p2</code> itself cannot be modified, but the value it points to can be modified.</li>
+</ul>
+<p><strong>Modify Function Parameters</strong></p>
+<ul>
+<li><code>void foo(const int&amp; x)</code>: Prevents the function from modifying the passed parameter.</li>
+</ul>
+<p><strong>Modify Return Values</strong></p>
+<ul>
+<li><code>const std::string&amp; getStr()</code>: If returning a pointer or reference, <code>const</code> can be added to prevent unintended modifications.</li>
+</ul>
+<p><strong>Modify member functions</strong></p>
+<pre><code class="language-cpp">class A 
+{
+    public:
+        int getVal() const 
+        {
+            return val;
+        }
+    private:
+        int val;
+};
+</code></pre>
+<ul>
+<li>At this point, the member function cannot modify member variables and can only call other <code>const</code> member functions.</li>
+<li>This <code>const</code> modifies the <code>this</code> pointer.</li>
+<li>Function overloading: You can create two versions of the same member function—one decorated with <code>const</code> and one without. First, define a <code>const</code> version of the function, and then have the non-<code>const</code> version call this function.<pre><code class="language-cpp">template &lt;typename T&gt;
+const T&amp; Vector&lt;T&gt;::findElement(const T&amp; value) const 
+{
+    for (size_t i = 0; i &lt; logical_size; i++) 
+    {
+        if (elems[i] == value) return elems[i];
+    }
+    throw std::out_of_range(&quot;Element not found&quot;);
+}
+
+template &lt;typename T&gt;
+T&amp; Vector&lt;T&gt;::findElement(const T&amp; value) 
+{
+    return const_cast&lt;T&amp;&gt;(static_cast&lt;const Vector&lt;T&gt;&amp;&gt;(*this).findElement(value));
+}
+</code></pre>
+</li>
+</ul>
+<h2 id="35-Composition">5 Composition</h2>
+<p>A class uses an object of another class as its member variable, organizing and reusing its code, thereby &quot;possessing&quot; the functionality of the other class.</p>
+<p><strong>Method 1: Value Composition / Embedded Objects</strong></p>
+<pre><code class="language-cpp">class A 
+{
+    int x;
+public:
+    A(int val) : x(val) {}
+};
+
+class B 
+{
+    A a1, a2;
+public:
+    B() : a1(10), a2(20) {} // Initialize sub-objects using list initialization
+};
+</code></pre>
+<p><strong>Method 2: Reference / Pointer Combination</strong></p>
+<h2 id="36-Inheritance">6 Inheritance</h2>
+<p>Create a new class (called a <strong>derived class</strong> or <strong>subclass</strong>) based on an existing class (called a b<strong>ase class</strong> or <strong>superclass</strong>). The derived class automatically inherits the attributes and methods of the base class.</p>
+<pre><code class="language-cpp">// Base class
+class Animal 
+{
+public:
+    void speak() 
+    {
+        cout &lt;&lt; &quot;Animal makes a sound&quot; &lt;&lt; endl;
+    }
+};
+
+// Derived class
+class Dog : public Animal 
+{
+public:
+    void bark() 
+    {
+        cout &lt;&lt; &quot;Dog barks&quot; &lt;&lt; endl;
+    }
+};
+
+int main() {
+    Dog d;
+
+    d.speak(); // Inherited from Animal
+    d.bark();  // User-defined functions
+
+    return 0;
+}
+</code></pre>
+<p><strong>The content that can be inherited</strong> includes:</p>
+<ul>
+<li>Member variables</li>
+<li><code>public</code> or <code>protected</code> member functions</li>
+<li>Static members: Their scope remains within the class.</li>
+</ul>
+<p><strong>Content that cannot be directly inherited</strong> includes:</p>
+<ul>
+<li>Constructors</li>
+<li>Destructors</li>
+<li>Assignment operators</li>
+</ul>
+<p>Assuming class <code>B</code> is a derived class of class <code>A</code>, then:</p>
+<table>
+<thead>
+<tr>
+<th align="left">Inheritance Type</th>
+<th align="left"><code>public</code></th>
+<th align="left"><code>protected</code></th>
+<th align="left"><code>private</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>public A</code></td>
+<td align="left">Public in B</td>
+<td align="left">Protected in B</td>
+<td align="left">Hidden</td>
+</tr>
+<tr>
+<td align="left"><code>private A</code></td>
+<td align="left">Private in B</td>
+<td align="left">Private in B</td>
+<td align="left">Hidden</td>
+</tr>
+<tr>
+<td align="left"><code>protected A</code></td>
+<td align="left">Protected in B</td>
+<td align="left">Protected in B</td>
+<td align="left">Hidden</td>
+</tr>
+</tbody></table>
+<h2 id="37-Polymorphism">7 Polymorphism</h2>
+<p>Its core idea is &quot;one interface, multiple implementations.&quot;</p>
+<h3 id="Subclassing-and-Subtyping">7.1 Subclassing and Subtyping</h3>
+<p><code>public</code> inheritance: establishes an &quot;is-a&quot; relationship and allows implicit type conversion from derived class to base class</p>
+<p>Liskov Substitution Principle (LSP): derived classes must also be behaviorally compatible with the base class</p>
+<ul>
+<li><p>A derived class cannot strengthen the preconditions of a base class method (i.e., impose stricter input requirements)</p>
+</li>
+<li><p>A derived class cannot weaken the postconditions of a base class method (i.e., provide fewer guarantees on output)</p>
+</li>
+<li><p>A derived class must maintain the invariants of the base class</p>
+</li>
+</ul>
+<h3 id="Upcasting">7.2 Upcasting</h3>
+<p>Convert a pointer or reference of a derived class to a pointer or reference of a base class.</p>
+<pre><code class="language-cpp">class Animal {};
+class Dog : public Animal {};
+
+Dog myDog;
+Animal* pAnimal = &amp;myDog; // Upcasting
+Animal&amp; rAnimal = myDog;  // Upcasting
+</code></pre>
+<blockquote>
+<p>Only <code>virtual</code> allows <code>override</code>.</p>
+</blockquote>
+<h3 id="Dynamic-Binding-Late-Binding-Runtime-Binding">7.3 Dynamic Binding (Late Binding / Runtime Binding)</h3>
+<p>The mechanism that determines which version of a member function to call based on the actual object type pointed to by a pointer or reference during program execution.</p>
+<p>The conditions for this to occur are:</p>
+<ul>
+<li>The call must be made through a pointer or reference to a base class.</li>
+<li>The called member function must be declared as <code>virtual</code> in the base class.</li>
+</ul>
+<blockquote>
+<p><strong>static binding</strong>: During compilation, the specific function to be called has already been determined based on the declared type of the pointer or reference.</p>
+</blockquote>
+<hr>
+<p>Virtual functions allow subclasses to override the behavior of the base class and determine which version of the function to call at runtime based on the actual type of the object.</p>
+<pre><code class="language-cpp">class Shape {
+public:
+    virtual void Draw() { cout &lt;&lt; &quot;Drawing a generic shape&quot; &lt;&lt; endl; }
+    virtual ~Shape() {}
+};
+</code></pre>
+<p>If a derived class object is deleted through a base class pointer, and the base class destructor is not <code>virtual</code>, then only the base class destructor will be called, resulting in a &quot;partially destroyed&quot; object.</p>
+<p>Therefore, if a class is intended to be used as a base class and derived class objects may later be deleted through a base class pointer, its destructor must be declared as <code>virtual</code>.</p>
+<pre><code class="language-cpp">class Base {
+public:
+    virtual ~Base() = default;
+};
+</code></pre>
+<blockquote>
+<p>Never call virtual functions in constructors or destructors.
+Never redefine inherited default parameter values.</p>
+</blockquote>
+<blockquote>
+<p>Alternatives / Enhancements for Virtual Functions</p>
+<ol>
+<li>Non-Virtual Interface (NVI) method: It is a template method</li>
+<li>Strategy pattern: The core idea is to decouple the algorithm (strategy) from the context that uses it and make it interchangeable.</li>
+</ol>
+</blockquote>
+<hr>
+<p>The purpose of <strong>overriding</strong> is to provide a function in a subclass that has exactly the same signature as a virtual function in the base class, in order to implement its own specific behavior.</p>
+<ul>
+<li>Function signature: The name, parameter list, and <code>const</code> modifier must be strictly consistent</li>
+<li>The base class function must be <code>virtual</code>, and it is recommended to also write <code>virtual</code> when overriding in a derived class</li>
+</ul>
+<pre><code class="language-cpp">class Base {
+public:
+    virtual void display(int x) const;
+};
+
+class Derived : public Base {
+public:
+    void display(int x) const override;
+    // void display(int x) override; // Compilation error! const mismatch
+    // void display(double x) const override; // Compilation error! Parameter type mismatch
+};
+</code></pre>
+<p>Covariant return types: If a base class virtual function returns <code>Base*</code> or <code>Base&amp;</code>, a derived class can override it to return <code>Derived*</code> or <code>Derived&amp;</code> (where <code>Derived</code> inherits from <code>Base</code>).</p>
+<pre><code class="language-cpp">class Document {
+public:
+    virtual Document* clone() const = 0;
+    virtual ~Document() = default;
+};
+class TextDocument : public Document {
+public:
+    TextDocument* clone() const override { return new TextDocument(*this); }
+};
+</code></pre>
+<blockquote>
+<p>The access level of a derived class&#39;s overridden function cannot be more restrictive than that of the base class.</p>
+</blockquote>
+<p><strong>name hiding</strong>:</p>
+<pre><code class="language-cpp">class Base {
+public:
+    virtual void func(int);
+    void func(double); // overloading
+};
+class Derived : public Base {
+public:
+    // Only rewrite the int version
+    void func(int) override;
+    // If there is no next line, Base::func(double) will be hidden
+    using Base::func;// Bring Base&#39;s func(double) into Derived&#39;s scope
+};
+</code></pre>
+<h3 id="Abstract-Classes">7.4 Abstract Classes</h3>
+<p>A class that contains at least one pure virtual function</p>
+<p>Pure virtual function: Adding <code>= 0</code> at the end of the declaration indicates that the function has no implementation and must be provided by a derived class</p>
+<pre><code class="language-cpp">// Shape is an abstract class
+class Shape { 
+public:
+    // Pure virtual function: defines an interface, forcing subclasses to implement it
+    virtual double calculateArea() const = 0;
+
+    // Abstract classes can have ordinary member functions and data members
+    void setColor(const std::string&amp; c) { color = c; }
+
+    // Even abstract classes need virtual destructors if they might be inherited!
+    virtual ~Shape() = default;
+private:
+    std::string color;
+};
+</code></pre>
+<p>Its function is to provide a unified interface specification, forcing subclasses to implement it.</p>
+<h2 id="38-Inheritance-of-Interface-and-Implementation">8 Inheritance of Interface and Implementation</h2>
+<p>Inheritance can be divided into interface inheritance and implementation inheritance.</p>
+<table>
+<thead>
+<tr>
+<th align="center">Type</th>
+<th align="center">What You Inherit</th>
+<th align="center">Can It Be Changed?</th>
+<th align="center">Essential Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">Pure Virtual Function</td>
+<td align="center">Only the &quot;rule&quot;</td>
+<td align="center">Must implement yourself</td>
+<td align="center">Only defines the interface</td>
+</tr>
+<tr>
+<td align="center">Virtual Function</td>
+<td align="center">Rule + default implementation</td>
+<td align="center">Can be changed</td>
+<td align="center">Has default behavior</td>
+</tr>
+<tr>
+<td align="center">Non-Virtual Function</td>
+<td align="center">Rule + enforced implementation</td>
+<td align="center">Cannot be changed</td>
+<td align="center">No variation allowed</td>
+</tr>
+</tbody></table>
+<hr>
+<p><strong>Multiple inheritance</strong> refers to a mechanism where a class can inherit from multiple base classes simultaneously.</p>
+<ul>
+<li>Implementing multiple interfaces: A class can satisfy multiple different contracts at the same time. When encountering members with the same name inherited from different base classes, we need to manually specify which base class&#39;s member to use.</li>
+</ul>
+<pre><code class="language-cpp">class Clickable {
+public: 
+    virtual void onClick() = 0; 
+    virtual ~Clickable() = default; 
+};
+
+class Serializable { 
+public: 
+    virtual void serialize(std::ostream&amp; os) const = 0; 
+    virtual ~Serializable() = default; 
+};
+
+// Button implements both the Clickable and Serializable interfaces
+class Button : public Clickable, public Serializable { /* ... implement interface ... */ };
+</code></pre>
+<ul>
+<li>Mixed inheritance: inheriting from a concrete base class while implementing one or more interfaces.</li>
+</ul>
+<p><strong>Diamond Problem</strong>: When a class inherits from the same indirect base class through different paths, multiple copies of the base class&#39;s members exist in the derived class, leading to ambiguity in access.</p>
+<p>The solution to this problem is to use virtual inheritance, i.e., applying the <code>virtual</code> keyword when the intermediate classes inherit from the common base class.</p>
+<pre><code class="language-cpp">class Top { public: int value; };
+// Using virtual inheritance
+class Left : virtual public Top {};
+class Right : virtual public Top {};
+class Bottom : public Left, public Right {};
+
+Bottom b;
+b.value = 10;
+</code></pre>
+<blockquote>
+<p>Design Principles for Inheritance and Polymorphism</p>
+<ol>
+<li>Prefer composition over inheritance</li>
+<li>Use multiple inheritance with caution</li>
+<li>Beware of default parameters in virtual functions</li>
+<li>Do not call virtual functions in constructors/destructors</li>
+</ol>
+</blockquote>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-2/" rel="prev"><span>← Previous chapter</span>Chapter 2 STL Containers</a>
+  <a href="../chapter-4/" rel="next"><span>Next chapter →</span>Chapter 4 Functions</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

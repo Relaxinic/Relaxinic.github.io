@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 2 Physical Layer — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  <link rel="stylesheet" href="../../../../../../media/katex/katex.min.css">
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Computer Network</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-09-20">20 Sept 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-2-Physical-Layer">Chapter 2 Physical Layer</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#21-Transmission-Media">1 Transmission Media</a>
+      <ul class="toc-subsections">
+        <li><a href="#Guided-Transmission-Media">1.1 Guided Transmission Media</a></li>
+        <li><a href="#Non-guided-transmission-medium">1.2 Non-guided transmission medium</a></li>
+      </ul>
+    </li>
+    <li><a href="#22-Transmission-Methods">2 Transmission Methods</a>
+      <ul class="toc-subsections">
+        <li><a href="#Serial-Transmission-and-Parallel-Transmission">2.1 Serial Transmission and Parallel Transmission</a></li>
+        <li><a href="#Synchronous-transmission-and-asynchronous-transmission">2.2 Synchronous transmission and asynchronous transmission</a></li>
+        <li><a href="#Simplex-half-duplex-and-full-duplex">2.3 Simplex, half-duplex, and full-duplex</a></li>
+      </ul>
+    </li>
+    <li><a href="#23-Encoding-and-Modulation">3 Encoding and Modulation</a>
+      <ul class="toc-subsections">
+        <li><a href="#Basic-Concepts">3.1 Basic Concepts</a></li>
+        <li><a href="#Common-Encoding-Methods">3.2 Common Encoding Methods</a></li>
+        <li><a href="#Basic-Bandpass-Modulation-Methods-and-Hybrid-Modulation-Methods">3.3 Basic Bandpass Modulation Methods and Hybrid Modulation Methods</a></li>
+      </ul>
+    </li>
+    <li><a href="#24-The-Maximum-Capacity-of-a-Channel">4 The Maximum Capacity of a Channel</a>
+      <ul class="toc-subsections">
+        <li><a href="#Main-Factors-Causing-Signal-Distortion">4.1 Main Factors Causing Signal Distortion</a></li>
+        <li><a href="#Nyquist-Theorem">4.2 Nyquist Theorem</a></li>
+        <li><a href="#Shannon-Formula">4.3 Shannon Formula</a></li>
+      </ul>
+    </li>
+    <li><a href="#25-Channel-Multiplexing-Technology">5 Channel Multiplexing Technology</a>
+      <ul class="toc-subsections">
+        <li><a href="#Basic-Principles">5.1 Basic Principles</a></li>
+        <li><a href="#Common-Technologies">5.2 Common Technologies</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<p>The physical layer interface has the following characteristics:</p>
+<ul>
+<li><p>Mechanical characteristics: shape and dimensions, number and arrangement of pins, fixing and locking devices</p>
+</li>
+<li><p>Electrical characteristics: range of signal voltage, impedance matching conditions, transmission rate, distance limitations</p>
+</li>
+<li><p>Functional characteristics: specifies the role of each signal line in the interface cable</p>
+</li>
+<li><p>Procedural characteristics: specifies a set of operational procedures for transmitting a bit stream over the signal lines, including the timing relationships between the signals</p>
+</li>
+</ul>
+<h2 id="21-Transmission-Media">1 Transmission Media</h2>
+<p>Transmission media: the physical path between computer network devices, not included in the computer network architecture (below the physical layer).</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/26.png" style="max-width: 30%; display: block; margin: 0 auto;">
+
+<h3 id="Guided-Transmission-Media">1.1 Guided Transmission Media</h3>
+<h4 id="Coaxial-Cable">Coaxial Cable</h4>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/27.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Categories:</p>
+<ul>
+<li><p>Baseband coaxial cable (50 Ω): used for digital transmission, widely used in early local area networks</p>
+</li>
+<li><p>Broadband coaxial cable (75 Ω): used for analog transmission, currently mainly used for cable television drop lines</p>
+</li>
+</ul>
+<p>Coaxial cable is relatively expensive and its cabling is not flexible or convenient enough; with the development of technology and the emergence of hubs, twisted pair is basically used as the transmission medium in the local area network field</p>
+<h4 id="Twisted-pair">Twisted pair</h4>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/28.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The role of twisting:</p>
+<ul>
+<li><p>Reduce electromagnetic interference between adjacent conductors</p>
+</li>
+<li><p>Resist some electromagnetic interference from the outside</p>
+</li>
+</ul>
+<h4 id="Fiber-optics">Fiber optics</h4>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/30.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>Communication is carried out by using the transmission of light pulses in optical fibers.</p>
+<p>Since the frequency of visible light is very high (on the order of about 108 MHz), the transmission bandwidth of an optical fiber communication system is far greater than the bandwidth of various other transmission media currently available.</p>
+<p>Classification:</p>
+<ul>
+<li><p>Multi-mode fiber</p>
+</li>
+<li><p>Single-mode fiber</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/33.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Non-guided-transmission-medium">1.2 Non-guided transmission medium</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/34.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li>Radio waves</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/35.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li>Microwave</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/36.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/37.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>Infrared</p>
+<ul>
+<li><p>Devices: TV / air conditioner remote controls</p>
+</li>
+<li><p>Infrared communication has been phased out</p>
+</li>
+</ul>
+</li>
+<li><p>Laser</p>
+</li>
+<li><p>Visible light</p>
+</li>
+</ul>
+<h2 id="22-Transmission-Methods">2 Transmission Methods</h2>
+<h3 id="Serial-Transmission-and-Parallel-Transmission">2.1 Serial Transmission and Parallel Transmission</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/39.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/40.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Synchronous-transmission-and-asynchronous-transmission">2.2 Synchronous transmission and asynchronous transmission</h3>
+<h4 id="Synchronized-transmission">Synchronized transmission</h4>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/41.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Methods for clock synchronization between the sender and receiver:</p>
+<ul>
+<li><p>External synchronization: Add a clock signal line between the sender and receiver.</p>
+</li>
+<li><p>Internal synchronization: The sender encodes the clock signal into the transmitted data and sends them together (e.g., Manchester encoding).</p>
+</li>
+</ul>
+<h4 id="Asynchronous-transmission">Asynchronous transmission</h4>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/42.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Asynchronous between bytes, meaning the time interval between bytes is not fixed.</p>
+<p>Each bit within a byte still needs to be synchronized, meaning the duration of each bit is the same.</p>
+<h3 id="Simplex-half-duplex-and-full-duplex">2.3 Simplex, half-duplex, and full-duplex</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/43.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h2 id="23-Encoding-and-Modulation">3 Encoding and Modulation</h2>
+<h3 id="Basic-Concepts">3.1 Basic Concepts</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/44.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Symbol: When a waveform in the time domain is used to represent a signal, the basic waveform that represents different discrete values.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/45.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Common-Encoding-Methods">3.2 Common Encoding Methods</h3>
+<h4 id="Bipolar-Non-Return-to-Zero-Encoding-NRZ">Bipolar Non-Return-to-Zero Encoding (NRZ)</h4>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/46.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>High coding efficiency, but there is a synchronization problem.</p>
+<p>How does the receiver determine the symbols?</p>
+<ul>
+<li><p>A clock signal line needs to be added for both the sender and receiver.</p>
+</li>
+<li><p>While the sender sends data to the receiver through the data signal line, it also sends a clock signal to the receiver through the clock signal line.</p>
+</li>
+<li><p>The receiver samples the signal on the data signal line according to the rhythm of the received clock signal.</p>
+</li>
+<li><p>For computer networks, it is preferable to use this transmission line to transmit data signals rather than clock signals.</p>
+</li>
+</ul>
+<h4 id="Bipolar-return-to-zero-encoding">Bipolar return-to-zero encoding</h4>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/47.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>At the midpoint of each symbol, the signal returns to zero level.</p>
+</li>
+<li><p>The receiver only needs to sample after the signal returns to zero.</p>
+</li>
+<li><p>Return-to-zero encoding is equivalent to encoding the clock signal into the data using a return-to-zero method, which is called a &quot;self-synchronizing&quot; signal.</p>
+</li>
+<li><p>However, in return-to-zero encoding, most of the data bandwidth is wasted on transmitting the return to zero.</p>
+</li>
+</ul>
+<h4 id="NRZInot-return-to-zero-inverted">NRZI(not-return-to-zero inverted)</h4>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/333.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>NRZ code that toggles on 1</p>
+<p>Principle: At the beginning of each bit, the level toggles on a 1 and does not toggle on a 0.</p>
+<h4 id="Manchester-encoding">Manchester encoding</h4>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/48.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The level transition at the middle of a symbol represents both the clock signal and the data.</p>
+<p>Whether a positive transition represents 1 or 0, and a negative transition represents 0 or 1, can be defined as desired.</p>
+<p>Problem: The bandwidth overhead is doubled (two symbols represent one bit of data, so the bit rate is only half the baud rate).</p>
+<h4 id="Differential-Manchester-encoding">Differential Manchester encoding</h4>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/49.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The level transition at the middle of a symbol represents only the clock signal, not the data.</p>
+<p>The representation of data lies in whether there is a level transition at the beginning of each symbol: no transition represents 1, and a transition represents 0.</p>
+<p>When transmitting a large number of consecutive 1s or consecutive 0s, the differential Manchester encoded signal has fewer changes than the Manchester encoded signal.</p>
+<p>In noisy environments, detecting whether there is a transition is less error-prone than detecting the direction of the transition, so the differential Manchester encoded signal is easier to detect than the Manchester encoded signal.</p>
+<p>When incorrect wiring of the transmission medium causes the high and low levels to be reversed, differential Manchester encoding is still effective.</p>
+<h4 id="4B5B-Encoding">4B/5B Encoding</h4>
+<p>Ensure sufficient signal transitions so that the receiver stays synchronized and reduces timing errors.</p>
+<p>It has higher encoding efficiency compared to Manchester encoding (the encoding method used by Ethernet).</p>
+<h3 id="Basic-Bandpass-Modulation-Methods-and-Hybrid-Modulation-Methods">3.3 Basic Bandpass Modulation Methods and Hybrid Modulation Methods</h3>
+<p>Basic bandpass modulation methods:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/50.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Hybrid modulation methods: Typically, the phase and amplitude of a carrier can be combined and modulated together, for example, quadrature amplitude modulation (QAM-16):</p>
+<ul>
+<li><p>12 phases</p>
+</li>
+<li><p>Each phase has 1 or 2 selectable amplitudes</p>
+</li>
+<li><p>16 types of symbols (waveforms) can be modulated, and each symbol can correspond to 4 bits (<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi>log</mi><mo>⁡</mo></mrow><mn>2</mn></msub><mn>16</mn><mo>=</mo><mn>4</mn></mrow><annotation encoding="application/x-tex">\log_2 16=4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9386em;vertical-align:-0.2441em;"></span><span class="mop"><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.207em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">16</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">4</span></span></span></span>)</p>
+</li>
+<li><p>The correspondence between each symbol and 4 bits uses Gray code, meaning that any two adjacent symbols differ by only 1 bit.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/51.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Note: 星座图 (constellation diagram)</p>
+</blockquote>
+<h2 id="24-The-Maximum-Capacity-of-a-Channel">4 The Maximum Capacity of a Channel</h2>
+<h3 id="Main-Factors-Causing-Signal-Distortion">4.1 Main Factors Causing Signal Distortion</h3>
+<ol>
+<li><p>Symbol transmission rate: The higher the transmission rate, the more severe the distortion of the signal after transmission.</p>
+</li>
+<li><p>Signal transmission distance: The longer the transmission distance, the more severe the distortion of the signal after transmission.</p>
+</li>
+<li><p>Noise interference: The greater the noise interference, the more severe the distortion of the signal after transmission.</p>
+</li>
+<li><p>Quality of the transmission medium: The poorer the quality of the transmission medium, the more severe the distortion of the signal after transmission.</p>
+</li>
+</ol>
+<p>A digital signal transmitted over a channel can be regarded as a square wave formed by the repeated superposition of multiple analog signals of different frequencies.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/52.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>If the high-frequency components in a digital signal are attenuated during transmission or even cannot pass through the channel, then the leading and trailing edges of the waveform received at the receiving end become less steep, and the time boundary occupied by each symbol is no longer clear. In this way, the signal waveform received at the receiving end loses the clear boundaries between symbols. This phenomenon is called intersymbol interference.</p>
+<p>If the frequency band of the channel is wider, then more high-frequency components of the signal can pass through, so the symbol transmission rate can be higher without causing intersymbol interference.</p>
+<p>However, the frequency bandwidth of a channel has an upper limit and cannot be infinite, so the symbol transmission rate also has an upper limit.</p>
+<h3 id="Nyquist-Theorem">4.2 Nyquist Theorem</h3>
+<p>The maximum symbol transmission rate of an ideal low-pass channel = 2W Baud = 2W symbols/second</p>
+<ul>
+<li><p>W: the channel&#39;s frequency bandwidth (in Hz)</p>
+</li>
+<li><p>Baud: baud, i.e., symbols/second</p>
+</li>
+</ul>
+<p>Using the formula given by the Nyquist theorem, the maximum symbol transmission rate (modulation rate) of the channel can be calculated from the channel&#39;s frequency bandwidth.</p>
+<p>As long as the symbol transmission rate does not exceed the upper limit calculated according to the Nyquist theorem, intersymbol interference can be avoided.</p>
+<p>What the Nyquist theorem gives is the maximum symbol transmission rate of an ideal low-pass channel, which differs considerably from an actual channel; therefore, the maximum symbol transmission rate that an actual channel can transmit is significantly lower than the upper limit given by the Nyquist theorem.</p>
+<p>The Nyquist theorem applies to all transmission media.</p>
+<p>The relationship between baud rate (symbols) and bit rate (data): when 1 symbol carries only 1 bit of information, the baud rate and the bit rate are numerically equal; when 1 symbol carries n bits of information, when converting the baud rate into the bit rate, the numerical value must be multiplied by n.</p>
+<p>The information transmission rate cannot be increased without limit, because there is noise in an actual channel. Noise is randomly generated, and its instantaneous value can sometimes be very large, which affects the receiver&#39;s identification of symbols, and the greater the noise power relative to the signal power, the greater the impact.</p>
+<h3 id="Shannon-Formula">4.3 Shannon Formula</h3>
+<p>The ultimate information transmission rate of a channel with limited bandwidth and interference from additive white Gaussian noise is:</p>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi><mo>=</mo><mi>W</mi><msub><mrow><mi>log</mi><mo>⁡</mo></mrow><mn>2</mn></msub><mo stretchy="false">(</mo><mn>1</mn><mo>+</mo><mfrac><mi>S</mi><mi>N</mi></mfrac><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">C = W \log_2 (1 + \frac{S}{N})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop"><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.207em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.2173em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8723em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05764em;">S</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose">)</span></span></span></span></p>
+<ul>
+<li><p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi></mrow><annotation encoding="application/x-tex">C</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span></span></span></span>: the ultimate information transmission rate of the channel (in b/s)</p>
+</li>
+<li><p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi></mrow><annotation encoding="application/x-tex">W</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span></span>: the channel&#39;s frequency bandwidth (in Hz)</p>
+</li>
+<li><p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi></mrow><annotation encoding="application/x-tex">S</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span>: the average power of the signal transmitted within the channel</p>
+</li>
+<li><p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span>: the Gaussian noise power within the channel</p>
+</li>
+<li><p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi><mi mathvariant="normal">/</mi><mi>N</mi></mrow><annotation encoding="application/x-tex">S/N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span>: signal-to-noise ratio (SNR), using decibels (dB) as the unit of measurement = <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>10</mn><msub><mrow><mi>log</mi><mo>⁡</mo></mrow><mn>10</mn></msub><mrow><mo fence="true">(</mo><mstyle scriptlevel="0" displaystyle="true"><mfrac><mi>S</mi><mi>N</mi></mfrac></mstyle><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">10 \log_{10} \left( \dfrac{S}{N} \right)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.4em;vertical-align:-0.95em;"></span><span class="mord">10</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop"><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.207em;"><span style="top:-2.4559em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">10</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2441em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">(</span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3603em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">)</span></span></span></span></span></span></p>
+</li>
+</ul>
+<p>The larger the channel&#39;s frequency bandwidth <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi></mrow><annotation encoding="application/x-tex">W</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span></span> or the signal-to-noise ratio <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi><mi mathvariant="normal">/</mi><mi>N</mi></mrow><annotation encoding="application/x-tex">S/N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> in the channel, the higher the channel&#39;s ultimate information transmission rate <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>C</mi></mrow><annotation encoding="application/x-tex">C</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span></span></span></span>.</p>
+<p>An actual channel cannot increase the frequency bandwidth <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi></mrow><annotation encoding="application/x-tex">W</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span></span> or the signal-to-noise ratio <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>S</mi><mi mathvariant="normal">/</mi><mi>N</mi></mrow><annotation encoding="application/x-tex">S/N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> in the channel without limit.</p>
+<p>The information transmission rate that can be achieved in an actual channel is considerably lower than the ultimate transmission rate given by the Shannon formula. This is because in an actual channel, the signal is also subject to some other impairments, such as various pulse interferences and signal attenuation, and these factors are not considered in the Shannon formula.</p>
+<p>When the channel&#39;s frequency bandwidth <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi></mrow><annotation encoding="application/x-tex">W</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span></span> is fixed, according to the Nyquist theorem and the Shannon formula, in order to increase the information transmission rate, it is necessary to adopt multilevel signaling (more complex modulation techniques) and strive to increase the signal-to-noise ratio in the channel.</p>
+<p>Since the publication of the Shannon formula, various new signal processing and modulation methods have continuously appeared, all with the aim of enabling a symbol to carry more bits, and thereby get as close as possible to the transmission rate limit given by the Shannon formula.</p>
+<h2 id="25-Channel-Multiplexing-Technology">5 Channel Multiplexing Technology</h2>
+<h3 id="Basic-Principles">5.1 Basic Principles</h3>
+<p>Multiplexing: transmitting the signals of multiple users simultaneously over a single transmission medium.</p>
+<p>When the transmission capacity of a transmission medium is greater than the total transmission capacity of multiple channels, multiplexing technology can be used to establish multiple communication channels on this transmission medium, so as to make full use of the bandwidth of the transmission medium.</p>
+<p>Although implementing channel multiplexing increases communication costs (requiring multiplexers, demultiplexers, and a relatively expensive high-capacity shared channel), it is still relatively cost-effective if the number of multiplexed channels is large.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/53.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Common-Technologies">5.2 Common Technologies</h3>
+<p>Frequency division multiplexing (FDM): all users simultaneously occupy different frequency band resources for parallel communication.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/54.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Time division multiplexing (TDM): all users occupy the same frequency band at different times.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/55.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Wavelength Division Multiplexing (WDM)</p>
+<ul>
+<li><p>Based on the design concept of frequency division multiplexing, multiple optical carrier signals with similar frequencies (wavelengths) can be transmitted simultaneously over a single optical fiber, realizing fiber-based frequency division multiplexing technology.</p>
+</li>
+<li><p>Currently, 80 or more optical carrier signals can be multiplexed over a single optical fiber, so this multiplexing technology is also called Dense Wavelength Division Multiplexing (DWDM).</p>
+</li>
+<li><p>Laying optical cables is extremely costly, so as many optical fibers as possible should be placed in a single optical cable, and then dense wavelength division multiplexing technology should be used for each optical fiber.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/56.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Code division multiplexing (CDM)</p>
+<ul>
+<li><p>Often called code division multiple access (CDMA), it is a wireless communication technology developed on the basis of spread spectrum communication technology.</p>
+</li>
+<li><p>Each user can communicate using the same frequency band at the same time.</p>
+</li>
+<li><p>Each bit time is divided into m shorter time slices, called chips; the value of m is usually 64 or 128 (for simplicity, the following examples assume that the value of m is 8).</p>
+</li>
+<li><p>In CDMA, each station is assigned a unique m-bit chip sequence: if a station wants to send bit 1, it sends its own m-bit chip sequence; if a station wants to send bit 0, it sends the complement of its own m-bit chip sequence.</p>
+</li>
+<li><p>If two or more stations send data at the same time, the signal in the channel is the superposition of the series of chip sequences or complements of chip sequences sent by these stations.</p>
+</li>
+<li><p>In order to separate each station&#39;s signal from the channel, when assigning chip sequences to each station, the following rules must be followed:</p>
+<ul>
+<li><p>The chip sequence assigned to each station must be different, and in practice pseudorandom code sequences are often used.</p>
+</li>
+<li><p>The chip sequences assigned to each station must be mutually orthogonal, that is, the normalized inner product between the corresponding chip vectors of each chip sequence is 0.</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>Let vector A represent the chip vector of station A, and let vector B represent the chip vector of station B; that the chip sequences of two different stations A and B are mutually orthogonal means that the normalized inner product of vector A and vector B is 0, that is:</p>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>⋅</mo><mi>B</mi><mo>=</mo><mfrac><mn>1</mn><mi>m</mi></mfrac><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>m</mi></msubsup><msub><mi>A</mi><mi>i</mi></msub><msub><mi>B</mi><mi>i</mi></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">A \cdot B = \frac{1}{m} \sum_{i=1}^m A_i B_i = 0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">A</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.1901em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">m</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:0em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8043em;"><span style="top:-2.4003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.2029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">m</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2997em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0502em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span></p>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-1/" rel="prev"><span>← Previous chapter</span>Chapter 1 Overview</a>
+  <a href="../chapter-3/" rel="next"><span>Next chapter →</span>Chapter 3 Data link layer</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

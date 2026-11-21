@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 1 Fundamentals — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Object-Oriented Programing</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-03-02">02 Mar 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-1-Fundamentals">Chapter 1 Fundamentals</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#11-Type-System">1 Type System</a>
+      <ul class="toc-subsections">
+        <li><a href="#Type-Alias-with-using">1.1 Type Alias with <strong>using</strong></a></li>
+        <li><a href="#Type-Deduction-with-auto">1.2 Type Deduction with <strong>auto</strong></a></li>
+        <li><a href="#stdoptional">1.3 std::optional</a></li>
+      </ul>
+    </li>
+    <li><a href="#12-Structs">2 Structs</a></li>
+    <li><a href="#13-Initialization">3 Initialization</a></li>
+    <li><a href="#14-Strings">4 Strings</a></li>
+    <li><a href="#15-Reference">5 Reference</a>
+      <ul class="toc-subsections">
+        <li><a href="#Pass-by-Reference">5.1 Pass by Reference</a></li>
+        <li><a href="#Structured-Binding-and-Reference">5.2 Structured Binding and Reference</a></li>
+        <li><a href="#Left-Value-Reference">5.3 Left Value Reference</a></li>
+        <li><a href="#Right-Value-Reference">5.4 Right Value Reference</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+using namespace std;
+
+int main() {
+    int number;
+    cout &lt;&lt; &quot;Enter a decimal number: &quot;;
+    cin &gt;&gt; number;
+    cout &lt;&lt; &quot;The number you entered is &quot; &lt;&lt; number &lt;&lt; endl;
+    return 0;
+}
+</code></pre>
+<h2 id="11-Type-System">1 Type System</h2>
+<blockquote>
+<p>C++ is a statically typed language: once a variable&#39;s type is declared, it cannot be changed.
+It is recommended to use explicit type conversion operators, such as <code>static_cast</code>、<code>dynamic_cast``、reinterpret_cast</code> 和 <code>const_cast</code></p>
+</blockquote>
+<h3 id="Type-Alias-with-using">1.1 Type Alias with <strong>using</strong></h3>
+<pre><code class="language-cpp">using Zeros = std::pair&lt;double, double&gt;;
+using Solution = std::pair&lt;bool, Zeros&gt;;
+Solution solveQuadratic(double a, double b, double c);
+</code></pre>
+<h3 id="Type-Deduction-with-auto">1.2 Type Deduction with <strong>auto</strong></h3>
+<pre><code class="language-cpp">auto result = solveQuadratic(a, b, c);
+</code></pre>
+<p>Do not specify the type, let the compiler infer the specific type.But we need to explicitly specify the type of the return value.</p>
+<h3 id="stdoptional">1.3 std::optional</h3>
+<p><code>std::optional&lt;T&gt;</code> is a template class that can wrap a value of type T that may or may not exist.</p>
+<ul>
+<li><p>Contains a value: Holds a valid value of type T</p>
+</li>
+<li><p>Does not contain a value: Holds no value, in which case it is <code>std::nullopt</code></p>
+</li>
+<li><p><code>has_value()</code> (or <code>operator bool()</code>): Checks whether it contains a value</p>
+</li>
+</ul>
+<aside class="post-callout">
+  <strong class="callout-title">Namespace</strong>
+  Divide variables or functions from different modules into multiple groups to avoid conflicts with the same name.<br>
+  When using these built-in types, we must add the prefix <code>std::</code>
+</aside>
+
+<h2 id="12-Structs">2 Structs</h2>
+<pre><code class="language-cpp">#include &lt;utility&gt;
+
+struct zjuIDCard {
+    string name;            
+    string type;        
+    int idNumber;
+
+    void display() { 
+        cout &lt;&lt; &quot;Name: &quot; &lt;&lt; name &lt;&lt; &quot;\nType: &quot; &lt;&lt; type 
+             &lt;&lt; &quot;\nID: &quot; &lt;&lt; idNumber &lt;&lt; endl;
+    }
+};
+
+zjuIDCard myCard = {&quot;Rinic&quot;, &quot;Student&quot;, 3240100000};
+
+// For structures with only two fields, we can use the built-in std::pair type in C++ as a replacement.
+std::pair&lt;std::string, int&gt; dozen { &quot;Eggs&quot;, 12 };
+std::string item = dozen.first;              // &quot;Eggs&quot;
+int quantity = dozen.second;                 // 12
+</code></pre>
+<h2 id="13-Initialization">3 Initialization</h2>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+
+std::tuple&lt;std::string, std::string, std::string&gt; getClassInfo() {
+    std::string className = &quot;CS106L&quot;;
+    std::string buildingName = &quot;Thornton 110&quot;;
+    std::string language = &quot;C++&quot;;
+    return {className, buildingName, language};
+}
+
+int main() 
+{
+    // Direct Initialization
+    // Attempt to implicitly convert the initialization value to the specified type
+    int numOne = 12;
+    int numTwo(12); 
+
+    // Uniform Initialization
+    // Type checking is performed and type conversion is not supported
+    int numThree{12};
+
+    // Structured Binding
+    auto [className, buildingName, language] = getClassInfo();
+}
+</code></pre>
+<blockquote>
+<p>Tips: Try to delay the timing of variable definitions as much as possible.</p>
+</blockquote>
+<h2 id="14-Strings">4 Strings</h2>
+<p>Three methods of <strong>initialization</strong>, similar to the previous content.</p>
+<pre><code class="language-cpp">    string str = &quot;Hello&quot;;
+    string str(&quot;Hello&quot;);
+    string str{&quot;Hello&quot;};
+</code></pre>
+<p><strong>Read an entire line of string.</strong>
+Before using getline, you should first use cin.get() to read the newline character (the function of this is to read a single character).</p>
+<pre><code class="language-cpp">    cin.get();
+    getline(cin, line_var);
+</code></pre>
+<p><strong>Get length</strong></p>
+<pre><code class="language-cpp">    int len = s.length();
+</code></pre>
+<p><strong>Constructor:</strong>
+Take the first len characters to construct a string.</p>
+<pre><code class="language-cpp">    string(const char *cp, int len);
+</code></pre>
+<p>From s2, construct a new string starting from position pos to the end.</p>
+<pre><code class="language-cpp">    string(const string&amp; s2, int pos);
+</code></pre>
+<p>Construct a new string of length len from s2 starting at position pos to the end.</p>
+<pre><code class="language-cpp">    string(const string&amp; s2, int pos, int len);
+</code></pre>
+<p><strong>Get substring</strong></p>
+<pre><code class="language-cpp">    substr(int pos, int len);
+</code></pre>
+<p><strong>Change the string</strong>
+Insert string s at position pos.</p>
+<pre><code class="language-cpp">    insert(size_t pos, const string&amp; s);
+</code></pre>
+<p>Starting from position pos, delete len characters (npos defaults to deleting until the end).</p>
+<pre><code class="language-cpp">    erase(size_t pos = 0, size_t len = npos);
+</code></pre>
+<p>Append a string at the end.</p>
+<pre><code>    append(const string&amp; str);
+</code></pre>
+<p>Starting from pos, replace len characters with str.</p>
+<pre><code class="language-cpp">    replace(size_t pos, size_t len, const string&amp; str);
+</code></pre>
+<p><strong>Find the string</strong>
+In the current string, starting from position pos, find the first occurrence of substring str.
+If found, return the position (index); if not found, return npos</p>
+<pre><code class="language-cpp">    size_t find(const string&amp; str, size_t pos = 0) const;
+</code></pre>
+<p> </p>
+<blockquote>
+<p>When writing C++ code, it is highly recommended to use <code>nullptr</code> to represent <code>NULL</code> when using <strong>pointers</strong>.</p>
+</blockquote>
+<h2 id="15-Reference">5 Reference</h2>
+<p>We can understand a reference as another name, or <strong>alias</strong>, created for an already existing memory object.</p>
+<h3 id="Pass-by-Reference">5.1 Pass by Reference</h3>
+<p>The modification of <code>n</code> by <code>squareN</code> directly acts on <code>num</code>.</p>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;math.h&gt;
+
+void squareN(int&amp; n) 
+{
+    n = std::pow(n, 2);
+}
+
+int main() {
+    int num = 2;
+    squareN(num);
+    std::cout &lt;&lt; num &lt;&lt; std::endl;
+    return 0;
+}
+</code></pre>
+<h3 id="Structured-Binding-and-Reference">5.2 Structured Binding and Reference</h3>
+<p>When using structured bindings in a <code>for</code> loop to unpack elements such as <code>std::pair</code> or <code>std::tuple</code>, it is important to consider: do we want to modify the elements in the original container?</p>
+<p>The &#39;&amp;&#39; in the first line binds to a copy of the element, while the &#39;&amp;&#39; in the third line binds to the element itself.</p>
+<pre><code class="language-cpp">void shift_correct(std::vector&lt;std::pair&lt;int, int&gt;&gt;&amp; nums) 
+{
+    for (auto&amp; pair_ref : nums) 
+    {
+        pair_ref.first++;
+        pair_ref.second++;
+    }
+}
+</code></pre>
+<h3 id="Left-Value-Reference">5.3 Left Value Reference</h3>
+<p><strong>L-Value:</strong></p>
+<ul>
+<li><p>Refers to objects that persist after expression evaluation and have identifiable memory locations</p>
+</li>
+<li><p>Can appear on the left side of the assignment operator (=) (as the assignment target) or on the right side (as the source of the value)</p>
+</li>
+</ul>
+<p><strong>R-Value:</strong></p>
+<ul>
+<li><p>Typically refers to temporary values or literal constants that do not persist after expression evaluation</p>
+</li>
+<li><p>Usually can only appear on the right side of the assignment operator</p>
+</li>
+</ul>
+<p><strong>Rules for Lvalue References:</strong></p>
+<ul>
+<li><p>Must be initialized</p>
+</li>
+<li><p>Binding cannot be changed</p>
+</li>
+<li><p>The target of the reference must have a definite memory location</p>
+</li>
+</ul>
+<pre><code class="language-cpp">int squareN(int&amp; num) {
+    return std::pow(num, 2);
+}
+
+int main()
+{
+    auto fourAgain = squareN(2);  // error!
+}
+</code></pre>
+<blockquote>
+<p>Since a reference itself is not an object whose address can be obtained:</p>
+</blockquote>
+<blockquote>
+<ol>
+<li>Conceptually, there is no direct &quot;reference to a reference&quot; type; references &quot;collapse.&quot;</li>
+</ol>
+</blockquote>
+<blockquote>
+<ol start="2">
+<li>There cannot be pointers to references.</li>
+</ol>
+</blockquote>
+<blockquote>
+<ol start="3">
+<li>There cannot be arrays of references, but there can be &quot;references to arrays.&quot;</li>
+</ol>
+</blockquote>
+<h3 id="Right-Value-Reference">5.4 Right Value Reference</h3>
+<p>Rvalue references, denoted by <code>T&amp;&amp;</code>, can bind to rvalues (temporary objects) that are about to be destroyed, thereby allowing us to &quot;steal&quot; the resources of these temporary objects.</p>
+<pre><code class="language-cpp">// Correct: The result of x * 2 is an rvalue (temporary expression result)
+int&amp;&amp; rr1 = x * 2;           
+
+// The role of `std::move`: Unconditionally converts an lvalue to an rvalue reference type, commonly used to &quot;steal&quot; resources.
+// Note: At this point, the state of x may become uncertain, and its original value should no longer be relied upon.
+int&amp;&amp; rr2 = std::move(x);   
+
+// Once an rvalue reference is initialized and has a name (such as rr1, rr2), this named rvalue reference itself becomes an lvalue! Therefore, it can be assigned a value.
+rr1 = 100;                   
+int y = rr1 + 2;
+</code></pre>
+<p>1.6 Dynamically Allocated Memory</p>
+<p><code>new</code>：Allocate memory space for the runtime program and call one or more constructors on that memory</p>
+<pre><code class="language-cpp">int *p = new int(2);
+int *a = new int[10];
+</code></pre>
+<p><code>delete</code>：First, call one or more destructors in the memory space, then release the memory.</p>
+<pre><code class="language-cpp">delete p;
+delete[] a;
+</code></pre>
+<aside class="post-callout">
+  <strong class="callout-title">int argc, char **argv</strong>
+  <code>argc</code> = argument count, <code>argv</code> = argument vector;<br>
+  <code>char **argv</code> means "pointer to a pointer to a character", and <code>int atoi(argv[1])</code> is used to convert a string to an integer.
+</aside>
+
+<hr>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  
+  <a href="../chapter-2/" rel="next"><span>Next chapter →</span>Chapter 2 STL Containers</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

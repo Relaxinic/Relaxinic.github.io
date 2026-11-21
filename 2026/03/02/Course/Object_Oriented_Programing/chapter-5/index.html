@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 5 Copying and Moving — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Object-Oriented Programing</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-04-20">20 Apr 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-5-Copying-and-Moving">Chapter 5 Copying and Moving</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#51-Copying">1 Copying</a>
+      <ul class="toc-subsections">
+        <li><a href="#Copy-Ctors">1.1 Copy Ctors</a></li>
+        <li><a href="#Shallow-Copy-vs-Deep-Copy">1.2 Shallow Copy v.s. Deep Copy</a></li>
+        <li><a href="#Copy-Assignments">1.3 Copy Assignments</a></li>
+        <li><a href="#Important-Rules">1.4 Important Rules</a></li>
+        <li><a href="#delete-and-default">1.5 delete and default</a></li>
+        <li><a href="#stdcopy">1.6 std::copy()</a></li>
+      </ul>
+    </li>
+    <li><a href="#52-Moving">2 Moving</a>
+      <ul class="toc-subsections">
+        <li><a href="#Move-Ctors">2.1 Move Ctors</a></li>
+        <li><a href="#Move-Assignments">2.2 Move Assignments</a></li>
+        <li><a href="#stdmove">2.3 std::move()</a></li>
+        <li><a href="#std-swap">2.4 std: :swap()</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<h2 id="51-Copying">1 Copying</h2>
+<p>Refers to the process of creating a completely new, independent copy of an object based on an existing object.</p>
+<p>Copying occurs when an object is passed by value as a parameter to a function:</p>
+<pre><code class="language-cpp">// Assume Currency is a class.
+void displayCurrency(Currency item) { 
+    // item is a copy of bucks
+    std::cout &lt;&lt; &quot;Value: &quot; &lt;&lt; item.dollars() &lt;&lt; std::endl;
+}
+
+int main() {
+    Currency bucks(100, 0);
+    displayCurrency(bucks); // bucks is copied into the parameter item
+    return 0;
+}
+</code></pre>
+<p>In this example, when <code>displayCurrency(bucks)</code> is called, the contents of the <code>bucks</code> object are used to initialize the function parameter <code>item</code>, a process typically carried out by the copy constructor.</p>
+<h3 id="Copy-Ctors">1.1 Copy Ctors</h3>
+<p>Copy constructors are a special type of constructor that defines how to initialize a new object from another object of the same class.</p>
+<pre><code class="language-cpp">className::className(const className&amp; other);
+</code></pre>
+<p>If we do not explicitly provide a copy constructor for a class, the C++ compiler will automatically generate one — this default copy constructor performs a member-wise copy.</p>
+<p>For basic data types (such as <code>int</code>, <code>double</code>) and member objects that inherently have good copy semantics (such as <code>std::string</code>), this default behavior is usually correct.</p>
+<p>However, if the class contains pointer members, the default copy constructor only copies the value of the pointer (i.e., the address), not the data it points to. This causes the pointer members of the original object and the copied object to point to the same memory area (i.e., shallow copy). In such cases, we need to define our own copy constructor.</p>
+<p>When copying occurs:</p>
+<ul>
+<li>Passing by value: when an object is passed as an argument to a function</li>
+<li>Returning an object by value: when a function returns an object, the compiler often performs (named) return value optimization to avoid unnecessary copying</li>
+<li>Object initialization: when one object is used to initialize another object</li>
+</ul>
+<pre><code class="language-cpp">Person p1(&quot;Alice&quot;);
+Person p2 = p1;    // Calling the copy constructor
+Person p3(p1);     // Explicitly calling the copy constructor
+</code></pre>
+<p>If you want to make a class&#39;s objects non-copyable, you can use the following methods:</p>
+<ul>
+<li><p>Declare the copy constructor and copy assignment operator as <code>= delete</code>; (C++11 and later, recommended)</p>
+</li>
+<li><p>Declare them as <code>private</code> and provide no implementation, so any attempt to copy the object will fail at compile time (traditional approach)</p>
+</li>
+</ul>
+<p>When defining a custom copy constructor, remember to copy all member variables and call the appropriate copy constructors of all base classes (if any).</p>
+<h3 id="Shallow-Copy-vs-Deep-Copy">1.2 Shallow Copy v.s. Deep Copy</h3>
+<blockquote>
+<p>Problems with shallow copy: dangling pointers, double free, unintended modification of shared data</p>
+</blockquote>
+<pre><code class="language-cpp">#include &lt;cstring&gt;
+#include &lt;iostream&gt;
+
+class Person 
+{
+private:
+    char* name;
+
+public:
+    Person(const char* n) 
+    {
+        if (n) 
+        {
+            name = new char[std::strlen(n) + 1];
+            std::strcpy(name, n);
+        } 
+        else 
+        {
+            name = new char[1];
+            name[0] = &#39;\0&#39;;
+        }
+        std::cout &lt;&lt; &quot;Person created: &quot; &lt;&lt; (name ? name : &quot;null&quot;) &lt;&lt; std::endl;
+    }
+
+    ~Person() 
+    {
+        std::cout &lt;&lt; &quot;Person destroyed: &quot; &lt;&lt; (name ? name : &quot;null&quot;) &lt;&lt; std::endl;
+        delete[] name; // Free dynamically allocated memory
+    }
+
+    // Person(const Person&amp; other) : name(other.name) {} // Wrong shallow copy!
+
+    // Correct deep copy constructor
+    Person(const Person&amp; other) 
+    {
+        if (other.name) 
+        {
+            name = new char[std::strlen(other.name) + 1];
+            std::strcpy(name, other.name);
+        } 
+        else 
+        {
+            name = new char[1];
+            name[0] = &#39;\0&#39;;
+        }
+        std::cout &lt;&lt; &quot;Person (deep) copied: &quot; &lt;&lt; name &lt;&lt; std::endl;
+    }
+
+    // Usually, a copy assignment operator is also needed (see below).
+    Person&amp; operator=(const Person&amp; other) 
+    {
+        std::cout &lt;&lt; &quot;Person copy assignment for: &quot; &lt;&lt; (name ? name : &quot;null&quot;) &lt;&lt; &quot; from &quot; &lt;&lt; (other.name ? other.name : &quot;null&quot;) &lt;&lt; std::endl;
+        if (this == &amp;other) 
+        { // Handling Self-Assignment
+            return *this;
+        }
+        delete[] name; // Release old resources
+        if (other.name) 
+        {
+            name = new char[std::strlen(other.name) + 1];
+            std::strcpy(name, other.name);
+        } 
+        else 
+        {
+            name = new char[1];
+            name[0] = &#39;\0&#39;;
+        }
+        return *this;
+    }
+
+    void print() const 
+    {
+        std::cout &lt;&lt; &quot;Name: &quot; &lt;&lt; (name ? name : &quot;N/A&quot;) &lt;&lt; std::endl;
+    }
+};
+</code></pre>
+<h3 id="Copy-Assignments">1.3 Copy Assignments</h3>
+<p>Construction: An object is constructed only once at the beginning of its lifecycle.</p>
+<pre><code class="language-cpp">Person p1(&quot;Alice&quot;);  // Calling an ordinary constructor
+Person p2 = p1;      // Calling the copy constructor (initializing p2)
+</code></pre>
+<p>Assignment: An existing object can be assigned multiple times.</p>
+<pre><code class="language-cpp">Person p3(&quot;Bob&quot;);
+p3 = p1;             // Call the copy assignment operator (p3 already exists)
+</code></pre>
+<p>The purpose of copy assignment operators is to completely replace the state of an existing object with the state of another existing object of the same type.</p>
+<pre><code class="language-cpp">T&amp; T::operator=(const T&amp; other);
+</code></pre>
+<p>When overloading the copy assignment operator, especially when the class manages resources, it is strongly recommended to strictly follow these steps:</p>
+<ul>
+<li>Handle self-assignment: This is a crucial step to prevent potential errors. If the source object and the target object are the same (<code>obj = obj;</code>), performing resource release and allocation without checking could lead to the object&#39;s resources being incorrectly released, resulting in undefined behavior.</li>
+</ul>
+<pre><code class="language-cpp">if (this == &amp;other) 
+{
+    return *this;
+}
+</code></pre>
+<ul>
+<li>Release the resources currently held by the object: Before copying the new state from the other object, the current object (*this) may already be managing some resources. These resources must be properly released to avoid resource leaks (such as memory leaks).</li>
+</ul>
+<pre><code class="language-cpp">delete[] this-&gt;name_;
+this-&gt;name_ = nullptr;
+</code></pre>
+<ul>
+<li>Allocate new resources and copy the source object data: Similar to the copy constructor, if the class manages resources, the assignment operation must also perform a deep copy. Allocate new, independent resources for the current object (*this), and then copy the data from the other object (including the contents of the resources it manages).</li>
+</ul>
+<pre><code class="language-cpp">if (other.name_) 
+{
+    this-&gt;name_ = new char[std::strlen(other.name_) + 1];   // Allocate new memory for this-&gt;name_
+    std::strcpy(this-&gt;name_, other.name_);                  // Copy content
+} 
+else 
+{
+    this-&gt;name_ = nullptr;
+}
+// Copy other non-resource-dependent member variables
+this-&gt;age_ = other.age_;
+</code></pre>
+<ul>
+<li>Return a reference to the current object: return *this to support chained assignment.</li>
+</ul>
+<pre><code class="language-cpp">return *this;
+</code></pre>
+<p>If a copy assignment operator is not explicitly defined, the compiler will automatically generate one, and it also performs memberwise assignment:</p>
+<ul>
+<li>For members of built-in types, it directly copies the value.</li>
+<li>For members of class types, it calls the copy assignment operator of that member.</li>
+<li>For pointer-type members, it only copies the address value of the pointer (shallow copy), without copying the data pointed to by the pointer.</li>
+</ul>
+<p>It can be seen that in most cases, the implementation code of the copy constructor and the copy assignment operator is very similar, meaning there is code duplication. However, even so, we should not have the copy assignment operator directly call the copy constructor, nor the other way around, because the former is equivalent to constructing an already existing object, while the latter attempts to assign a value to another object using an object that has not yet been constructed—both of which are meaningless.</p>
+<p>The correct approach is to place the duplicated code into a third-party function (typically declared as private), and then have both the copy constructor and the copy assignment operator call this function.</p>
+<h3 id="Important-Rules">1.4 Important Rules</h3>
+<ul>
+<li><p>Rule of Three (C++03): If a class defines any of the destructor, copy constructor, or copy assignment operator, then typically all three need to be defined, because customizing one of these functions usually indicates that the class manages resources and requires special handling of their lifecycle and copy behavior.</p>
+</li>
+<li><p>Rule of Five (C++11 and later): With the introduction of move semantics, this rule expands to the Rule of Five—if any of the above three is defined, one usually also needs to consider defining the move constructor and move assignment operator, or explicitly <code>delete</code> or <code>default</code> them.</p>
+</li>
+<li><p>Rule of Zero (C++11 and later): If a class does not directly manage any resources but instead manages them through its member objects, then the class typically does not need to define any destructor, copy constructor, copy assignment operator, move constructor, or move assignment operator; the compiler-generated default versions usually work correctly.</p>
+</li>
+</ul>
+<h3 id="delete-and-default">1.5 delete and default</h3>
+<blockquote>
+<p>The <code>delete</code> introduced here is not the one used to release dynamically allocated memory!</p>
+</blockquote>
+<p>After C++11, the <code>delete</code> keyword can also be used to disable the automatic generation or implicit use of a class&#39;s special member functions (SMFs), typically to prevent operations such as copying or assigning objects.</p>
+<pre><code class="language-cpp">class NonCopyable {
+public:
+    NonCopyable() = default;
+    NonCopyable(const NonCopyable&amp;) = delete;             // Disable copy constructor
+    NonCopyable&amp; operator=(const NonCopyable&amp;) = delete;  // Disable copy assignment operator
+};
+</code></pre>
+<p>The main function of <code>default</code> is to explicitly require the compiler to generate default special member functions.</p>
+<pre><code class="language-cpp">class AnotherClass {
+public:
+    // ...
+    AnotherClass(const AnotherClass&amp; other) = default;              // Explicitly using the default copy constructor
+    AnotherClass&amp; operator=(const AnotherClass&amp; other) = default;   // Explicitly using the default copy assignment operator
+    ~AnotherClass() = default;                                      // Explicitly using the default destructor
+};
+</code></pre>
+<h3 id="stdcopy">1.6 std::copy()</h3>
+<p><code>std::copy</code> is a generic algorithm in the C++ standard library&#39;s <code>&lt;algorithm&gt;</code> header. It copies elements from one range to another location and can be used with various data structures, such as arrays and other containers.</p>
+<p>The simplified function signature is as follows:</p>
+<pre><code class="language-cpp">template&lt;class InputIt, class OutputIt&gt;
+OutputIt copy(InputIt first, InputIt last, OutputIt result);
+</code></pre>
+<ul>
+<li><p><code>first</code>: Input iterator pointing to the first element to be copied in the source range</p>
+</li>
+<li><p><code>last</code>: Input iterator pointing to the position one past the last element to be copied in the source range (i.e., the &quot;past-the-end&quot; iterator); this element itself will not be copied</p>
+</li>
+<li><p><code>result</code>: Output iterator pointing to the position in the target range where the first element will be copied</p>
+</li>
+<li><p>Returns an output iterator pointing to the position one past the last copied element in the target range</p>
+</li>
+</ul>
+<p>The caller must ensure that the memory area pointed to by the target range <code>result</code> is large enough to accommodate all elements in the source range <code>[first, last)</code>. <code>std::copy</code> itself does not perform any memory allocation or size checking.</p>
+<p>The caller must ensure that the memory area pointed to by the target range result is large enough to accommodate all elements in the source range [first, last). std::copy itself does not perform any memory allocation or size checking.</p>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt; // For std::copy
+#include &lt;iterator&gt;  // For std::back_inserter
+
+int main() {
+    std::vector&lt;int&gt; source = {1, 2, 3, 4, 5};
+    std::vector&lt;int&gt; destination1(source.size()); // The target container needs to have enough space.
+
+    // Copy to a pre-allocated container
+    std::copy(source.begin(), source.end(), destination1.begin());
+
+    for (int val : destination1) {
+        std::cout &lt;&lt; val &lt;&lt; &quot; &quot;; // Output: 1 2 3 4 5
+    }
+    std::cout &lt;&lt; std::endl;
+
+    std::vector&lt;int&gt; destination2;
+    // Use std::back_inserter to dynamically expand the target container (commonly used with vector, list, deque)
+    std::copy(source.begin(), source.end(), std::back_inserter(destination2));
+
+    for (int val : destination2) {
+        std::cout &lt;&lt; val &lt;&lt; &quot; &quot;; // Output: 1 2 3 4 5
+    }
+    std::cout &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+<p><code>std::copy_if</code> is a variant of <code>std::copy</code> that only copies elements from the source range that satisfy a specific condition. It requires an additional parameter—a unary predicate (a function or function object that returns a boolean value to determine whether an element should be copied, typically written as a lambda expression).</p>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt; // For std::copy_if
+#include &lt;iterator&gt;  // For std::back_inserter
+
+int main() {
+    std::vector&lt;int&gt; numbers = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    std::vector&lt;int&gt; even_numbers;
+
+    // Copy only even numbers
+    std::copy_if(numbers.begin(), numbers.end(),
+                std::back_inserter(even_numbers),
+                [](int n){ return n % 2 == 0; });
+
+    for (int val : even_numbers) {
+        std::cout &lt;&lt; val &lt;&lt; &quot; &quot;; // ouput: 2 4 6 8 10
+    }
+    std::cout &lt;&lt; std::endl;
+
+    return 0;
+}
+</code></pre>
+<h2 id="52-Moving">2 Moving</h2>
+<p>C++11 introduced move semantics, allowing resources (such as dynamically allocated memory) to be &quot;transferred&quot; from one object to another instead of performing expensive copies.</p>
+<p>The core of move semantics is the rvalue reference, denoted by <code>&amp;&amp;</code>, which can bind to temporary objects (rvalues) that are about to be destroyed.</p>
+<h3 id="Move-Ctors">2.1 Move Ctors</h3>
+<p>When a new object is initialized with an rvalue (typically a temporary object or the result of <code>std::move</code>), the move constructor is called. Its task is not to copy resources, but to &quot;steal&quot; resources from the source object, leaving the source object in a valid but typically empty or unspecified state.</p>
+<pre><code class="language-cpp">ClassName(ClassName&amp;&amp; other) noexcept;
+</code></pre>
+<ul>
+<li><p><code>ClassName&amp;&amp; other</code>: The parameter is an rvalue reference to an object of the same class.</p>
+</li>
+<li><p><code>noexcept</code> (optional, but strongly recommended): If the move constructor might throw an exception, certain components in the standard library may choose copy over move because they cannot provide a strong exception guarantee, thus losing performance benefits. Therefore, <code>noexcept</code> should be used to ensure the move constructor does not throw exceptions.</p>
+</li>
+</ul>
+<pre><code class="language-cpp">class MyString {
+public:
+    char* data_;
+    size_t size_;
+
+    // ...
+    // Move Constructor
+    MyString(MyString&amp;&amp; other) noexcept
+        : data_(other.data_), size_(other.size_) {
+        std::cout &lt;&lt; &quot;Move constructor from: \&quot;&quot; &lt;&lt; (other.data_ ? other.data_ : &quot;&quot;) &lt;&lt; &quot;\&quot;\n&quot;;
+        // 1. Steal resources (shallow copy pointer and size)
+        // data_ = other.data_;
+        // size_ = other.size_; // Already done in the member initializer list
+
+        // 2. Place the source object in a valid but unspecified (usually empty) state
+        // Ensure that the source object does not release the stolen resources when destructed
+        other.data_ = nullptr;
+        other.size_ = 0;
+    }
+    // ...
+};
+</code></pre>
+<h3 id="Move-Assignments">2.2 Move Assignments</h3>
+<p>When assigning an existing object with an rvalue (a temporary object or the result of <code>std::move</code>), the move assignment operator is called. It first releases the resources held by the current object, then &quot;steals&quot; the resources from the source object, leaving the source object in a valid but unspecified state.</p>
+<pre><code class="language-cpp">ClassName&amp; operator=(ClassName&amp;&amp; other) noexcept;
+</code></pre>
+<ul>
+<li><p><code>ClassName&amp;&amp; other</code>: The parameter is an rvalue reference to an object of the same class.</p>
+</li>
+<li><p><code>noexcept</code> (optional, but strongly recommended): If the move constructor might throw an exception, certain components in the standard library may choose copy over move because they cannot provide a strong exception guarantee, thus losing performance benefits. Therefore, <code>noexcept</code> should be used to prevent the move constructor from throwing exceptions.</p>
+</li>
+<li><p>Return <code>ClassName&amp;</code> (i.e., <code>*this</code>) to support chained assignment.</p>
+</li>
+</ul>
+<pre><code class="language-cpp">// Continuing from the example above
+class MyString {
+public:
+    char* data_;
+    size_t size_;
+
+    // ...
+    // Move assignment operator
+    MyString&amp; operator=(MyString&amp;&amp; other) noexcept {
+        std::cout &lt;&lt; &quot;Move assignment operator from: \&quot;&quot; &lt;&lt; (other.data_ ? other.data_ : &quot;&quot;) &lt;&lt; &quot;\&quot;\n&quot;;
+        if (this == &amp;other) { // Self-assignment check (although alias situations are rare for rvalue reference sources, it is still a good habit)
+            return *this;
+        }
+
+        // 1. Release the resources held by the current object
+        delete[] data_;
+
+        // 2. Steal the resources of the source object
+        data_ = other.data_;
+        size_ = other.size_;
+
+        // 3. Place the source object in a valid but unspecified (usually empty) state.
+        other.data_ = nullptr;
+        other.size_ = 0;
+
+        return *this;
+    }
+    // ...
+};
+</code></pre>
+<h3 id="stdmove">2.3 std::move()</h3>
+<p><code>std::move</code> itself does not perform any move operation. It is a library function (located in the <code>&lt;utility&gt;</code> header) that unconditionally converts its argument into an rvalue reference.</p>
+<pre><code class="language-cpp">#include &lt;vector&gt;
+#include &lt;string&gt;
+#include &lt;utility&gt; 
+#include &lt;iostream&gt;
+
+int main() {
+    std::string str1 = &quot;hello&quot;;
+    std::cout &lt;&lt; &quot;Before move, str1: &quot; &lt;&lt; str1 &lt;&lt; std::endl;
+
+    std::string str2 = std::move(str1); // Calling the move constructor, the resources of str1 are transferred to str2.
+
+    std::cout &lt;&lt; &quot;After move, str1: &quot; &lt;&lt; str1 &lt;&lt; &quot; (state is valid but unspecified)&quot; &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;After move, str2: &quot; &lt;&lt; str2 &lt;&lt; std::endl;
+
+    std::vector&lt;std::string&gt; vec1;
+    vec1.push_back(&quot;world&quot;);
+
+    std::vector&lt;std::string&gt; vec2 = std::move(vec1); // Move, the internal buffer of vec1 may be taken over by vec2.
+
+    std::cout &lt;&lt; &quot;vec1 size after move: &quot; &lt;&lt; vec1.size() &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;vec2 size after move: &quot; &lt;&lt; vec2.size() &lt;&lt; std::endl;
+    if (!vec2.empty()) {
+        std::cout &lt;&lt; &quot;vec2[0] after move: &quot; &lt;&lt; vec2[0] &lt;&lt; std::endl;
+    }
+
+    return 0;
+}
+</code></pre>
+<p>State of the moved-from object: After calling <code>std::move(obj)</code>, if a move operation actually occurs (i.e., a move constructor or move assignment is matched), the state of the object <code>obj</code> becomes &quot;valid but unspecified.&quot; This means:</p>
+<ul>
+<li><p>The destructor can still be called on <code>obj</code> (it must be safely destructible).</p>
+</li>
+<li><p><code>obj</code> can be reassigned.</p>
+</li>
+<li><p>However, you should no longer rely on the value or state that <code>obj</code> previously held, unless the class&#39;s documentation explicitly specifies the state after moving (e.g., <code>std::string</code> is typically empty after being moved).</p>
+</li>
+</ul>
+<p>Do not use <code>std::move</code> on <code>const</code> objects: <code>std::move</code> converts <code>const T</code> to <code>const T&amp;&amp;</code>.</p>
+<p>Be cautious when using <code>std::move</code> in a <code>return</code> statement:</p>
+<h3 id="std-swap">2.4 std: :swap()</h3>
+<p>The <code>std::swap</code> function (located in <code>&lt;utility&gt;</code> (C++11 and later) or <code>&lt;algorithm&gt;</code> (before C++11)) is used to swap the values of two objects.</p>
+<p>The implementation is similar to:</p>
+<pre><code class="language-cpp">template&lt;class T&gt;
+void swap(T&amp; a, T&amp; b) {
+    T temp = std::move(a); // Move Constructor
+    a = std::move(b);      // Move assignment
+    b = std::move(temp);   // Move assignment
+}
+</code></pre>
+<p>Sometimes, we can provide a more efficient specialized version by customizing <code>std::swap</code>.</p>
+<ul>
+<li><p>Provide member and non-member <code>swap</code> functions: used to perform the lowest-level, most efficient swap operations, typically swapping internal pointers or basic type members.</p>
+</li>
+<li><p>Use <code>using std::swap;</code> and an unqualified call when invoking <code>swap</code>.</p>
+</li>
+</ul>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-4/" rel="prev"><span>← Previous chapter</span>Chapter 4 Functions</a>
+  <a href="../chapter-6/" rel="next"><span>Next chapter →</span>Chapter 6 Operator Overloading</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

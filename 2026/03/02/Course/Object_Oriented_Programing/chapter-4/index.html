@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 4 Functions — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Object-Oriented Programing</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-04-02">02 Apr 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-4-Functions">Chapter 4 Functions</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#41-Parameter-Passing">1 Parameter Passing</a></li>
+    <li><a href="#42-Function-Return">2 Function Return</a></li>
+    <li><a href="#43-Overloaded-Functions">3 Overloaded Functions</a>
+      <ul class="toc-subsections">
+        <li><a href="#Delegating-Constructors">3.1 Delegating Constructors</a></li>
+      </ul>
+    </li>
+    <li><a href="#44-Default-Arguments">4 Default Arguments</a></li>
+    <li><a href="#45-Inline-Functions">5 Inline Functions</a></li>
+    <li><a href="#46-Lambda">6 Lambda</a></li>
+    <li><a href="#47-Ranges-and-Views">7 Ranges and Views</a></li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<h2 id="41-Parameter-Passing">1 Parameter Passing</h2>
+<p>Generally, functions use pass-by-value. In this case, function parameters are initialized with copies of the actual arguments, and these copies are generated through the object&#39;s copy constructor, which makes pass-by-value relatively costly.</p>
+<pre><code class="language-cpp">bool validateStudent(Student s);
+</code></pre>
+<p>We can avoid these copy constructors and destructors by using pass by reference-to-const, which passes the actual argument itself without creating a copy. Additionally, the const modifier indicates that the function cannot modify the parameter, so there is no need to worry about altering the actual argument.</p>
+<pre><code class="language-cpp">bool validateStudent(const Student&amp; s);
+</code></pre>
+<p>Passing by constant reference can also avoid the slicing problem: when a derived class object is passed by value to a base class object, the base class&#39;s copy constructor is called, which causes the derived class-specific parts to be discarded, retaining only the base class components.</p>
+<p>For built-in types (such as int, double, etc.) or small user-defined classes, passing by value may be more efficient. After all, the underlying implementation of references is pointers, and pointers themselves also occupy a significant amount of space.</p>
+<h2 id="42-Function-Return">2 Function Return</h2>
+<p>Functions have two ways to create new objects: on the stack or on the heap.</p>
+<ul>
+<li><p>Local variables are created on the stack. Before a function exits, all local variables created inside the function will be destroyed.</p>
+</li>
+<li><p>Objects created with <code>new</code> are based on the heap.</p>
+</li>
+<li><p>Do not attempt to return a local static object. Since such an object exists throughout the entire program&#39;s lifecycle, if multiple places need to use this object, they are actually pointing to the same object.</p>
+</li>
+</ul>
+<p>Handles: Things like pointers and references that can represent the internal data of an object refer to any identifier or reference that can be used to access or manipulate another entity (such as an object, resource, file, etc.).</p>
+<p>In short: Unless you are absolutely certain, a function should return a complete object rather than a handle to that object.</p>
+<h2 id="43-Overloaded-Functions">3 Overloaded Functions</h2>
+<p>Function overloading: It allows us to define multiple functions with the same name, as long as their parameter lists differ in type, number, or order. The compiler automatically selects the best matching function version based on the arguments provided at the call, and can perform appropriate automatic type conversions.</p>
+<blockquote>
+<p>Destructors must not be overloaded!</p>
+</blockquote>
+<h3 id="Delegating-Constructors">3.1 Delegating Constructors</h3>
+<p>When designing a class, it is sometimes encountered that multiple constructors contain a large amount of repetitive initialization code, which is generally considered a bad practice known as code duplication.</p>
+<p>C++11 introduced delegating constructors to address this issue: a constructor can call another constructor of the same class in its member initializer list, thereby &quot;delegating&quot; common initialization tasks to it. This can form a delegation chain.</p>
+<pre><code class="language-cpp">class class_c {
+public:
+    int max;
+    int min;
+    int middle;
+
+    class_c(int my_max) 
+    {
+        max = my_max &gt; 0 ? my_max : 10;
+        min = 1;
+        middle = (max + min) / 2;
+        std::cout &lt;&lt; &quot;Delegated to: class_c(int)&quot; &lt;&lt; std::endl;
+    }
+
+    // This constructor delegates to class_c(int).
+    class_c(int my_max, int my_min) : class_c(my_max) 
+    {
+        // max has already been initialized by class_c(my_max)
+        min = my_min &gt; 0 &amp;&amp; my_min &lt; max ? my_min : 1;
+        middle = (this-&gt;max + this-&gt;min) / 2; // Use this-&gt; to explicitly access members
+        std::cout &lt;&lt; &quot;Delegated to: class_c(int, int)&quot; &lt;&lt; std::endl;
+    }
+
+    // This constructor delegates to class_c(int, int).
+    class_c(int my_max, int my_min, int my_middle) : class_c(my_max, my_min)
+    {
+        // max and min have been initialized by class_c(my_max, my_min)
+        middle = my_middle &lt; this-&gt;max &amp;&amp; my_middle &gt; this-&gt;min ? my_middle : (this-&gt;max + this-&gt;min) / 2;
+        std::cout &lt;&lt; &quot;Called: class_c(int, int, int)&quot; &lt;&lt; std::endl;
+    }
+};
+</code></pre>
+<h2 id="44-Default-Arguments">4 Default Arguments</h2>
+<p>Default arguments: Values specified for parameters when declaring a function</p>
+<p>When defining a function&#39;s parameter list, default parameters must be specified from right to left. That is, if a parameter has a default value, all parameters to its right must also have default values.</p>
+<pre><code class="language-cpp">int harpo(int n, int m = 4, int j = 5);
+
+// int chico(int n, int m = 6, int j); // Error! j has no default value, but m does
+
+// Call example
+int beeps;
+beeps = harpo(2);       // Equivalent to harpo(2, 4, 5);
+beeps = harpo(1, 8);    // Equivalent to harpo(1, 8, 5);
+beeps = harpo(8, 7, 6); // All parameters are provided, no default values are used.
+</code></pre>
+<blockquote>
+<p>Default parameters should be specified in the function declaration (prototype). If a function has both a declaration and a definition (in different locations), the default parameters should not be repeated in the definition.
+The best practice is to place function declarations with default parameters in header files.</p>
+</blockquote>
+<pre><code class="language-cpp">// Example_MyClass.h
+class MyClass {
+public:
+    void func(int a, int b = 10);
+};
+</code></pre>
+<pre><code class="language-cpp">// Example_MyClass.cpp
+void MyClass::func(int a, int b) {
+    // ... Implementation ...
+}
+</code></pre>
+<h2 id="45-Inline-Functions">5 Inline Functions</h2>
+<p>Problems with regular functions: overhead of function calls</p>
+<ul>
+<li>Pushing arguments onto the stack  </li>
+<li>Pushing the return address onto the stack  </li>
+<li>Jumping to the function&#39;s code location  </li>
+<li>(After the function executes) preparing the return value  </li>
+<li>Restoring the stack, popping the previously pushed content, and returning control to the caller</li>
+</ul>
+<p>Inline functions: directly &quot;embed&quot; or &quot;expand&quot; the function&#39;s code body at the call site, instead of performing a regular function call jump. This is similar to text substitution in preprocessor macros, but inline functions are real functions with advantages such as type checking.  </p>
+<p>By adding the <code>inline</code> keyword before the function declaration and definition, you suggest (note: not &quot;force&quot;) the compiler to treat it as an inline function:</p>
+<pre><code class="language-cpp">inline int plusOne(int x);
+inline int plusOne(int x) { return ++x; };
+</code></pre>
+<p>The definition of an inline function is typically placed in a header file. This way, any source file that <code>#include</code>s the header file can obtain the function definition, allowing the compiler to perform inlining.</p>
+<p>Even without explicitly using the <code>inline</code> keyword, any member function defined inside a class declaration may be considered an inline function.</p>
+<p>Advantages:</p>
+<ul>
+<li><p>Reduces the overhead of function calls, potentially improving execution speed, especially for small, frequently called functions.</p>
+</li>
+<li><p>Safer than C macros, as macros do not perform parameter type checking and are prone to errors, whereas inline functions do perform type checking.</p>
+</li>
+</ul>
+<p>Disadvantages:</p>
+<ul>
+<li><p>If the function body is large, inlining can cause code bloat at the call site, increasing the size of the final executable file (a typical space-for-time trade-off).</p>
+</li>
+<li><p>Since inline functions are expanded at compile time, debuggers may not be able to set breakpoints or step through the inline function&#39;s code as they would with regular functions.</p>
+</li>
+</ul>
+<blockquote>
+<p>It is important to note that the <code>inline</code> keyword is merely a suggestion to the compiler; the compiler may not necessarily adopt this suggestion and may decide whether to actually inline a function based on its own optimization strategies.</p>
+</blockquote>
+<p>Suitable scenarios: The best candidates for inlining are functions with very small bodies (e.g., only one or two lines of code) that are called frequently, such as simple getter and setter functions.</p>
+<p>Less suitable scenarios:</p>
+<ul>
+<li><p>Functions with large bodies (e.g., a rough standard of over 20 lines of code, though this is not a hard rule): Inlining them may significantly increase code size, while performance gains may be negligible or even worsen due to reduced code cache efficiency.</p>
+</li>
+<li><p>Recursive functions.</p>
+</li>
+<li><p>Functions containing complex logic (e.g., loops, extensive branching).</p>
+</li>
+<li><p>Functions that include virtual function calls.</p>
+</li>
+</ul>
+<aside class="post-callout">
+  <strong class="callout-title">Warning</strong>
+  The following content is supplementary and is not part of the course exam points.
+</aside>
+
+<h2 id="46-Lambda">6 Lambda</h2>
+<p>Lambda functions are a powerful feature introduced in the C++11 standard, allowing us to define anonymous function objects in code. Lambda functions are particularly suitable for scenarios that require short, one-time-use functions.</p>
+<pre><code class="language-cpp">[capture_clause](parameters) mutable_specifier exception_specifier -&gt; return_type 
+{
+    // function body
+}
+</code></pre>
+<ul>
+<li><p><code>[capture_clause]</code>: The capture clause defines which variables from the enclosing scope the lambda function can access and how it accesses them (by value or by reference). The specific cases are as follows:</p>
+<ul>
+<li><p><code>[]</code>: Does not capture any external variables.</p>
+</li>
+<li><p><code>[var]</code>: Captures the variable <code>var</code> by value; inside the lambda function, <code>var</code> is a copy, and modifying it does not affect the external <code>var</code>.</p>
+</li>
+<li><p><code>[&amp;var]</code>: Captures the variable <code>var</code> by reference; modifying <code>var</code> inside the lambda function affects the external <code>var</code>.</p>
+</li>
+<li><p><code>[=]</code>: Captures by value all local variables visible at the point of lambda definition (including <code>this</code> if the lambda is defined inside a member function).</p>
+</li>
+<li><p><code>[&amp;]</code>: Captures by reference all local variables visible at the point of lambda definition (including <code>this</code> if the lambda is defined inside a member function).</p>
+</li>
+<li><p><code>[this]</code>: Captures the <code>this</code> pointer of the current object by value. Allows access to the class&#39;s member variables and member functions.</p>
+</li>
+<li><p><code>[&amp;, var]</code>: Captures all variables by reference, but captures <code>var</code> by value.</p>
+</li>
+<li><p><code>[=, &amp;var]</code>: Captures all variables by value, but captures <code>var</code> by reference.</p>
+</li>
+<li><p>C++14 introduced init-capture, also known as generalized lambda capture, which allows declaring and initializing new variables within the capture clause. These variables are only visible inside the lambda.</p>
+</li>
+</ul>
+</li>
+</ul>
+<pre><code class="language-cpp">[x = std::move(my_large_object)](){ /* ... */ }
+[val = compute_value()](){ /* ... */ }
+</code></pre>
+<ul>
+<li><p><code>(parameters)</code>: Parameter list, similar to that of a regular function, defining the parameters accepted by the Lambda function. It can be empty.</p>
+</li>
+<li><p><code>mutable_specifier</code>: Mutable specifier (optional)</p>
+<ul>
+<li>By default, variables captured by value are <code>const</code> inside the Lambda function body; if you want to modify the copy of a variable captured by value within the Lambda function, you need to use the <code>mutable</code> keyword.</li>
+</ul>
+</li>
+<li><p><code>exception_specifier</code>: Exception specifier (optional), used to specify the types of exceptions that the Lambda function may throw.</p>
+<ul>
+<li>For example, <code>noexcept</code> indicates that the Lambda will not throw any exceptions.</li>
+</ul>
+</li>
+<li><p><code>-&gt; return_type</code>: Return type (optional), specifying the return type of the Lambda function.</p>
+<ul>
+<li><p>In many cases, the compiler can automatically deduce the return type, so it can be omitted.</p>
+</li>
+<li><p>If the Lambda function body contains multiple <code>return</code> statements, or the expression type of the <code>return</code> statement is unclear, or you want to explicitly specify a different return type, you need to explicitly specify the return type.</p>
+</li>
+</ul>
+</li>
+<li><p><code>{ // function body }</code>: Function body, containing the actual execution code of the Lambda function.</p>
+</li>
+</ul>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+#include &lt;string&gt;
+
+int main() 
+{
+    // 1. Basic lambda, no capture, no parameters, implicitly returns void
+    [] { std::cout &lt;&lt; &quot;Hello from Lambda!&quot; &lt;&lt; std::endl; }(); // Define and immediately invoke
+
+    // 2. Lambda with Parameters
+    auto add = [](int a, int b) -&gt; int {
+        return a + b;
+    };
+    std::cout &lt;&lt; &quot;Sum: &quot; &lt;&lt; add(5, 3) &lt;&lt; std::endl; // Output: Sum: 8
+
+    // 3. Automatic return type deduction (omitting -&gt; double)
+    auto multiply = [](double a, double b) {
+        return a * b;
+    };
+    std::cout &lt;&lt; &quot;Product: &quot; &lt;&lt; multiply(2.5, 4.0) &lt;&lt; std::endl; // Output: Product: 10.0
+
+    // 4. Example of a Catch Clause
+    int x = 10;
+    int y = 20;
+
+    // Capture x and y by value
+    auto capture_by_value = [x, y]() {
+        // x and y here are copies; modifying them will not affect the external x and y.
+        std::cout &lt;&lt; &quot;Inside by_value: x = &quot; &lt;&lt; x &lt;&lt; &quot;, y = &quot; &lt;&lt; y &lt;&lt; std::endl;
+        // x = 100; // Compilation error because x is const (unless mutable is used)
+    };
+    capture_by_value();
+
+    // Capture x and y by reference
+    auto capture_by_reference = [&amp;x, &amp;y]() {
+        x = 100; // Modifying will affect the external x
+        y = 200; // Modifying will affect the external y
+        std::cout &lt;&lt; &quot;Inside by_reference: x = &quot; &lt;&lt; x &lt;&lt; &quot;, y = &quot; &lt;&lt; y &lt;&lt; std::endl;
+    };
+    capture_by_reference();
+    std::cout &lt;&lt; &quot;Outside after by_reference: x = &quot; &lt;&lt; x &lt;&lt; &quot;, y = &quot; &lt;&lt; y &lt;&lt; std::endl; // Output: x = 100, y = 200
+
+    // Implicitly capture all visible variables by value
+    int z = 30;
+    auto capture_all_by_value = [=]() {
+        std::cout &lt;&lt; &quot;Inside all_by_value: x = &quot; &lt;&lt; x &lt;&lt; &quot;, y = &quot; &lt;&lt; y &lt;&lt; &quot;, z = &quot; &lt;&lt; z &lt;&lt; std::endl;
+    };
+    capture_all_by_value();
+
+    // Implicitly capture all visible variables by reference
+    int w = 40;
+    auto capture_all_by_reference = [&amp;]() {
+        x = 1; y = 2; z = 3; w = 4;
+        std::cout &lt;&lt; &quot;Inside all_by_reference: x = &quot; &lt;&lt; x &lt;&lt; &quot;, y = &quot; &lt;&lt; y &lt;&lt; &quot;, z = &quot; &lt;&lt; z &lt;&lt; &quot;, w = &quot; &lt;&lt; w &lt;&lt; std::endl;
+    };
+    capture_all_by_reference();
+    std::cout &lt;&lt; &quot;Outside after all_by_reference: x = &quot; &lt;&lt; x &lt;&lt; &quot;, y = &quot; &lt;&lt; y &lt;&lt; &quot;, z = &quot; &lt;&lt; z &lt;&lt; &quot;, w = &quot; &lt;&lt; w &lt;&lt; std::endl;
+
+    // 5. mutable keyword
+    int val = 5;
+    auto mutable_lambda = [val]() mutable {
+        val = 10; // Now you can modify a copy of the val captured by value
+        std::cout &lt;&lt; &quot;Inside mutable_lambda, val = &quot; &lt;&lt; val &lt;&lt; std::endl;
+    };
+    mutable_lambda();
+    std::cout &lt;&lt; &quot;Outside mutable_lambda, val = &quot; &lt;&lt; val &lt;&lt; std::endl; // Output: 5 (the external val remains unchanged)
+
+    // 6. Using Lambda in STL Algorithms
+    std::vector&lt;int&gt; numbers = {1, 5, 2, 8, 3, 7};
+    int threshold = 4;
+
+    // Count the number of elements greater than the threshold.
+    int count = std::count_if(numbers.begin(), numbers.end(), [threshold](int n) {
+        return n &gt; threshold;
+    });
+    std::cout &lt;&lt; &quot;Numbers greater than &quot; &lt;&lt; threshold &lt;&lt; &quot;: &quot; &lt;&lt; count &lt;&lt; std::endl; // Output: 3
+
+    // Print all elements
+    std::for_each(numbers.begin(), numbers.end(), [](int n) {
+        std::cout &lt;&lt; n &lt;&lt; &quot; &quot;;
+    });
+    std::cout &lt;&lt; std::endl;
+
+    // 7. C++14: Generic Lambdas (using auto as parameter type)
+    auto generic_add = [](auto a, auto b) {
+        return a + b;
+    };
+    std::cout &lt;&lt; &quot;Generic add (int): &quot; &lt;&lt; generic_add(10, 20) &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;Generic add (double): &quot; &lt;&lt; generic_add(1.5, 2.5) &lt;&lt; std::endl;
+    std::cout &lt;&lt; &quot;Generic add (string): &quot; &lt;&lt; generic_add(std::string(&quot;Hello, &quot;), std::string(&quot;World!&quot;)) &lt;&lt; std::endl;
+
+
+    // 8. C++14: Init Capture (Generalized Lambda Capture)
+    std::string message = &quot;Original message&quot;;
+    auto generalized_capture_lambda = [captured_message = std::move(message)]() {
+        std::cout &lt;&lt; &quot;Inside generalized_capture_lambda: &quot; &lt;&lt; captured_message &lt;&lt; std::endl;
+        // The message has been removed here and should generally no longer be used (unless reassigned).
+    };
+    generalized_capture_lambda();
+    std::cout &lt;&lt; &quot;After generalized_capture_lambda, message: \&quot;&quot; &lt;&lt; message &lt;&lt; &quot;\&quot;&quot; &lt;&lt; std::endl; //The message may be empty or in an undefined state.
+
+    return 0;
+}
+</code></pre>
+<p>At the underlying level, compilers typically convert a lambda function into an anonymous function object (also known as a closure). This object has an overloaded <code>operator()</code>, whose body is the lambda&#39;s function body. The captured variables become member variables of this anonymous class.</p>
+<p>Lambda functions have the following characteristics:</p>
+<ul>
+<li><p><strong>Conciseness</strong>: For short functions, lambda expressions are more concise than defining a complete function or function object class.</p>
+</li>
+<li><p><strong>Locality</strong>: Lambdas can be defined where they are used, making the logic more centralized and the code easier to read.</p>
+</li>
+<li><p><strong>Closure</strong>: The capture clause allows lambdas to &quot;remember&quot; the context in which they were created, making them ideal for callbacks and event handling.</p>
+</li>
+<li><p><strong>STL Algorithms</strong>: Lambdas are the perfect companion for C++ standard library algorithms, allowing custom operations to be passed easily.</p>
+</li>
+<li><p><strong>Asynchronous Programming</strong>: In multithreading and asynchronous tasks, lambdas can conveniently encapsulate blocks of code to be executed.</p>
+</li>
+</ul>
+<h2 id="47-Ranges-and-Views">7 Ranges and Views</h2>
+<p>Conceptually, a range is a single object or entity that encapsulates all the information needed to traverse a sequence of elements. This allows us to refer to and manipulate the entire &quot;sequence&quot; as a whole, rather than separately handling its &quot;beginning&quot; and &quot;end.&quot; In summary: a range is essentially a unified abstraction for any &quot;iterable sequence.&quot;</p>
+<p>The <code>&lt;ranges&gt;</code> library implements the concept of a range in the following ways:</p>
+<ul>
+<li><p>It defines a series of concepts (such as <code>std::ranges::range</code>, <code>std::ranges::input_range</code>, <code>std::ranges::view</code>, etc.). If a type satisfies the <code>std::ranges::range</code> concept, it is considered a range.</p>
+</li>
+<li><p>It provides free functions (non-member functions) like <code>std::ranges::begin()</code> and <code>std::ranges::end()</code>, which can be used with any type that satisfies the range concept, offering a unified way to obtain the beginning and end of a range.</p>
+</li>
+</ul>
+<p>The following can all be considered ranges:</p>
+<ul>
+<li><p>C++ standard library containers</p>
+</li>
+<li><p>C-style arrays</p>
+</li>
+<li><p>Sequences defined by a pair of iterators</p>
+</li>
+<li><p>User-defined types that conform to the range concept</p>
+</li>
+<li><p>New ranges generated by views (to be introduced shortly)</p>
+</li>
+</ul>
+<pre><code class="language-cpp">#include &lt;vector&gt;
+#include &lt;algorithm&gt; // for std::ranges::sort
+#include &lt;ranges&gt;    // Core ranges support
+
+std::vector&lt;int&gt; vec = {1, 2, 3};
+int arr[] = {4, 5, 6};
+
+std::ranges::sort(vec); // Directly pass the container (range)
+std::ranges::sort(arr); // Directly pass an array (range)
+</code></pre>
+<hr>
+<p>Views are a core component of the <code>&lt;ranges&gt;</code> library, representing a non-owning, lazily evaluated operation or transformation on an underlying sequence.</p>
+<ul>
+<li><p>Non-owning: Views themselves do not store element data; they are merely a way of &quot;looking at&quot; or &quot;referencing&quot; the underlying data.</p>
+</li>
+<li><p>Lazily evaluated: Operations on views are typically not executed immediately; they are only evaluated when the result is actually needed (e.g., when iterating over the view or passing it to an algorithm that consumes data).</p>
+</li>
+<li><p>Lightweight: View objects themselves are usually small, with low overhead for creation and copying. They typically only store references/iterators to the underlying range and some configuration parameters.</p>
+</li>
+<li><p>Composable: This is the most powerful feature of views. Multiple view adaptors can be chained together using the pipe operator <code>|</code> to form a complex data processing pipeline while keeping the code clear and readable.</p>
+</li>
+</ul>
+<p>The <code>&lt;ranges&gt;</code> library provides a series of view adaptors, which are function objects that accept one or more ranges and return a new view.</p>
+<ul>
+<li><p><code>std::views::filter</code>: Filters elements based on a given predicate function.</p>
+</li>
+<li><p><code>std::views::transform</code>: Applies a function to each element in the range and generates a new view containing the results.</p>
+</li>
+<li><p><code>std::views::take(n)</code>: Takes the first n elements from the range.</p>
+</li>
+<li><p><code>std::views::drop(n)</code>: Skips the first n elements from the range.</p>
+</li>
+<li><p><code>std::views::reverse</code>: Reverses the order of elements in the range.</p>
+</li>
+<li><p><code>std::views::elements&lt;n&gt;</code>: (For ranges of tuples or class-like structures) Extracts the nth element of each tuple.</p>
+</li>
+<li><p><code>std::views::keys</code>: (For ranges of associative containers or similar structures) Extracts the keys.</p>
+</li>
+<li><p><code>std::views::values</code>: (For ranges of associative containers or similar structures) Extracts the values.</p>
+</li>
+<li><p><code>std::views::iota(start, end)</code>: Generates a sequence of integers starting from <code>start</code> up to (but not including) <code>end</code>.</p>
+</li>
+<li><p><code>std::views::all(range)</code>: Converts a <code>range</code> into a view.</p>
+</li>
+<li><p><code>std::views::counted(iterator, count)</code>: Creates a view starting from an iterator, taking <code>count</code> elements.</p>
+</li>
+</ul>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;ranges&gt;
+#include &lt;algorithm&gt; // for std::ranges::for_each
+
+int main() {
+    std::vector&lt;int&gt; numbers = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+
+    auto even_numbers = [](int n) { return n % 2 == 0; };
+    auto square = [](int n) { return n * n; };
+
+    // Use the pipe operator | to combine views
+    auto result_view = numbers
+                    | std::views::filter(even_numbers) // Filter even numbers {2, 4, 6, 8, 10}
+                    | std::views::transform(square)    // Square {4, 16, 36, 64, 100}
+                    | std::views::take(3);             // Take the first 3. {4, 16, 36}
+
+    // At this point, the operations above are lazily defined and no actual computation has been performed.
+    // When we iterate over result_view, the computation will occur on demand.
+    std::cout &lt;&lt; &quot;Processed numbers: &quot;;
+    for (int n : result_view) { // Iterate through result_view to trigger computation.
+        std::cout &lt;&lt; n &lt;&lt; &quot; &quot;;
+    }
+    std::cout &lt;&lt; std::endl; // Output: Processed numbers: 4 16 36
+
+    // It can also be directly passed to the ranges algorithm.
+    std::cout &lt;&lt; &quot;Processed numbers (using for_each): &quot;;
+    std::ranges::for_each(numbers
+                        | std::views::filter(even_numbers)
+                        | std::views::transform(square)
+                        | std::views::take(3),
+                        [](int n){ std::cout &lt;&lt; n &lt;&lt; &quot; &quot;; });
+    std::cout &lt;&lt; std::endl; // Output: Processed numbers (using for_each): 4 16 36
+
+    return 0;
+}
+</code></pre>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-3/" rel="prev"><span>← Previous chapter</span>Chapter 3 Classes and Objects</a>
+  <a href="../chapter-5/" rel="next"><span>Next chapter →</span>Chapter 5 Copying and Moving</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

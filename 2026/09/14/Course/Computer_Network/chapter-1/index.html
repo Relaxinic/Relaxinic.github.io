@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 1 Overview — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  <link rel="stylesheet" href="../../../../../../media/katex/katex.min.css">
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Computer Network</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-09-14">14 Sept 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-1-Overview">Chapter 1 Overview</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#11-Internet">1 Internet</a></li>
+    <li><a href="#12-Network-instance">2 Network instance</a>
+      <ul class="toc-subsections">
+        <li><a href="#Network-edge">2.1 Network edge</a></li>
+        <li><a href="#Network-core">2.2 Network core</a></li>
+      </ul>
+    </li>
+    <li><a href="#13-Circuit-switching-packet-switching-and-message-switching">3 Circuit switching, packet switching, and message switching</a>
+      <ul class="toc-subsections">
+        <li><a href="#Circuit-switching">3.1 Circuit switching</a></li>
+        <li><a href="#Packet-switching">3.2 Packet switching</a></li>
+        <li><a href="#Message-switching">3.3 Message switching</a></li>
+      </ul>
+    </li>
+    <li><a href="#14-Definition-and-Classification">4 Definition and Classification</a></li>
+    <li><a href="#15-Performance-Metrics">5 Performance Metrics</a></li>
+    <li><a href="#16-Architecture">6 Architecture</a></li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<h2 id="11-Internet">1 Internet</h2>
+<p><strong>Network</strong>: formed by interconnecting several links and nodes.</p>
+<p><strong>Internet</strong>: formed by interconnecting several networks through routers, a network of networks.</p>
+<p>The Internet is the largest internet in the world. The Internet has developed into a multi-level interconnected network based on Internet Service Providers (ISPs).</p>
+<h2 id="12-Network-instance">2 Network instance</h2>
+<h3 id="Network-edge">2.1 Network edge</h3>
+<p>End systems: computers and other devices located at the edge of the Internet and connected to the Internet.</p>
+<p>End systems are composed of various hosts: clients (desktop computers, mobile computers, and various other smart terminal devices) and servers.</p>
+<p>Functions of hosts: to contain (i.e., run) applications, generate information and send data to the access network, and receive data from the network and provide it to applications.</p>
+<p><strong>Access network</strong></p>
+<ul>
+<li><p>Goal: to connect hosts to edge routers.</p>
+</li>
+<li><p>Edge routers are the first routers on the path from an end-system host to any other remote end system. Various heterogeneous networks access through edge routers.</p>
+</li>
+<li><p>Connection forms between end systems and edge routers:</p>
+<ul>
+<li><p>Wired network access technologies: fiber to the home FTTH, Ethernet, coaxial cable, twisted-pair DSL, and the ancient dial-up Internet access.</p>
+</li>
+<li><p>Wireless network access technologies: WiFi, 4G/5G, and satellite wide-area coverage.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="Network-core">2.2 Network core</h3>
+<p>A mesh network composed of packet-switching devices and communication links of interconnected end systems</p>
+<p>Composed of packet switches (routers, link-layer switches) and communication links (fiber optics, copper cables, radio, laser links)</p>
+<p>Two major functions:</p>
+<ul>
+<li><p>Routing (Global operations): determining the path used by data packets from source to destination. Requires routing protocols and routing algorithms, and produces a routing table.</p>
+</li>
+<li><p>Forwarding (Local operation): a router or switch forwards received data packets onward (i.e., moves them to a certain output interface of the device). Determining the output interface/link to forward to: based on the destination address in the packet header received from the &quot;input interface,&quot; look up the local routing table to determine the &quot;output interface.&quot;</p>
+</li>
+</ul>
+<h2 id="13-Circuit-switching-packet-switching-and-message-switching">3 Circuit switching, packet switching, and message switching</h2>
+<h3 id="Circuit-switching">3.1 Circuit switching</h3>
+<p>Data transmission between computers is bursty in nature. When circuit switching is used to transmit computer data, the transmission efficiency of the line is generally very low, and the time actually used on the line to transmit data is often less than 10% or even 1%.</p>
+<blockquote>
+<p>Establish connection (allocate communication resources) - Call (continuously occupy communication resources) - Release connection (return communication resources)</p>
+</blockquote>
+<h3 id="Packet-switching">3.2 Packet switching</h3>
+<p>Sender: construct and send packets</p>
+<p>Switching nodes: cache and forward packets</p>
+<p>Receiver: receive packets and restore the message</p>
+<p>Advantages:</p>
+<ul>
+<li><p>There is no process of establishing a connection and releasing a connection</p>
+</li>
+<li><p>During packet transmission, communication links are occupied segment by segment, resulting in higher communication line utilization</p>
+</li>
+<li><p>Switching nodes can independently select a forwarding route for each packet, giving the network very good survivability</p>
+</li>
+</ul>
+<p>Disadvantages:</p>
+<ul>
+<li><p>The packet header brings additional transmission overhead</p>
+</li>
+<li><p>Store-and-forward processing of packets by switching nodes causes a certain delay</p>
+</li>
+<li><p>It cannot ensure that all end-to-end communication resources are available during communication, and network congestion may occur when traffic is heavy</p>
+</li>
+<li><p>Packets may experience problems such as out-of-order delivery and loss</p>
+</li>
+</ul>
+<h3 id="Message-switching">3.3 Message switching</h3>
+<p>The predecessor of packet switching. The entire message is sent, rather than being split into several packets for transmission. A switching node can only look up the forwarding table after receiving the entire message, and then forward the entire message to the next node. Therefore, compared with packet switching, the forwarding delay is much longer, and the cache space required by the switching node is also much larger.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/9.png" style="max-width: 60%; display: block; margin: 0 auto;">
+
+<p>If a large amount of data needs to be transmitted continuously, and the data transmission time is much greater than the time required to establish a connection, then using circuit switching can achieve relatively high transmission efficiency; however, computer data transmission is often bursty, so when circuit switching is used, the utilization rate of the communication line will be very low.</p>
+<p>Neither message switching nor packet switching requires establishing a connection in advance (that is, preallocating communication resources), so when transmitting bursty computer data, they can improve the utilization rate of the communication line.</p>
+<p>Dividing a message into several smaller packets for packet switching results in lower delay than performing message switching on the entire message, and it can also avoid an overly long message occupying the link for a long time, which is beneficial to error control and also provides greater flexibility.</p>
+<h2 id="14-Definition-and-Classification">4 Definition and Classification</h2>
+<p>A computer network is mainly composed of some general-purpose, programmable hardware interconnected together, and this hardware is not specifically designed to achieve a particular purpose (for example, transmitting data or video signals). This programmable hardware can be used to transmit many different types of data and can support a wide range of and ever-growing applications.</p>
+<blockquote>
+<p>Programmable hardware: not limited to computers, but also includes smart hardware such as smartphones, sensors with network capabilities, and smart home appliances; these hardware devices must contain a CPU.
+Various applications: various applications implemented based on data transmission, including various applications that may appear in the future.</p>
+</blockquote>
+<p>Classification:</p>
+<ul>
+<li><p>Switching method: circuit / message / packet switching (see the previous section)</p>
+</li>
+<li><p>Users: public network: the Internet; private network: military, railway, electric power, banking</p>
+</li>
+<li><p>Transmission medium: wired network / wireless network</p>
+</li>
+</ul>
+<p>Coverage range:</p>
+<ul>
+<li><p>Wide Area Network (WAN): tens to thousands of kilometers</p>
+</li>
+<li><p>Metropolitan Area Network (MAN): 5-50 km</p>
+</li>
+<li><p>Local Area Network (LAN): ~1 km</p>
+</li>
+<li><p>Personal Area Network (PAN): 10 m</p>
+</li>
+</ul>
+<p>Topology: bus / star / ring / mesh</p>
+<h2 id="15-Performance-Metrics">5 Performance Metrics</h2>
+<p>Rate: The transmission rate of data (i.e., how many bits are transmitted per second), also known as data rate or bit rate.</p>
+<ul>
+<li><p>The basic unit is bits per second (bit/s, which can be abbreviated as b/s, and is sometimes also written as bps (bit per second)).</p>
+</li>
+<li><p>Commonly used units (note the unit conversions):</p>
+<ul>
+<li><p>Kilobits per second (kb/s or kbps) = 10^3 bps</p>
+</li>
+<li><p>Megabits per second (Mb/s or Mbps) = 10^6 bps</p>
+</li>
+<li><p>Gigabits per second (Gb/s or Gbps) = 10^9 bps</p>
+</li>
+<li><p>Terabits per second (Tb/s or Tbps) = 10^12 bps</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>Bandwidth: refers to the capability of a network&#39;s communication line to transmit data, that is, the maximum data rate that can pass from one point in the network to another per unit time.</p>
+<ul>
+<li><p>Unit: same as &quot;rate&quot;</p>
+</li>
+<li><p>Data transmission rate = min[host interface rate, line bandwidth, switch or router interface rate] (short-board effect)</p>
+</li>
+</ul>
+<p>Throughput: the actual amount of data passing through a network or interface per unit time. It is often used to measure an actual network in order to determine exactly how much data has passed through the network. It is limited by network bandwidth.</p>
+<p>Delay/latency: the time consumed for data to be transmitted from one end of the network to the other, also called delay or latency.</p>
+<ul>
+<li><p>Data may consist of one or more packets, or even a single bit.</p>
+</li>
+<li><p>Transmission latency (also called transmission delay) = packet length (b) / transmission rate (b/s) (for the transmission rate formula, see the &quot;bandwidth&quot; section)</p>
+</li>
+<li><p>Propagation latency = channel length (m) / signal propagation rate (m/s)</p>
+</li>
+<li><p>Queueing latency and processing latency are inconvenient to calculate.</p>
+</li>
+<li><p>Total latency is the sum of the above four latencies.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/17.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>Bandwidth-delay product = propagation delay * bandwidth, also called the length of the link in bits, which is very helpful for us to understand the minimum frame length of Ethernet later.</p>
+<p>Round-trip time (RTT): the total time elapsed from when the sender starts sending a data packet to when the sender receives the corresponding acknowledgment packet sent back by the receiver.</p>
+<p>Utilization</p>
+<ul>
+<li><p>Link utilization: the percentage of time a link is utilized (that is, data is passing through it); the utilization of a completely idle link is zero.</p>
+</li>
+<li><p>Network utilization: the weighted average of the link utilizations of all links in the network.</p>
+</li>
+<li><p>According to queueing theory, when the utilization of a link increases, the delay caused by that link increases rapidly.</p>
+</li>
+<li><p>When the network traffic is relatively low, the resulting delay is not large, but as network traffic continues to increase, the queueing delay of packets in switching nodes (routers or switches) will increase accordingly, so the delay caused by the network will increase.</p>
+</li>
+<li><p>Let <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">D_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> denote the delay when the network is idle, and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi></mrow><annotation encoding="application/x-tex">D</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span></span></span></span> denote the current delay of the network. Then, under ideal assumptions, the relationship among <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo separator="true">,</mo><msub><mi>D</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">D, D_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>, and network utilization <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>U</mi></mrow><annotation encoding="application/x-tex">U</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">U</span></span></span></span> can be expressed by the following formula:</p>
+</li>
+</ul>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><mfrac><msub><mi>D</mi><mn>0</mn></msub><mrow><mn>1</mn><mo>−</mo><mi>U</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex">D = \frac{D_0}{1 - U}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.2918em;vertical-align:-0.4033em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8884em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mbin mtight">−</span><span class="mord mathnormal mtight" style="margin-right:0.10903em;">U</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.4101em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3173em;"><span style="top:-2.357em;margin-left:-0.0278em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.4033em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></p>
+<ul>
+<li>Some large ISPs often control channel utilization to no more than 50%; if it exceeds that, they expand capacity by increasing the bandwidth of the line.</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/20.png" style="max-width: 30%; display: block; margin: 0 auto;">
+
+<p>Packet loss rate: The ratio of the number of packets lost during transmission to the total number of packets within a certain time range.</p>
+<ul>
+<li><p>Divided into interface / node / link / path / network packet loss rate.</p>
+</li>
+<li><p>Packet loss mainly occurs in the following two situations:</p>
+<ul>
+<li><p>A packet has a bit error during transmission and is discarded after a node switch (such as a router) or the destination host in the transmission path detects the bit error.</p>
+</li>
+<li><p>A node switch actively discards packets according to a discard policy.</p>
+</li>
+</ul>
+</li>
+<li><p>The packet loss rate can reflect the congestion situation of the network: when there is no congestion, the path packet loss rate is 0; when there is mild congestion, the path packet loss rate is 1% ~ 4%; when there is severe congestion, the path packet loss rate is 5% ~ 15%.</p>
+</li>
+</ul>
+<h2 id="16-Architecture">6 Architecture</h2>
+<p>Two communication modes:</p>
+<ul>
+<li><p>Connectionless service: No need to establish a connection in advance</p>
+</li>
+<li><p>Connection-oriented service: Also called virtual circuit service; a virtual circuit must be established before communication</p>
+</li>
+</ul>
+<p>The OSI (open system interconnection) model allows the network layer to support two modes: connectionless (IP) + connection-oriented (X.25 and other protocols)</p>
+<p>In the TCP/IP model, the network layer (IP layer) is connectionless, and connection-oriented functionality is implemented by the transport layer (TCP)</p>
+<p>The TCP/IP architecture is shown in the figure:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/22.png" style="max-width: 50%; display: block; margin: 0 auto;">
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/23.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>Entity: Addresses the problem of implementing specific network applications through the interaction of application processes.</p>
+<p>Peer entities: Entities at the same layer on both communicating sides.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/24.png" style="max-width: 30%; display: block; margin: 0 auto;">
+
+<p>Protocol: A set of rules that controls two peer entities in performing &quot;logical communication&quot; in the &quot;horizontal direction.&quot;</p>
+<ul>
+<li><p>Three elements of a protocol:</p>
+<ul>
+<li><p>Syntax: Defines the format of the information exchanged.</p>
+</li>
+<li><p>Semantics: Defines the operations to be completed by both communicating sides.</p>
+</li>
+<li><p>Synchronization: Defines the timing relationship between both communicating sides.</p>
+</li>
+</ul>
+</li>
+<li><p>The data packets transmitted between peer layers are called the protocol data unit (PDU) of that layer.</p>
+</li>
+</ul>
+<p>Service:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/25.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>Protocols are &quot;horizontal,&quot; while services are &quot;vertical.&quot;</p>
+</li>
+<li><p>An entity can see the services provided by the lower layer, but does not know the specific protocol that implements the service; the lower-layer protocol is &quot;transparent&quot; to the upper-layer entity.</p>
+</li>
+<li><p>The logical interface through which entities in two adjacent layers in the same system exchange information is called a service access point (SAP), and it is used to distinguish different types of services.</p>
+</li>
+<li><p>The &quot;type&quot; field of a frame, the &quot;protocol&quot; field of an IP datagram, and the &quot;port number&quot; field of a TCP segment or UDP user datagram are all SAPs.</p>
+</li>
+<li><p>For the upper layer to use the services provided by the lower layer, it must exchange some commands with the lower layer, and these commands are called service primitives.</p>
+</li>
+<li><p>The data packets exchanged between layers within the same system are called service data units (SDUs).</p>
+</li>
+<li><p>Six core service primitives (taking connection-oriented services as an example)</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/338.png" style="max-width: 50%; display: block; margin: 0 auto;"></li>
+</ul>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  
+  <a href="../chapter-2/" rel="next"><span>Next chapter →</span>Chapter 2 Physical Layer</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

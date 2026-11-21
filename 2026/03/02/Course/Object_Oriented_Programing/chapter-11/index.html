@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 11 Streams — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Object-Oriented Programing</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-06-30">30 Jun 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-11-Streams">Chapter 11 Streams</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#111-Manipulators">1 Manipulators</a></li>
+    <li><a href="#112-Stream-Control">2 Stream Control</a></li>
+    <li><a href="#113-File-Streams">3 File Streams</a></li>
+    <li><a href="#114-I0-Stream-Buffers">4 I/0 Stream Buffers</a></li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<p>A stream is a common logical interface provided for devices, allowing values to be read or written sequentially.</p>
+<table>
+<thead>
+<tr>
+<th align="left"></th>
+<th align="left">Input</th>
+<th align="left">Output</th>
+<th align="left">Header</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">General scenario</td>
+<td align="left"><code>istream</code></td>
+<td align="left"><code>ostream</code></td>
+<td align="left"><code>&lt;iostream&gt;</code></td>
+</tr>
+<tr>
+<td align="left">File</td>
+<td align="left"><code>ifstream</code></td>
+<td align="left"><code>ofstream</code></td>
+<td align="left"><code>&lt;fstream&gt;</code></td>
+</tr>
+<tr>
+<td align="left">String</td>
+<td align="left"><code>istringstream</code></td>
+<td align="left"><code>ostringstream</code></td>
+<td align="left"><code>&lt;sstream&gt;</code></td>
+</tr>
+</tbody></table>
+<ul>
+<li><p>Extractor: reads values from a stream, overloaded operator <code>&gt;&gt;</code></p>
+</li>
+<li><p>Insertor: inserts values into a stream, overloaded operator <code>&lt;&lt;</code></p>
+</li>
+<li><p>Manipulator: changes the state of a stream</p>
+</li>
+<li><p>Others ...</p>
+</li>
+</ul>
+<p>Predefined streams:</p>
+<ul>
+<li><p><code>cin</code>: standard input, an instance of <code>std::istream</code></p>
+</li>
+<li><p><code>cout</code>: standard output, an instance of <code>std::ostream</code></p>
+</li>
+<li><p><code>cerr</code>: unbuffered error (debug) output</p>
+</li>
+<li><p><code>clog</code>: buffered error (debug) output</p>
+</li>
+</ul>
+<hr>
+<p>The predefined extractor <code>istream &gt;&gt; lvalue</code> ignores leading whitespace characters, and its definition is as follows:</p>
+<pre><code class="language-cpp">istream&amp; operator&gt;&gt;(istream&amp; is, T&amp; obj) 
+{
+    // specific code to read obj
+    return is;
+}
+</code></pre>
+<p>Other input operators:</p>
+<ul>
+<li><p><code>int get()</code>: Returns the next character in the stream, or <code>EOF</code> if there are no characters in the stream.</p>
+<pre><code class="language-cpp">int ch;
+while ((ch = cin.get()) != EOF)
+    cout.put(ch);
+</code></pre>
+</li>
+<li><p><code>istream&amp; get(char &amp;ch)</code>: Places the next character into the parameter, functioning similarly to the previous input operator.</p>
+</li>
+<li><p><code>istream&amp; getline(istream&amp; is, string&amp; str, char delim = &#39;\n&#39;);</code>: Reads the input stream until the character <code>delim</code> is encountered, then stores the result in the buffer <code>str</code>.</p>
+</li>
+<li><p><code>ignore(int limit = 1, int delim = EOF)</code>: Skips <code>limit</code> characters and the delimiter.</p>
+</li>
+<li><p><code>int gcount()</code>: Returns the number of characters just read.</p>
+<pre><code class="language-cpp">string buffer;
+getline(cin, buffer);
+cout &lt;&lt; &quot;read &quot; &lt;&lt; cin.gcount() &lt;&lt; &quot; characters&quot;
+</code></pre>
+</li>
+<li><p><code>void putback(char)</code>: Push a single character back into the stream</p>
+</li>
+<li><p><code>char peek()</code>: Check the next character without reading it</p>
+</li>
+</ul>
+<hr>
+<p>The predefined inserter <code>ostream &lt;&lt; expression</code> is defined as follows:</p>
+<pre><code class="language-cpp">ostream&amp; operator&lt;&lt;(ostream&amp; os, const T&amp; obj) 
+{
+    // specific code to write obj
+    return os;
+}
+</code></pre>
+<p>Other output operators:</p>
+<ul>
+<li><p><code>put(char)</code>: prints a single character</p>
+<pre><code class="language-cpp">cout.put(&#39;a&#39;);
+cerr.put(&#39;!&#39;);
+</code></pre>
+</li>
+<li><p><code>flush()</code>: Force output stream content</p>
+<pre><code class="language-cpp">cout &lt;&lt; &quot;Enter a number&quot;;
+cout.flush();
+</code></pre>
+</li>
+</ul>
+<h2 id="111-Manipulators">1 Manipulators</h2>
+<p>Using manipulators for formatting, modifying stream state</p>
+<p>Include header file: <code>#include&lt;iomanip&gt;</code></p>
+<table>
+<thead>
+<tr>
+<th align="left">Manipulator</th>
+<th align="left">Effect</th>
+<th align="left">Type</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>dec</code>, <code>hex</code>, <code>oct</code></td>
+<td align="left">Set numeric conversion</td>
+<td align="left">I, O</td>
+</tr>
+<tr>
+<td align="left"><code>endl</code></td>
+<td align="left">Insert a new line and flush the stream</td>
+<td align="left">O</td>
+</tr>
+<tr>
+<td align="left"><code>flush</code></td>
+<td align="left">Flush the stream (also available with <code>cout</code> and <code>endl</code>)</td>
+<td align="left">O</td>
+</tr>
+<tr>
+<td align="left"><code>setw(int)</code></td>
+<td align="left">Set field width</td>
+<td align="left">I, O</td>
+</tr>
+<tr>
+<td align="left"><code>setfill(char)</code></td>
+<td align="left">Change fill character</td>
+<td align="left">I, O</td>
+</tr>
+<tr>
+<td align="left"><code>setbase(int)</code></td>
+<td align="left">Set numeric base</td>
+<td align="left">O</td>
+</tr>
+<tr>
+<td align="left"><code>ws</code></td>
+<td align="left">Skip whitespace characters</td>
+<td align="left">I</td>
+</tr>
+<tr>
+<td align="left"><code>setprecision(int)</code></td>
+<td align="left">Set floating-point precision</td>
+<td align="left">O</td>
+</tr>
+</tbody></table>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+int main() 
+{
+    cout &lt;&lt; setprecision(2) &lt;&lt; 1000.243 &lt;&lt; endl;
+    cout &lt;&lt; setw(20) &lt;&lt; &quot;OK!&quot;;
+    return 0;
+}
+</code></pre>
+<blockquote>
+<p>Since each execution of <code>endl</code> flushes the stream buffer, it is relatively costly; therefore, to improve program performance, it is better to use the newline character <code>&#39;\n&#39;</code> instead of <code>endl</code>.</p>
+</blockquote>
+<p>We can define custom manipulators:</p>
+<pre><code class="language-cpp">// skeleton for an output stream manipulator
+ostream&amp; manip(ostream&amp; out) 
+{
+    ...
+    return out;
+}
+ostream&amp; tab(ostream&amp; out) 
+{
+    return out &lt;&lt; &#39;\t&#39;;
+}
+cout &lt;&lt; &quot;Hello&quot; &lt;&lt; tab &lt;&lt; &quot;World!&quot; &lt;&lt; endl;
+</code></pre>
+<h2 id="112-Stream-Control">2 Stream Control</h2>
+<p><code>std::ios</code> defines the common functionality and status information for all input/output operations.</p>
+<p>Stream flags control formatting:</p>
+<table>
+<thead>
+<tr>
+<th align="left">Flag</th>
+<th align="left">Purpose (when set)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>ios::skipws</code></td>
+<td align="left">Skip leading whitespace characters</td>
+</tr>
+<tr>
+<td align="left"><code>ios::left</code>, <code>ios::right</code></td>
+<td align="left">Alignment</td>
+</tr>
+<tr>
+<td align="left"><code>ios::internal</code></td>
+<td align="left">Fill between sign and value</td>
+</tr>
+<tr>
+<td align="left"><code>ios::dec</code>, <code>ios::hex</code>, <code>ios::oct</code></td>
+<td align="left">Numeric format</td>
+</tr>
+<tr>
+<td align="left"><code>ios::showbase</code></td>
+<td align="left">Show numeric base</td>
+</tr>
+<tr>
+<td align="left"><code>ios::showpoint</code></td>
+<td align="left">Always show decimal point</td>
+</tr>
+<tr>
+<td align="left"><code>ios::uppercase</code></td>
+<td align="left">Display base in uppercase</td>
+</tr>
+<tr>
+<td align="left"><code>ios::showpos</code></td>
+<td align="left">Show <code>+</code> for positive numbers</td>
+</tr>
+</tbody></table>
+<p>Setting flags:</p>
+<ul>
+<li><p>Using manipulators: <code>setiosflags(flags)</code>, <code>resetiosflags(flags)</code></p>
+</li>
+<li><p>Using <code>stream</code> member functions: <code>setf(flags)</code>, <code>unsetf(flags)</code></p>
+</li>
+</ul>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;iomanip&gt;
+int main() 
+{
+    cout setf(ios::showpos | ios::scientific);
+    cout &lt;&lt; 123 &lt;&lt; &quot; &quot; &lt;&lt; 456.78 &lt;&lt; endl;
+    cout &lt;&lt; resetiosflags(ios::showpos) &lt;&lt; 123;
+    return 0;
+}
+</code></pre>
+<p>Stream error status:
+<img loading="lazy" src="https://note.noughtq.top/lang/cpp/images/6.png" style="max-width: 40%; display: block; margin: 0 auto;"></p>
+<p>Status Check:</p>
+<ul>
+<li><p><code>good()</code>: Returns <code>true</code> when the state is valid</p>
+</li>
+<li><p><code>eof()</code>: Returns <code>true</code> when <code>EOF</code> is encountered</p>
+</li>
+<li><p><code>fail()</code>: Returns <code>true</code> when a minor failure or bad state occurs</p>
+</li>
+<li><p><code>bad()</code>: Returns <code>true</code> when the state is bad</p>
+</li>
+<li><p><code>clear()</code>: Used to reset the error state to <code>good()</code></p>
+</li>
+</ul>
+<pre><code class="language-cpp">int n;
+cout &lt;&lt; &quot;Enter a value for n, then [Enter]&quot; &lt;&lt; flush;
+while (cin.good()) 
+{
+    cin &gt;&gt; n;
+    if (cin) 
+    { // input was ok
+        cin.ignore(INT_MAX, &#39;\n&#39;); // flush newline
+        break;
+    }
+    if (cin.fail()) 
+    {
+        cin.clear(); // clear the error state
+        cin.ignore(INT_MAX, &#39;\n&#39;); // skip garbage
+        cout &lt;&lt; &quot;No good, try again!&quot; &lt;&lt; flush;
+    }
+}
+</code></pre>
+<h2 id="113-File-Streams">3 File Streams</h2>
+<ul>
+<li><p><code>ifstream</code> and <code>ofstream</code> connect files with streams</p>
+</li>
+<li><p>Need to include the header file: <code>#!cpp #include &lt;fstream&gt;</code></p>
+</li>
+<li><p>Use modes to specify how to create the file:</p>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="left">Mode</th>
+<th align="left">Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>ios:app</code></td>
+<td align="left">Append</td>
+</tr>
+<tr>
+<td align="left"><code>ios:ate</code></td>
+<td align="left">At end</td>
+</tr>
+<tr>
+<td align="left"><code>ios:binary</code></td>
+<td align="left">Handle binary I/O</td>
+</tr>
+<tr>
+<td align="left"><code>ios:in</code></td>
+<td align="left">Open file for input</td>
+</tr>
+<tr>
+<td align="left"><code>ios:out</code></td>
+<td align="left">Open file for output</td>
+</tr>
+</tbody></table>
+<p>Related stream operations:</p>
+<ul>
+<li><p><code>open(const char *, int flags, int)</code>: Open the specified file</p>
+</li>
+<li><p><code>is_open()</code>: Check if the file is open</p>
+</li>
+<li><p><code>close()</code>: Close the stream</p>
+</li>
+<li><p><code>fail()</code></p>
+</li>
+</ul>
+<pre><code class="language-cpp">int main() {
+    /// associating file on construction
+    std::ofstream ofs(“hello.txt”)
+    if (ofs.is_open()) {
+        ofs &lt;&lt; “Hello CS106L!” &lt;&lt; ‘\n’;
+    }
+    ofs.close();
+    ofs &lt;&lt; “this will not get written”;
+    ofs.open(“hello.txt”, std::ios::app);
+    ofs &lt;&lt; “this will though! It’s open again”;
+    return 0;
+}
+</code></pre>
+<pre><code class="language-cpp">int inputFileStreamExample() {
+    std::ifstream ifs(“append.txt”)
+    if (ifs.is_open()) {
+        std::string line;
+        std::getline(ifs, line);
+        std::cout &lt;&lt; “Read from the file: “ &lt;&lt; line &lt;&lt; ‘\n’;
+    }
+    if (ifs.is_open()) {
+        std::string lineTwo;
+        std::getline(ifs, lineTwo);
+        std::cout &lt;&lt; “Read from the file: “ &lt;&lt; lineTwo &lt;&lt; ‘\n’;
+    }
+    return 0;
+}
+</code></pre>
+<h2 id="114-I0-Stream-Buffers">4 I/0 Stream Buffers</h2>
+<p>Every I/O has a stream buffer</p>
+<p>The class <code>streambuf</code> defines the abstraction of this buffer</p>
+<p>The member function <code>rdbuf()</code> returns a pointer to the stream buffer</p>
+<p><code>&lt;&lt;</code> is overloaded to directly connect buffers</p>
+<pre><code class="language-cpp">#include &lt;fstream&gt;
+#include &lt;assert&gt;
+int main(int argc, char *argv[]) 
+{
+    assert(argc == 2);
+    ifstream in(argv[1]);
+    assert(in); // check that stream opened
+    cout &lt;&lt; in.rdbuf(); // Drain file!
+}
+</code></pre>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-10/" rel="prev"><span>← Previous chapter</span>Chapter 10 Design Concepts</a>
+  
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

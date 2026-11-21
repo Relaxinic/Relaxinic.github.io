@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 5 Transport Layer — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  <link rel="stylesheet" href="../../../../../../media/katex/katex.min.css">
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Computer Network</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-11-08">08 Nov 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-5-Transport-Layer">Chapter 5 Transport Layer</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#51-Overview">1 Overview</a>
+      <ul class="toc-subsections">
+        <li><a href="#Network-Communication-Between-Processes">1.1 Network Communication Between Processes</a></li>
+        <li><a href="#Two-Important-Protocols">1.2 Two Important Protocols</a></li>
+        <li><a href="#Transport-Layer-Port-Numbers">1.3 Transport-Layer Port Numbers</a></li>
+        <li><a href="#Sender-Multiplexing-and-Receiver-Demultiplexing">1.4 Sender Multiplexing and Receiver Demultiplexing</a></li>
+      </ul>
+    </li>
+    <li><a href="#52-Comparison-of-UDP-and-TCP">2 Comparison of UDP and TCP</a>
+      <ul class="toc-subsections">
+        <li><a href="#Support-for-Unicast-Multicast-and-Broadcast">2.1 Support for Unicast, Multicast, and Broadcast</a></li>
+        <li><a href="#Handling-Application-Layer-Messages">2.2 Handling Application-Layer Messages</a></li>
+        <li><a href="#Support-for-Reliable-Data-Transfer">2.3 Support for Reliable Data Transfer</a></li>
+        <li><a href="#Header-Comparison">2.4 Header Comparison</a></li>
+      </ul>
+    </li>
+    <li><a href="#53-Transmission-Control-Protocol">3 Transmission Control Protocol</a>
+      <ul class="toc-subsections">
+        <li><a href="#Segment-Header-Format">3.1 Segment Header Format</a></li>
+        <li><a href="#Transport-Connection-Management">3.2 Transport Connection Management</a></li>
+        <li><a href="#Flow-Control">3.3 Flow Control</a></li>
+        <li><a href="#Congestion-Control">3.4 Congestion Control</a></li>
+        <li><a href="#Choosing-the-Retransmission-Timeout">3.5 Choosing the Retransmission Timeout</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<h2 id="51-Overview">1 Overview</h2>
+<h3 id="Network-Communication-Between-Processes">1.1 Network Communication Between Processes</h3>
+<p>The entities that actually communicate in a computer network are processes running on the hosts at the two ends. The transport layer&#39;s main task is to provide direct logical communication services between application processes on different hosts. Transport-layer protocols are therefore also called end-to-end protocols.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/244.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Two-Important-Protocols">1.2 Two Important Protocols</h3>
+<p>Transmission Control Protocol (TCP) provides connection-oriented, reliable data transfer to the upper layer. The communicating parties first establish a logical TCP connection, rather than a physical connection, and release it after transmission. Reliability requires connection management, acknowledgments, timeout retransmission, flow control, congestion control, and other mechanisms. TCP is complex, has a relatively large segment header, and consumes more processor resources.</p>
+<p>User Datagram Protocol (UDP) provides connectionless, unreliable data transfer. The parties do not establish a connection before sending data, and UDP does not implement the mechanisms needed for reliable transmission. Its implementation is simple and its datagram header is small.</p>
+<p>Typical Internet applications and their application-layer and transport-layer protocols are illustrated below.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/245.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Transport-Layer-Port-Numbers">1.3 Transport-Layer Port Numbers</h3>
+<p>The TCP/IP transport layer uses port numbers to identify different application processes. A port number is 16 bits long and ranges from 0 to 65535.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/246.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Common well-known ports to remember:</p>
+<ul>
+<li><p>FTP: 21/20.</p>
+</li>
+<li><p>SMTP: 25.</p>
+</li>
+<li><p>DNS: 53.</p>
+</li>
+<li><p>DHCP: 67/68.</p>
+</li>
+<li><p>HTTP: 80.</p>
+</li>
+<li><p>BGP: 179.</p>
+</li>
+<li><p>HTTPS: 443.</p>
+</li>
+<li><p>RIP: 520.</p>
+</li>
+</ul>
+<p>Port numbers have only local significance: they identify application processes within one computer&#39;s protocol stack. Identical port numbers on different computers are independent. TCP and UDP port-number spaces are also independent of each other.</p>
+<h3 id="Sender-Multiplexing-and-Receiver-Demultiplexing">1.4 Sender Multiplexing and Receiver Demultiplexing</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/247.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Multiplexing at the sender and demultiplexing at the receiver are implemented through sockets, which form the interface between the application and transport layers and the API between applications and the network.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/343.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>A UDP socket is identified by an IP-address/port-number pair. On receiving a UDP datagram, the transport layer checks its destination port and delivers it to the corresponding socket. Datagrams with the same destination IP address and destination port are delivered to the same socket regardless of their source IP addresses and ports. The receiving process uses the source address and port to send a response.</p>
+<p>The UDP socket communication procedure is:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/344.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>socket(): create a socket.</p>
+</li>
+<li><p>bind(): bind an address and port.</p>
+</li>
+<li><p>recvfrom(): receive a request.</p>
+</li>
+<li><p>sendto(): send a response.</p>
+</li>
+<li><p>close(): close the socket.</p>
+</li>
+</ul>
+<p>To serve many clients simultaneously, a TCP server uses a listening socket and connected sockets. The listening socket waits for connection requests on a well-known port. After receiving a request, the server creates a connected socket and can create a new process to serve that client. Each connected socket communicates with only one client.</p>
+<p>A TCP connection is identified by the four-tuple of source IP address, destination IP address, source port, and destination port. For incoming segments, the source address and port belong to the client, while the destination address belongs to the server and the destination port is the server&#39;s listening port. The server uses the four-tuple to deliver each segment to the correct connected socket.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/342.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The TCP socket communication procedure is:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/345.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>socket(): create a socket.</p>
+</li>
+<li><p>bind(): bind an address and port.</p>
+</li>
+<li><p>listen(): begin listening and set the queue size; this call is nonblocking.</p>
+</li>
+<li><p>accept(): take an established connection from the connected queue and create a new socket for it. If the queue is empty, block the caller until a new connection arrives.</p>
+</li>
+<li><p>Communicate with the client using the returned socket.</p>
+</li>
+</ul>
+<h2 id="52-Comparison-of-UDP-and-TCP">2 Comparison of UDP and TCP</h2>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/250.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Support-for-Unicast-Multicast-and-Broadcast">2.1 Support for Unicast, Multicast, and Broadcast</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/251.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Handling-Application-Layer-Messages">2.2 Handling Application-Layer Messages</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/252.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Support-for-Reliable-Data-Transfer">2.3 Support for Reliable Data Transfer</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/253.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Header-Comparison">2.4 Header Comparison</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/254.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h2 id="53-Transmission-Control-Protocol">3 Transmission Control Protocol</h2>
+<h3 id="Segment-Header-Format">3.1 Segment Header Format</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/255.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Sequence number: 32 bits, ranging from <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn></mrow><annotation encoding="application/x-tex">0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span> to <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mn>32</mn></msup><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">2^{32} - 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8974em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">32</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> and wrapping back to 0 after the last value. It identifies the first byte of the segment&#39;s data payload.</p>
+<p>Acknowledgment number: 32 bits with the same range and wraparound. It identifies the first byte of data expected in the next segment from the other party and cumulatively acknowledges all preceding data.</p>
+<p>ACK flag: the acknowledgment field is valid only when <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">A</mi><mi mathvariant="normal">C</mi><mi mathvariant="normal">K</mi></mrow><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\mathrm{ACK} = 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord"><span class="mord mathrm">ACK</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>. TCP requires all segments sent after connection establishment to have ACK set to 1.</p>
+<blockquote>
+<p>The sequence number, acknowledgment number, and ACK flag are fields used to implement reliable transmission.</p>
+</blockquote>
+<p>Data offset: 4 bits, measured in 4-byte units. It gives the distance from the beginning of the segment to the beginning of the payload, thereby indicating the header length.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/256.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Reserved: 6 bits reserved for future use and set to 0 in this header format.</p>
+<p>Window: 16 bits, measured in bytes. It indicates the sender of this segment&#39;s receive-window size, namely the available receive-buffer space. Using the receiver&#39;s capacity to limit how much data the sender transmits is called flow control.</p>
+<p>Checksum: 16 bits, used to detect transmission errors in the entire TCP segment.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/257.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The sender calculates the checksum as follows:</p>
+<ul>
+<li><p>Set the TCP checksum field to 0.</p>
+</li>
+<li><p>Divide the pseudoheader, TCP header, and payload into 2-byte words. If their combined length is odd, append one all-zero byte.</p>
+</li>
+<li><p>Add all words using one&#39;s-complement arithmetic, then complement the sum. Any carry beyond the word size must be added back into the sum.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/362.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li>Write the resulting value into the TCP checksum field.</li>
+</ul>
+<p>The receiver checks the segment by prepending a 12-byte pseudoheader, dividing the pseudoheader, header, and payload into 2-byte words, summing them with one&#39;s-complement arithmetic, and complementing the result. A result of 0 indicates that no error has been detected; a nonzero result indicates an error.</p>
+<p>SYN flag: used in the three-way handshake to establish a connection. <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">S</mi><mi mathvariant="normal">Y</mi><mi mathvariant="normal">N</mi></mrow><mo>=</mo><mn>1</mn><mo separator="true">,</mo><mtext> </mtext><mrow><mi mathvariant="normal">A</mi><mi mathvariant="normal">C</mi><mi mathvariant="normal">K</mi></mrow><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\mathrm{SYN} = 1,\ \mathrm{ACK} = 0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord"><span class="mord mathrm">SYN</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord">1</span><span class="mpunct">,</span><span class="mspace"> </span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathrm">ACK</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span> identifies a connection request. A response accepting the connection has <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">S</mi><mi mathvariant="normal">Y</mi><mi mathvariant="normal">N</mi></mrow><mo>=</mo><mn>1</mn><mo separator="true">,</mo><mtext> </mtext><mrow><mi mathvariant="normal">A</mi><mi mathvariant="normal">C</mi><mi mathvariant="normal">K</mi></mrow><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\mathrm{SYN} = 1,\ \mathrm{ACK} = 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord"><span class="mord mathrm">SYN</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord">1</span><span class="mpunct">,</span><span class="mspace"> </span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathrm">ACK</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>. Thus a segment with SYN set is either a connection request or a connection response.</p>
+<p>FIN flag: used in the four-message connection-release procedure. <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">F</mi><mi mathvariant="normal">I</mi><mi mathvariant="normal">N</mi></mrow><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\mathrm{FIN} = 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord"><span class="mord mathrm">FIN</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> means that the sender has finished sending data and requests connection release.</p>
+<p>RST flag: resets a TCP connection. A value of 1 indicates a serious connection error requiring release and reestablishment. It is also used to reject an invalid segment or refuse a connection.</p>
+<p>PSH flag: the sender sets PSH and immediately constructs and sends a segment instead of accumulating more data. The receiver delivers its data to the application promptly rather than waiting for more data. For efficiency, TCP may otherwise delay sending or delivering data to process more at once. During interactive communication, an application may request PUSH so that a command can receive an immediate response.</p>
+<p>URG flag: the urgent-pointer field is valid when <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">U</mi><mi mathvariant="normal">R</mi><mi mathvariant="normal">G</mi></mrow><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\mathrm{URG} = 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord"><span class="mord mathrm">URG</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> and invalid when <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">U</mi><mi mathvariant="normal">R</mi><mi mathvariant="normal">G</mi></mrow><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\mathrm{URG} = 0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord"><span class="mord mathrm">URG</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span>.</p>
+<p>Urgent pointer: 16 bits, measured in bytes, indicating the urgent data&#39;s extent. A sender can place urgent data at the front of its send buffer and immediately send it in a segment. The pointer identifies how much urgent data precedes the ordinary data. The receiver extracts urgent data from a segment with URG set and delivers it directly to the application rather than leaving it queued in the receive buffer.</p>
+<p>Options have variable length, up to 40 bytes. They include:</p>
+<ul>
+<li><p>Maximum segment size (MSS): the maximum payload length, not the length of the whole TCP segment.</p>
+</li>
+<li><p>Window scale: expands the window to improve throughput.</p>
+</li>
+<li><p>Timestamps: measure round-trip time (RTT) and help handle sequence-number wraparound through protection against wrapped sequence numbers (PAWS).</p>
+</li>
+<li><p>Selective acknowledgment: supports selective acknowledgment of received data.</p>
+</li>
+</ul>
+<p>Padding: if the options plus the 20-byte fixed header do not make a multiple of 4 bytes, zero bits are added so that the header length is divisible by 4, as with IPv4 header padding.</p>
+<h3 id="Transport-Connection-Management">3.2 Transport Connection Management</h3>
+<p>A TCP connection has three phases: establishment through a three-way handshake, reliable data transfer over the established connection, and release through a four-message exchange after transfer is complete.</p>
+<h4 id="Establishing-a-TCP-Connection">Establishing a TCP Connection</h4>
+<p>The three-way handshake addresses three main requirements:</p>
+<ul>
+<li><p>Each side confirms the other&#39;s existence.</p>
+</li>
+<li><p>The sides negotiate parameters such as maximum segment size, maximum window size, and timestamp options.</p>
+</li>
+<li><p>The sides allocate and initialize transport-entity resources, including buffers, state variables, and connection-table entries.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/258.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>A transmission control block (TCB) includes the TCP connection table, pointers to send and receive buffers and the retransmission queue, and current send and receive sequence numbers.</p>
+<p>The client&#39;s connection-request segment has SYN set to 1 and an initial sequence number <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">x</span></span></span></span>. In the handshake described here, a SYN segment carries no data but consumes one sequence number. Thus the client&#39;s first data byte will have sequence number <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">x + 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>.</p>
+<p>The server&#39;s connection-request acknowledgment also has SYN set to 1. It chooses initial sequence number <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi></mrow><annotation encoding="application/x-tex">y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span></span></span></span> and sets the acknowledgment number to <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">x + 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>, acknowledging the client&#39;s initial sequence number.</p>
+<p>The client&#39;s next segment has sequence number <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">x + 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> and acknowledgment number <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">y + 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>. An ordinary acknowledgment may carry data; if it does not, it consumes no sequence number, so the next data segment still begins at <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">x + 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>.</p>
+<p>Three messages rather than two prevent an obsolete connection request that arrives unexpectedly at the server from incorrectly establishing a connection.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/259.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h4 id="Releasing-a-TCP-Connection">Releasing a TCP Connection</h4>
+<p>The four-message release procedure is illustrated below.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/260.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The client&#39;s release segment sets both FIN and ACK to 1, requesting release while acknowledging previously received data. Its sequence number is <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>u</mi></mrow><annotation encoding="application/x-tex">u</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">u</span></span></span></span>, one more than the last data-byte sequence number it has sent, and its acknowledgment number is <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>v</mi></mrow><annotation encoding="application/x-tex">v</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span></span></span></span>, one more than the last data-byte sequence number it has received. A FIN segment consumes one sequence number even without data.</p>
+<p>The server acknowledges with sequence number <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>v</mi></mrow><annotation encoding="application/x-tex">v</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span></span></span></span> and acknowledgment number <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>u</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">u + 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">u</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>. It enters CLOSE-WAIT, and the connection is half-closed: the client-to-server direction is closed, but the server may still send data and the client must continue receiving it. This state may last for some time.</p>
+<p>When the server finishes, it sends its own FIN with sequence number <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi></mrow><annotation encoding="application/x-tex">w</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.02691em;">w</span></span></span></span>, which may exceed <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>v</mi></mrow><annotation encoding="application/x-tex">v</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span></span></span></span> because additional data may have been sent during the half-close, and acknowledgment number <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>u</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">u + 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">u</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>. The client returns an acknowledgment with sequence number <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>u</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">u + 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal">u</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span> and acknowledgment number <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">w + 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>.</p>
+<p>The maximum segment lifetime (MSL) is suggested as 2 minutes in the described procedure. The client remains in TIME-WAIT for <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mrow><mi mathvariant="normal">M</mi><mi mathvariant="normal">S</mi><mi mathvariant="normal">L</mi></mrow></mrow><annotation encoding="application/x-tex">2\mathrm{MSL}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">2</span><span class="mord"><span class="mord mathrm">MSL</span></span></span></span></span>, or 4 minutes, before entering CLOSED. This is an engineering choice, and implementations may use a smaller MSL appropriate to their networks.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/261.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Waiting for <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mrow><mi mathvariant="normal">M</mi><mi mathvariant="normal">S</mi><mi mathvariant="normal">L</mi></mrow></mrow><annotation encoding="application/x-tex">2\mathrm{MSL}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">2</span><span class="mord"><span class="mord mathrm">MSL</span></span></span></span></span> allows the server to receive the final acknowledgment and close. It also allows all segments from the old connection to disappear, preventing them from appearing in a subsequent connection.</p>
+<p>The role of the TCP keepalive timer is illustrated below.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/262.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Flow-Control">3.3 Flow Control</h3>
+<p>TCP provides flow control to prevent a sender from transmitting so quickly that the receiver cannot keep up and its receive buffer overflows.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/263.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Example.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/264.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/265.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/266.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>To break a deadlock caused by the loss of a nonzero-window advertisement, TCP maintains a persist timer for each connection. Receiving a zero-window advertisement starts the timer. When it expires, the sender transmits a zero-window probe carrying one byte of data. The receiver acknowledges it with its current receive-window value. If the window remains zero, the timer is restarted; if it is nonzero, normal transmission can resume.</p>
+<p>Even with a zero receive window, the protocol described here accepts zero-window probes, acknowledgments, and segments carrying urgent data. Probes also have a retransmission timer, so a lost probe can be retransmitted and does not cause permanent deadlock.</p>
+<blockquote>
+<p>Example.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/267.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Congestion-Control">3.4 Congestion Control</h3>
+<p>Congestion occurs when demand for a network resource exceeds its available capacity for some period, degrading network performance. Without control, overall throughput can decrease as the offered load increases.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/268.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>Flow control limits a particular sender according to its receiver&#39;s capacity and concerns that pair&#39;s traffic.</p>
+</li>
+<li><p>Congestion control lets a source adjust its sending rate according to multiple network factors and a congestion-control algorithm. It is a global issue involving hosts, routers, and other network resources.</p>
+</li>
+</ul>
+<p>The following discussion assumes:</p>
+<ul>
+<li><p>Data flows in one direction and acknowledgments in the other.</p>
+</li>
+<li><p>The receiver always has enough buffer space, so the sender&#39;s window is determined only by congestion; receiver flow control is ignored.</p>
+</li>
+<li><p>Window sizes are discussed in units of maximum segment size (MSS), rather than bytes, even though TCP is byte-stream oriented.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/269.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/270.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h4 id="Slow-Start-and-Congestion-Avoidance">Slow Start and Congestion Avoidance</h4>
+<p>Slow start means that few segments are initially injected into the network; it does not mean that the congestion window grows slowly. Congestion avoidance means increasing the congestion window linearly to make congestion less likely, rather than completely preventing congestion.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/276.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Example: stage 1.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/271.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Stage 2.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/272.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Stage 3.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/273.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Stage 4.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/274.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Stage 5.</p>
+</blockquote>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/275.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h4 id="Fast-Retransmit-and-Fast-Recovery">Fast Retransmit and Fast Recovery</h4>
+<p>Fast retransmit retransmits a missing segment as soon as possible instead of waiting for the retransmission timer. The receiver immediately sends acknowledgments, including duplicate acknowledgments for out-of-order arrivals, rather than waiting to piggyback them on outgoing data. Upon three consecutive duplicate acknowledgments, the sender immediately retransmits the corresponding segment.</p>
+<p>For an isolated lost segment, this avoids timeout retransmission and prevents the sender from unnecessarily treating it as severe congestion and reducing cwnd to 1. In practice, fast retransmit can improve overall network throughput by roughly 20%.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/277.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>In fast recovery, the sender sets both ssthresh and cwnd to half the current cwnd and begins congestion avoidance. Some implementations initially set <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">c</mi><mi mathvariant="normal">w</mi><mi mathvariant="normal">n</mi><mi mathvariant="normal">d</mi></mrow><mo>=</mo><mtext>new ssthresh</mtext><mo>+</mo><mn>3</mn></mrow><annotation encoding="application/x-tex">\mathrm{cwnd} = \text{new ssthresh} + 3</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathrm">cwnd</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord text"><span class="mord">new ssthresh</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">3</span></span></span></span>. Three duplicate acknowledgments indicate that three segments have left the network and are buffered at the receiver, so they no longer consume network resources and the congestion window may temporarily be increased by three.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/278.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>For TCP throughput, ignore the short slow-start phase and consider only congestion avoidance. Let <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi></mrow><annotation encoding="application/x-tex">W</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span></span> be the congestion window at packet loss. The throughput is then <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi><mi mathvariant="normal">/</mi><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow></mrow><annotation encoding="application/x-tex">W/\mathrm{RTT}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mord">/</span><span class="mord"><span class="mord mathrm">RTT</span></span></span></span></span>. After reducing the window to <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi><mi mathvariant="normal">/</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">W/2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mord">/2</span></span></span></span>, it is <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi><mi mathvariant="normal">/</mi><mo stretchy="false">(</mo><mn>2</mn><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">W/(2\mathrm{RTT})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mord">/</span><span class="mopen">(</span><span class="mord">2</span><span class="mord"><span class="mord mathrm">RTT</span></span><span class="mclose">)</span></span></span></span>. If RTT and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi></mrow><annotation encoding="application/x-tex">W</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span></span> remain approximately constant throughout the connection, the average throughput is</p>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>Average throughput</mtext><mo>=</mo><mfrac><mrow><mn>0.75</mn><mi>W</mi></mrow><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow></mfrac><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\text{Average throughput} = \frac{0.75W}{\mathrm{RTT}}.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">Average throughput</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.2173em;vertical-align:-0.345em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8723em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">RTT</span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">0.75</span><span class="mord mathnormal mtight" style="margin-right:0.13889em;">W</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord">.</span></span></span></span></p>
+<h3 id="Choosing-the-Retransmission-Timeout">3.5 Choosing the Retransmission Timeout</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/288.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>A timeout that is too short causes unnecessary retransmissions, while one that is too long delays recovery from packet loss. Intuitively, it should exceed RTT, but RTT varies. The Jacobson algorithm estimates it as follows.</p>
+<p>The smoothed RTT is an exponentially weighted average:</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><msub><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow><mrow><mi>S</mi><mn>1</mn></mrow></msub></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><msub><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow><mn>1</mn></msub><mo separator="true">,</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mtext>New </mtext><msub><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow><mi>S</mi></msub></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>α</mi><mo stretchy="false">)</mo><mtext> </mtext><mtext>Old </mtext><msub><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow><mi>S</mi></msub><mo>+</mo><mi>α</mi><mtext> </mtext><mtext>New RTT sample</mtext><mi mathvariant="normal">.</mi></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+\mathrm{RTT}_{S1} &amp;= \mathrm{RTT}_1, \\
+\text{New }\mathrm{RTT}_S &amp;= (1 - \alpha)\,\text{Old }\mathrm{RTT}_S + \alpha\,\text{New RTT sample}.
+\end{aligned}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:3em;vertical-align:-1.25em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.75em;"><span style="top:-3.91em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord mathrm">RTT</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05764em;">S</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">New </span></span><span class="mord"><span class="mord"><span class="mord mathrm">RTT</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05764em;">S</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.25em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.75em;"><span style="top:-3.91em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord"><span class="mord"><span class="mord mathrm">RTT</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord text"><span class="mord">Old </span></span><span class="mord"><span class="mord"><span class="mord mathrm">RTT</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05764em;">S</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord text"><span class="mord">New RTT sample</span></span><span class="mord">.</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.25em;"><span></span></span></span></span></span></span></span></span></span></span></span></p>
+<p>Here <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn><mo>≤</mo><mi>α</mi><mo>&lt;</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">0 \le \alpha &lt; 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7804em;vertical-align:-0.136em;"></span><span class="mord">0</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>. A value close to 0 gives new samples little influence; a value close to 1 gives them greater influence. RFC 6298 recommends <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi><mo>=</mo><mn>1</mn><mi mathvariant="normal">/</mi><mn>8</mn></mrow><annotation encoding="application/x-tex">\alpha = 1/8</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1/8</span></span></span></span>.</p>
+<p>The smoothed RTT deviation is</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><msub><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow><mrow><mi>D</mi><mn>1</mn></mrow></msub></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><msub><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow><mn>1</mn></msub><mi mathvariant="normal">/</mi><mn>2</mn><mo separator="true">,</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mtext>New </mtext><msub><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow><mi>D</mi></msub></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>β</mi><mo stretchy="false">)</mo><mtext> </mtext><mtext>Old </mtext><msub><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow><mi>D</mi></msub><mo>+</mo><mi>β</mi><mrow><mo fence="true">∣</mo><msub><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow><mi>S</mi></msub><mo>−</mo><mtext>New RTT sample</mtext><mo fence="true">∣</mo></mrow><mi mathvariant="normal">.</mi></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+\mathrm{RTT}_{D1} &amp;= \mathrm{RTT}_1/2, \\
+\text{New }\mathrm{RTT}_D &amp;= (1 - \beta)\,\text{Old }\mathrm{RTT}_D + \beta\left|\mathrm{RTT}_S - \text{New RTT sample}\right|.
+\end{aligned}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:3em;vertical-align:-1.25em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.75em;"><span style="top:-3.91em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord mathrm">RTT</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">D</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">New </span></span><span class="mord"><span class="mord"><span class="mord mathrm">RTT</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">D</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.25em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.75em;"><span style="top:-3.91em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord"><span class="mord"><span class="mord mathrm">RTT</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord">/2</span><span class="mpunct">,</span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord text"><span class="mord">Old </span></span><span class="mord"><span class="mord"><span class="mord mathrm">RTT</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">D</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">∣</span><span class="mord"><span class="mord"><span class="mord mathrm">RTT</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05764em;">S</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord text"><span class="mord">New RTT sample</span></span><span class="mclose delimcenter" style="top:0em;">∣</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">.</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.25em;"><span></span></span></span></span></span></span></span></span></span></span></span></p>
+<p>Here <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn><mo>≤</mo><mi>β</mi><mo>&lt;</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">0 \le \beta &lt; 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7804em;vertical-align:-0.136em;"></span><span class="mord">0</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>, and RFC 6298 recommends <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi><mo>=</mo><mn>1</mn><mi mathvariant="normal">/</mi><mn>4</mn></mrow><annotation encoding="application/x-tex">\beta = 1/4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1/4</span></span></span></span>.</p>
+<blockquote>
+<p>Textbooks may interchange the meanings of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span> and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>−</mo><mi>α</mi></mrow><annotation encoding="application/x-tex">1 - \alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span>, and similarly for <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi></mrow><annotation encoding="application/x-tex">\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05278em;">β</span></span></span></span>. A large coefficient, such as 0.9 or 0.875, usually weights the old estimate; a small coefficient usually weights the new sample. Check which formula is being used.</p>
+</blockquote>
+<p>RTO should be slightly greater than the smoothed RTT, rather than any individual sample. RFC 6298 gives</p>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">O</mi></mrow><mo>=</mo><msub><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow><mi>S</mi></msub><mo>+</mo><mn>4</mn><msub><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow><mi>D</mi></msub><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\mathrm{RTO} = \mathrm{RTT}_S + 4\mathrm{RTT}_D.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord"><span class="mord mathrm">RTO</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord mathrm">RTT</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05764em;">S</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord">4</span><span class="mord"><span class="mord"><span class="mord mathrm">RTT</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">D</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord">.</span></span></span></span></p>
+<blockquote>
+<p>Exercise from xht, Homework 6.</p>
+</blockquote>
+<p>If the TCP round-trip time, RTT, is currently 30 msec and the following acknowledgements come in after 26, 32, and 24 msec, respectively, what is the new RTT estimate using the Jacobson algorithm? Use <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi><mo>=</mo><mn>0.9</mn></mrow><annotation encoding="application/x-tex">\alpha = 0.9</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.9</span></span></span></span>.</p>
+<p>Using the convention where <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span> weights the old estimate,</p>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow><mrow><mi mathvariant="normal">n</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">w</mi></mrow></msub><mo>=</mo><mi>α</mi><msub><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow><mrow><mi mathvariant="normal">o</mi><mi mathvariant="normal">l</mi><mi mathvariant="normal">d</mi></mrow></msub><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>α</mi><mo stretchy="false">)</mo><mrow><mi mathvariant="normal">S</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">m</mi><mi mathvariant="normal">p</mi><mi mathvariant="normal">l</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow><mo separator="true">,</mo><mspace width="2em"/><mi>α</mi><mo>=</mo><mn>0.9.</mn></mrow><annotation encoding="application/x-tex">\mathrm{RTT}_{\mathrm{new}} = \alpha\mathrm{RTT}_{\mathrm{old}} + (1 - \alpha)\mathrm{SampleRTT}, \qquad \alpha = 0.9.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord mathrm">RTT</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight" style="margin-right:0.01389em;">new</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mord"><span class="mord"><span class="mord mathrm">RTT</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">old</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mclose">)</span><span class="mord"><span class="mord mathrm">SampleRTT</span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0.9.</span></span></span></span></p>
+<p>Starting with <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi mathvariant="normal">R</mi><mi mathvariant="normal">T</mi><mi mathvariant="normal">T</mi></mrow><mn>0</mn></msub><mo>=</mo><mn>30</mn><mtext> </mtext><mrow><mi mathvariant="normal">m</mi><mi mathvariant="normal">s</mi></mrow></mrow><annotation encoding="application/x-tex">\mathrm{RTT}_0 = 30\,\mathrm{ms}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord mathrm">RTT</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">30</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathrm">ms</span></span></span></span></span>:</p>
+<ul>
+<li><p>After 26 ms: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.9</mn><mo>×</mo><mn>30</mn><mo>+</mo><mn>0.1</mn><mo>×</mo><mn>26</mn><mo>=</mo><mn>29.6</mn><mtext> </mtext><mrow><mi mathvariant="normal">m</mi><mi mathvariant="normal">s</mi></mrow></mrow><annotation encoding="application/x-tex">0.9 \times 30 + 0.1 \times 26 = 29.6\,\mathrm{ms}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">0.9</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">30</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">0.1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">26</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">29.6</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathrm">ms</span></span></span></span></span>.</p>
+</li>
+<li><p>After 32 ms: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.9</mn><mo>×</mo><mn>29.6</mn><mo>+</mo><mn>0.1</mn><mo>×</mo><mn>32</mn><mo>=</mo><mn>29.84</mn><mtext> </mtext><mrow><mi mathvariant="normal">m</mi><mi mathvariant="normal">s</mi></mrow></mrow><annotation encoding="application/x-tex">0.9 \times 29.6 + 0.1 \times 32 = 29.84\,\mathrm{ms}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">0.9</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">29.6</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">0.1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">32</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">29.84</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathrm">ms</span></span></span></span></span>.</p>
+</li>
+<li><p>After 24 ms: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.9</mn><mo>×</mo><mn>29.84</mn><mo>+</mo><mn>0.1</mn><mo>×</mo><mn>24</mn><mo>=</mo><mn>29.256</mn><mtext> </mtext><mrow><mi mathvariant="normal">m</mi><mi mathvariant="normal">s</mi></mrow></mrow><annotation encoding="application/x-tex">0.9 \times 29.84 + 0.1 \times 24 = 29.256\,\mathrm{ms}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">0.9</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">29.84</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">0.1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">24</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">29.256</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathrm">ms</span></span></span></span></span>.</p>
+</li>
+</ul>
+<p>The new estimate is approximately <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>29.256</mn><mtext> </mtext><mrow><mi mathvariant="normal">m</mi><mi mathvariant="normal">s</mi></mrow></mrow><annotation encoding="application/x-tex">29.256\,\mathrm{ms}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">29.256</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathrm">ms</span></span></span></span></span>.</p>
+<h4 id="Karns-Algorithm">Karn&#39;s Algorithm</h4>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/289.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>After a retransmission, an acknowledgment does not reveal whether it acknowledges the original segment or the retransmission. RTT therefore cannot be measured accurately from that acknowledgment, and using it would give an incorrect RTO.</p>
+<p>Karn&#39;s algorithm excludes RTT samples from retransmitted segments when calculating the smoothed RTT. Retransmission therefore does not produce a new RTT estimate or a new RTO through the estimation formula.</p>
+<p>This introduces another problem: if delay suddenly increases and remains high, perhaps after a topology change, the old RTO expires repeatedly. Since retransmitted segments supply no RTT samples, the estimate cannot adapt. The correction is to increase RTO after each retransmission, typically doubling it.</p>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-4/" rel="prev"><span>← Previous chapter</span>Chapter 4 Network Layer</a>
+  <a href="../chapter-6/" rel="next"><span>Next chapter →</span>Chapter 6 Application Layer</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

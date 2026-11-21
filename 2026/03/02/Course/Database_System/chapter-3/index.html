@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 3 Introduction to SQL — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  <link rel="stylesheet" href="../../../../../../media/katex/katex.min.css">
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Database System</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-03-07">07 Mar 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-3-Introduction-to-SQL">Chapter 3 Introduction to SQL</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#31-Data-Definition-Language">1 Data Definition Language</a></li>
+    <li><a href="#32-Basic-Structure-of-Selection">2 Basic Structure of Selection</a>
+      <ul class="toc-subsections">
+        <li><a href="#An-example-covering-most-of-content">2.1 An example covering most of content</a></li>
+        <li><a href="#String-Operations">2.2 String Operations</a></li>
+        <li><a href="#Set-Operation">2.3 Set Operation</a></li>
+        <li><a href="#Null-Values">2.4 Null Values</a></li>
+        <li><a href="#Aggregate-Functions">2.5 Aggregate Functions</a></li>
+      </ul>
+    </li>
+    <li><a href="#33-Nested-Subqueries">3 Nested Subqueries</a></li>
+    <li><a href="#34-Modification-of-the-Database">4 Modification of the Database</a>
+      <ul class="toc-subsections">
+        <li><a href="#Deletion-1">4.1 Deletion</a></li>
+        <li><a href="#Insertion-2">4.2 Insertion</a></li>
+        <li><a href="#Updates">4.3 Updates</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<h2 id="31-Data-Definition-Language">1 Data Definition Language</h2>
+<ul>
+<li><code>char(n)</code>: Fixed-length string, with length <code>n</code> specified by the user.</li>
+<li><code>varchar(n)</code>: Variable-length string, with maximum length <code>n</code> specified by the user.</li>
+<li><code>int</code>: Integer.</li>
+<li><code>smallint</code>: Smaller integer.</li>
+<li><code>numeric(p, d)</code>: Fixed-point number, with total number of digits <code>p</code> (including the sign) and number of digits to the right of the decimal point <code>d</code> specified by the user.</li>
+<li><code>real</code> / <code>double precision</code>: Correspond to single-precision floating-point and double-precision floating-point numbers, respectively.</li>
+<li><code>float(n)</code>: Floating-point number, with minimum precision <code>n</code> specified by the user.</li>
+<li><code>date</code>: Date, including year, month, and day, e.g., <code>2025-02-25</code>.</li>
+<li><code>time</code>: Time, including hour, minute, and second, e.g., <code>10:47:20</code>, <code>10:47:20.75</code>.</li>
+<li><code>timestamp</code> / <code>datetime</code>: Timestamp, i.e., date + time, e.g., <code>2025-02-25 10:47:20.75</code>.</li>
+</ul>
+<blockquote>
+<p>Type conversion functions exist, such as <code>abs()</code>, <code>exp()</code>, <code>round()</code>, <code>sin()</code>, <code>cos()</code>.</p>
+</blockquote>
+<pre><code class="language-sql">-- Basic Schema Definition
+
+-- Define relationship
+CREATE TABLE borrow (
+    index int NOT NULL PRIMARY KEY,
+    num NUMERIC(3, 0) DEFAULT 0,
+    cno CHAR(7),
+    bno CHAR(8),
+    borrow_date DATETIME,
+    return_date DATETIME,
+    type CHAR(1),
+    CONSTRAINT chk_type CHECK (type IN (&#39;T&#39;, &#39;G&#39;, &#39;U&#39;, &#39;O&#39;)),
+    FOREIGN KEY (cno) REFERENCES card(cno)
+        ON UPDATE CASCADE,
+    FOREIGN KEY (bno) REFERENCES book(bno)
+        ON DELETE CASCADE
+);
+
+-- composite primary key
+PRIMARY KEY (cno, bno)
+
+-- Delete relationship
+DROP TABLE borrow;
+
+-- Clear the contents of relationship
+DELETE FROM borrow;
+
+-- Add attributes
+ALTER TABLE borrow ADD attribute1, attribute2;
+-- Delete attributes
+ALTER TABLE borrow DROP attribute1;
+</code></pre>
+<h2 id="32-Basic-Structure-of-Selection">2 Basic Structure of Selection</h2>
+<h3 id="An-example-covering-most-of-content">2.1 An example covering most of content</h3>
+<pre><code class="language-sql">/*
+student(id, name, age, dept, gpa)
+course(id, title, credits)
+takes(student_id, course_id, score)
+*/
+
+SELECT DISTINCT 
+    s.gpa * 10 AS scaled_gpa, 
+    &#39;Passed&#39; AS status
+FROM student AS s, takes AS t, course AS c
+WHERE s.id = t.student_id
+  AND t.score NOT BETWEEN 0 AND 60
+ORDER BY scaled_gpa DESC, student_name ASC
+LIMIT 5 OFFSET 2;
+</code></pre>
+<ul>
+<li>DISTINCT Removes duplicate records;</li>
+<li>SQL allows the use of simple arithmetic expressions on constants or attributes within query statements;</li>
+<li>SQL strings should be enclosed in single quotes &#39;;</li>
+<li>Use AS to rename;</li>
+<li>The ORDER BY clause sorts the query results using the keywords DESC and ASC;</li>
+<li>The LIMIT clause is used to restrict the number of result tuples, and when combined with the OFFSET keyword, it can also specify a range of tuples to return.</li>
+</ul>
+<aside class="post-callout">
+  <strong class="callout-title">Tips</strong>
+  1. <code>FROM instructor, teaches</code> is essentially the Cartesian product of the two; <br>
+  2. Use * to select all attributes
+</aside>
+
+<h3 id="String-Operations">2.2 String Operations</h3>
+<p>In SQL, column names and table names are case-insensitive, while string comparisons are case-sensitive.</p>
+<p>SQL supports string functions.For example, removing trailing spaces from a string: <code>TRIM(s)</code>; And <code>SUBSTRING(name,1,5)</code>, <code>UPPER(s.name)</code>, <code>LOWER(name) || &#39;@cs&#39;</code>(&#39;||&#39; means concatenation)</p>
+<p>For <code>WHERE UPPER (s. name) LIKE &#39;KAN%&#39;</code>: </p>
+<ul>
+<li>LIKE is used for &quot;fuzzy matching&quot;</li>
+<li>&#39;%&#39; matches any string (similar to the file system&#39;s &#39;*&#39;) </li>
+<li>&#39;_&#39; matches any single character (similar to the file system&#39;s &#39;?&#39;)</li>
+</ul>
+<blockquote>
+<p>If you want to treat these special characters as ordinary characters, you need to use the ESCAPE keyword and add an escape character before the special characters, typically using the backslash \ as the escape character.
+<code>LIKE &#39;ab\%cd%&#39; ESCAPE &#39;\&#39;</code> : match all strings that start with &#39;ab%cd&#39;
+<code>LIKE &#39;ab\\cd%&#39; ESCAPE &#39;\&#39;</code> : match all strings that start with &#39;ab\cd&#39;</p>
+</blockquote>
+<h3 id="Set-Operation">2.3 Set Operation</h3>
+<p>SQL supports the set operators <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>∪</mo><mo separator="true">,</mo><mtext> </mtext><mo>∩</mo><mo separator="true">,</mo><mtext> </mtext><mover accent="true"><mtext>  </mtext><mo>ˉ</mo></mover></mrow><annotation encoding="application/x-tex">\cup,\ \cap,\ \bar{\ \ }</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7622em;vertical-align:-0.1944em;"></span><span class="mord">∪</span><span class="mpunct">,</span><span class="mspace"> </span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">∩</span><span class="mpunct">,</span><span class="mspace"> </span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.5678em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mspace"> </span><span class="mspace"> </span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.25em;"><span class="mord">ˉ</span></span></span></span></span></span></span></span></span></span> from relational algebra, represented by <code>UNION</code>, <code>INTERSECT</code>, and <code>EXCEPT</code> respectively.</p>
+<p>Using these operators automatically eliminates duplicate records (since sets do not allow duplicate records). If you want to retain duplicate records, you need to add the <code>ALL</code> keyword after the set operation keyword, i.e., <code>UNION ALL</code>, <code>INTERSECT ALL</code>, <code>EXCEPT ALL</code>.</p>
+<h3 id="Null-Values">2.4 Null Values</h3>
+<p>The result of any arithmetic expression containing null is null, and the result of any comparison involving null is unknown (except for <code>IS NULL</code> and <code>IS NOT NULL</code>).</p>
+<p>SQL logical expressions have three possible outcomes: true, unknown, false.</p>
+<p>If the evaluation result of a predicate in a <code>WHERE</code> clause is unknown, it is treated as false.</p>
+<p>The comparison <code>... = NULL</code> always results in null.</p>
+<p>When duplicate records are eliminated, null values are considered identical.</p>
+<p>Aggregate functions other than <code>count(*)</code> ignore records where the attribute contains null values.</p>
+<h3 id="Aggregate-Functions">2.5 Aggregate Functions</h3>
+<p><code>AVG (col)</code>, <code>MIN(col)</code>, <code>MAX(col)</code>, <code>SUM(col)</code>, <code>COUNT (col)</code></p>
+<blockquote>
+<p><code>SUM</code> and <code>AVG</code> require that the input values must be of numeric type, while the remaining operators can operate on non-numeric types.</p>
+</blockquote>
+<pre><code class="language-sql">-- example
+SELECT AVG(s.gpa) AS avg_gpa, e.cid 
+  FROM enrolled AS e, student AS s 
+  WHERE e.sid = s.sid
+GROUP BY e.cid
+HAVING AVG(s.gpa) &gt; 3.9;
+</code></pre>
+<blockquote>
+<p>The execution order of a query statement is: <code>FROM</code> -&gt; <code>WHERE</code> -&gt; <code>GROUP</code> -&gt; <code>HAVING</code> -&gt; <code>SELECT</code> -&gt; <code>ORDER BY</code></p>
+</blockquote>
+<blockquote>
+<p>Predicates in the HAVING clause are applied after groups are formed, whereas predicates in the WHERE clause are applied before groups are formed. Therefore, aggregate functions cannot be directly used in the WHERE clause.</p>
+</blockquote>
+<h2 id="33-Nested-Subqueries">3 Nested Subqueries</h2>
+<p>SQL uses <code>IN</code> to check whether a tuple is a member within a certain relation.<code>IN</code> Can be used for enumerating sets, and can also be paired with row constructors.</p>
+<pre><code class="language-sql">SELECT DISTINCT course_id
+FROM section
+WHERE semester = &#39;Fall&#39; AND year = 2017 AND course_id IN 
+(
+    SELECT course_id
+    FROM section
+    WHERE semester = &#39;Spring&#39; AND year = 2018        
+);
+
+SELECT DISTINCT name
+FROM instructor
+WHERE name NOT IN (&#39;Mozart&#39;, &#39;Einstein&#39;)
+</code></pre>
+<p><code>C &lt;comp&gt; SOME r</code> is equivalent to <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∃</mi><mtext> </mtext><mi>t</mi><mo>∈</mo><mi>r</mi><mo stretchy="false">(</mo><mi>C</mi><mtext> </mtext><mo stretchy="false">⟨</mo><mi>c</mi><mi>o</mi><mi>m</mi><mi>p</mi><mo stretchy="false">⟩</mo><mtext> </mtext><mi>r</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\exists\ t \in r (C\ \langle comp \rangle\ r)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7335em;vertical-align:-0.0391em;"></span><span class="mord">∃</span><span class="mspace"> </span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mspace"> </span><span class="mopen">⟨</span><span class="mord mathnormal">co</span><span class="mord mathnormal">m</span><span class="mord mathnormal">p</span><span class="mclose">⟩</span><span class="mspace"> </span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mclose">)</span></span></span></span></p>
+<pre><code class="language-sql">SELECT name
+FROM instructor
+WHERE salary &gt; SOME
+(
+    SELECT salary
+    FROM instructor
+    WHERE dept_name = &#39;Biology&#39;
+);
+</code></pre>
+<p><code>C &lt;comp&gt; ALL r</code> is equivalent to <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">∀</mi><mtext> </mtext><mi>t</mi><mo>∈</mo><mi>r</mi><mo stretchy="false">(</mo><mi>C</mi><mtext> </mtext><mo stretchy="false">⟨</mo><mi>c</mi><mi>o</mi><mi>m</mi><mi>p</mi><mo stretchy="false">⟩</mo><mtext> </mtext><mi>r</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\forall\ t \in r (C\ \langle comp \rangle\ r)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7335em;vertical-align:-0.0391em;"></span><span class="mord">∀</span><span class="mspace"> </span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="mspace"> </span><span class="mopen">⟨</span><span class="mord mathnormal">co</span><span class="mord mathnormal">m</span><span class="mord mathnormal">p</span><span class="mclose">⟩</span><span class="mspace"> </span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mclose">)</span></span></span></span></p>
+<pre><code class="language-sql">SELECT dept_name
+FROM instructor
+GROUP BY dept_name
+HAVING AVG(salary) &gt;= ALL
+(
+    SELECT AVG(salary)
+    FROM instructor
+    GROUP BY dept_name
+);
+</code></pre>
+<blockquote>
+<p><code>= SOME</code> <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≡</mo></mrow><annotation encoding="application/x-tex">\equiv</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4637em;"></span><span class="mrel">≡</span></span></span></span> <code>IN</code> , <strong>but</strong> <code>!= SOME</code> <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≢</mo></mrow><annotation encoding="application/x-tex">\not\equiv </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mrel"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="inner"><span class="mord"><span class="mrel"></span></span></span><span class="fix"></span></span></span></span></span><span class="mspace nobreak"></span><span class="mrel">≡</span></span></span></span> <code>NOT IN</code>
+<code>!= ALL</code> <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≡</mo></mrow><annotation encoding="application/x-tex">\equiv</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4637em;"></span><span class="mrel">≡</span></span></span></span> <code>NOT IN</code> , <strong>but</strong> <code>= ALL</code> <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≢</mo></mrow><annotation encoding="application/x-tex">\not\equiv </annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mrel"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="inner"><span class="mord"><span class="mrel"></span></span></span><span class="fix"></span></span></span></span></span><span class="mspace nobreak"></span><span class="mrel">≡</span></span></span></span> <code>IN</code>
+<code>SOME</code> <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≡</mo></mrow><annotation encoding="application/x-tex">\equiv</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4637em;"></span><span class="mrel">≡</span></span></span></span> <code>ANY</code></p>
+</blockquote>
+<p>When the subquery returns a non-empty result, <code>EXISTS</code> returns true; otherwise, it returns false.Conversely, the <code>NOT EXISTS</code> constructor returns the opposite result.</p>
+<pre><code class="language-sql">SELECT course_id
+FROM section AS S
+WHERE semester = &#39;Fall&#39; AND year = 2017 AND EXISTS 
+(
+    SELECT *
+    FROM section AS T
+    WHERE semester = &#39;Spring&#39; AND year = 2018 AND S.course_id = T.course_id
+);
+</code></pre>
+<p><code>UNIQUE</code> is used to check whether there are duplicate tuples in the result of a subquery. It returns true if there are no duplicate tuples, otherwise it returns false.</p>
+<pre><code class="language-sql">SELECT T.course_id
+FROM course AS T
+WHERE UNIQUE 
+(
+    SELECT R.course_id
+    FROM section AS R
+    WHERE T.course_id = R.course_id AND R.year = 2017
+);
+</code></pre>
+<p><code>FROM</code> also support subqueries, because all query statements return a relation.</p>
+<pre><code class="language-sql">SELECT dept_name, avg_salary
+FROM 
+(
+    SELECT dept_name, AVG(salary)
+    FROM instructor
+    GROUP BY dept_name
+)
+AS dept_avg(dept_name, avg_salary)
+WHERE avg_salary &gt; 42000;
+</code></pre>
+<p>Common Table Expressions (CTE) are an alternative to nested subqueries in complex scenarios, providing an auxiliary statement for large queries. We can think of them as a temporary table within a query.</p>
+<pre><code class="language-sql">WITH max_budget(value) AS 
+(
+        SELECT MAX(budget)
+        FROM department
+)
+SELECT budget
+FROM department, max_budget
+WHERE department.budget = max_budget.value;
+</code></pre>
+<p>Using <code>RECURSIVE</code> after <code>WITH</code> enables a CTE to reference itself, thereby achieving recursion in SQL queries.</p>
+<pre><code class="language-sql">WITH RECURSIVE cteSource (counter) AS 
+(
+    ( SELECT 1 ) 
+    -- Basic items
+    UNION
+    ( SELECT counter + 1 FROM cteSource WHERE counter &lt; 10 )
+    -- Recursive items
+)
+SELECT * FROM cteSource;
+</code></pre>
+<p>Scalar subqueries return only a single value (one tuple, one attribute) (though essentially the returned result is still a relation), which can be placed in <code>SELECT</code>, <code>WHERE</code>, and <code>HAVING</code> clauses.</p>
+<pre><code class="language-sql">SELECT dept_name, 
+(
+    SELECT COUNT(*)
+    FROM instructor
+    WHERE department.dept_name = instructor.dept_name
+) AS num_instructors
+FROM department;
+</code></pre>
+<blockquote>
+<p><code>(SELECT COUNT(*) FROM teaches) / (SELECT COUNT(*) FROM instructor);</code> is an integer division; to convert it into a floating-point division, you need to multiply by 1.0.</p>
+</blockquote>
+<h2 id="34-Modification-of-the-Database">4 Modification of the Database</h2>
+<h3 id="Deletion-1">4.1 Deletion</h3>
+<p>Only a complete tuple can be deleted, not specific attributes.</p>
+<pre><code class="language-sql">DELETE FROM instructor
+WHERE salary &lt; 
+(
+    SELECT AVG(salary)
+    FROM instructor
+);
+</code></pre>
+<h3 id="Insertion-2">4.2 Insertion</h3>
+<pre><code class="language-sql">-- Insert in order of attributes
+INSERT INTO course
+VALUES (&#39;CS-437&#39;, &#39;Database System&#39;, &#39;Comp. Sci.&#39;, 4);
+
+-- Insert attributes in a specified order
+INSERT INTO course(title, course_id, credits, dept_name)
+VALUES (&#39;Database System&#39;, &#39;CS-437&#39;,  4, &#39;Comp. Sci.&#39;);
+
+-- Insert query results
+INSERT INTO instrutor
+    SELECT ID, name, dept_name, 18000
+    FROM student
+    WHERE dept_name = &#39;Music&#39; AND tot_cred &gt; 144;
+</code></pre>
+<blockquote>
+<p>You can insert only some attributes, in which case the remaining attributes will be assigned null values.</p>
+</blockquote>
+<h3 id="Updates">4.3 Updates</h3>
+<pre><code class="language-sql">UPDATE instructor
+SET salary = salary * 1.05
+WHERE salary &lt; 
+(
+    SELECT AVG(salary)
+    FROM instructor
+);
+
+UPDATE student
+SET tot_cred = 
+(
+    SELECT SUM(credits)
+    FROM takes, course
+    WHERE student.ID = takes.ID AND
+        takes.course.id = course.course_id AND
+        takes.grade &lt;&gt; &#39;F&#39; AND
+        takes.graede IS NOT NULL
+);
+
+-- Supports executing different update operations conditionally within the same UPDATE statement
+UPDATE instructor
+SET salary = CASE
+    WHEN salary &lt;= 100000 THEN salary * 1.05
+    WHEN salary BETWEEN 100000 AND 200000 THEN salary * 1.04
+    ELSE salary * 1.03
+END;
+</code></pre>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-2/" rel="prev"><span>← Previous chapter</span>Chapter 2 Relational Model</a>
+  <a href="../chapter-4/" rel="next"><span>Next chapter →</span>Chapter 4 Intermediate SQL</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

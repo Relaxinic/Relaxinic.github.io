@@ -1,0 +1,894 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 3 Data link layer — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  <link rel="stylesheet" href="../../../../../../media/katex/katex.min.css">
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Computer Network</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-10-04">04 Oct 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-3-Data-link-layer">Chapter 3 Data link layer</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#31-Three-questions">1 Three questions</a>
+      <ul class="toc-subsections">
+        <li><a href="#Encapsulation-into-frames-and-transparent-transmission">1.1 Encapsulation into frames and transparent transmission</a></li>
+        <li><a href="#Error-detection">1.2 Error detection</a></li>
+        <li><a href="#Reliable-Transmission">1.3 Reliable Transmission</a></li>
+      </ul>
+    </li>
+    <li><a href="#32-Point-to-Point-Protocol">2 Point-to-Point Protocol</a>
+      <ul class="toc-subsections">
+        <li><a href="#Frame-Format">2.1 Frame Format</a></li>
+        <li><a href="#Transparent-Transmission">2.2 Transparent Transmission</a></li>
+        <li><a href="#Error-Detection">2.3 Error Detection</a></li>
+        <li><a href="#Working-States">2.4 Working States</a></li>
+      </ul>
+    </li>
+    <li><a href="#33-Shared-Ethernet">3 Shared Ethernet</a>
+      <ul class="toc-subsections">
+        <li><a href="#Network-Adapters-and-MAC-Addresses">3.1 Network Adapters and MAC Addresses</a></li>
+        <li><a href="#CSMACD-Protocol">3.2 CSMA/CD Protocol</a></li>
+        <li><a href="#Shared-Ethernet-Using-Hubs">3.3 Shared Ethernet Using Hubs</a></li>
+        <li><a href="#Extending-Ethernet-at-the-Physical-Layer">3.4 Extending Ethernet at the Physical Layer</a></li>
+        <li><a href="#Extending-Ethernet-at-the-Data-Link-Layer">3.5 Extending Ethernet at the Data Link Layer</a></li>
+      </ul>
+    </li>
+    <li><a href="#34-Switched-Ethernet">4 Switched Ethernet</a>
+      <ul class="toc-subsections">
+        <li><a href="#Shared-Ethernet-vs-Switched-Ethernet">4.1 Shared Ethernet vs. Switched Ethernet</a></li>
+      </ul>
+    </li>
+    <li><a href="#35-Ethernet-MAC-Frame-Format">5 Ethernet MAC Frame Format</a></li>
+    <li><a href="#36-Virtual-Local-Area-Network">6 Virtual Local Area Network</a>
+      <ul class="toc-subsections">
+        <li><a href="#IEEE-8021Q-frames">6.1 IEEE 802.1Q frames</a></li>
+        <li><a href="#Ethernet-Switches">6.2 Ethernet Switches</a></li>
+      </ul>
+    </li>
+    <li><a href="#37-80211-Wireless-Local-Area-Network">7 802.11 Wireless Local Area Network</a>
+      <ul class="toc-subsections">
+        <li><a href="#Composition">7.1 Composition</a></li>
+        <li><a href="#Physical-Layer">7.2 Physical Layer</a></li>
+        <li><a href="#CSMACA-Protocol">7.3 CSMA/CA Protocol</a></li>
+        <li><a href="#MAC-Frame">7.4 MAC Frame</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<p>Link: A physical line (wired or wireless) from one node to an adjacent node, with no other switching nodes in between.</p>
+<p>Data link: When transmitting data over a link, in addition to the link itself, certain necessary communication protocols are required to control the transmission of this data. Adding the hardware and software that implement these protocols to the link constitutes a data link.</p>
+<ul>
+<li>The network adapter in a computer (commonly known as a network card) and its corresponding software driver implement these protocols; a typical network adapter includes the functions of both the physical layer and the data link layer.</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/57.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Frame: The PDU for horizontal logical communication between peer entities at the data link layer.</p>
+<hr>
+<p>Services provided by the data link layer</p>
+<ul>
+<li><p>Unacknowledged connectionless service: The receiver does not acknowledge the received frames. Applicable scenarios: reliable channels with low bit error rates, real-time communication. Network example: Ethernet.</p>
+</li>
+<li><p>Acknowledged connectionless service: Each frame receives an individual acknowledgment. Applicable scenarios: unreliable channels (wireless channels). Network example: 802.11.</p>
+</li>
+<li><p>Acknowledged connection-oriented service. Applicable scenarios: unreliable channels with long delays.</p>
+</li>
+</ul>
+<blockquote>
+<p>SDLC / HDLC: Synchronous / High-level Data Link Control</p>
+</blockquote>
+<blockquote>
+<p>Piggybacking: When the receiver has data to send to the sender, it does not immediately send a pure acknowledgment frame. Instead, it temporarily delays sending the ACK, waiting until the next service data frame is ready to be sent, and then &quot;attaches&quot; the acknowledgment information to the header or a specific field of this data frame and sends it along with it.</p>
+</blockquote>
+<h2 id="31-Three-questions">1 Three questions</h2>
+<h3 id="Encapsulation-into-frames-and-transparent-transmission">1.1 Encapsulation into frames and transparent transmission</h3>
+<p>Encapsulation into frames: The data link layer adds the beginning and end of the frame to the PDU delivered by the upper layer to make it a frame.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/58.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>The beginning and end of the frame contain some important control information.</p>
+</li>
+<li><p>Another function of the beginning of the frame and the end of the frame is frame delimitation, but not every frame of the data link layer protocol contains the frame delimitation mark (such as the MAC frame of Ethernet V2)</p>
+</li>
+<li><p>In order to improve the efficiency of transmission frames, the length of the data load of the frame should be as greater than the length of the first and tail as possible.</p>
+</li>
+<li><p>Considering many factors such as the demand for cache space and error control, each data link layer protocol stipulates the maximum length of the frame&#39;s data load, that is, the maximum transfer unit (MTU)</p>
+</li>
+</ul>
+<p>Transparent transmission: make the data link layer have no restrictions on the content of the PDU delivered by the upper layer, as if the data link layer does not exist.</p>
+<ul>
+<li><p>Byte-oriented physical links use the method of byte filling to achieve transparent transmission.</p>
+</li>
+<li><p>Bit-oriented physical links use the method of bit filling to achieve transparent transmission.</p>
+</li>
+</ul>
+<h3 id="Error-detection">1.2 Error detection</h3>
+<p>Frames may have errors during the transmission process.</p>
+<p>Bit errors may occur during transmission (called bit errors). Bit 1 may become bit 0, and vice versa.</p>
+<p>Over a period of time, the ratio of the number of bits transmitted to the total number of bits transmitted is called the bit error rate (BER)</p>
+<p>Increasing the signal-to-noise ratio of the link can reduce the error rate; but in the actual communication link, it is impossible to reduce the error rate to zero.</p>
+<p>The receiving party can detect whether there is an error code in the frame according to the error code added by the sender at the end of the frame. The commonly used verification methods are:</p>
+<p><strong>Odd-even check</strong></p>
+<ul>
+<li><p>Odd check is to add a check bit after the data to be sent, so that the number of bits 1 in the entire data after adding the check bit is odd.</p>
+</li>
+<li><p>Even check is to add a check bit after the data to be sent, so that the number of bits 1 in the whole data after adding the check bit is even.</p>
+</li>
+<li><p>In the transmitted data, if there is an error in the odd bit, the oddity of the number of bits contained in bit 1 will change, and the error code can be detected.</p>
+</li>
+<li><p>In the transmitted data, if there is an error code in an even number of bits, the parity of the number of bits contained in 1 will not change, and the error code cannot be detected (missed detection)</p>
+</li>
+<li><p>In actual use, the parity check can be divided into vertical parity check, horizontal paparity check and horizontal vertical papamity check.</p>
+</li>
+</ul>
+<p><strong>Cyclic redundancy check</strong>(cyclic redundancy check, <strong>CRC</strong>)</p>
+<p>This technology with extremely low leakage rate is widely used in the data link layer, because although the calculation is relatively complex, it is very easy to implement with hardware.</p>
+<p>The sending and receiving parties agreed to generate a polynomial <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">G(X)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">G</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mclose">)</span></span></span></span>. Based on the data to be sent and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">G(X)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">G</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mclose">)</span></span></span></span>, the sender calculates the error detection code (redundant code, the length is the maximum number of polynomials generated), and adds the redundant code to the back of the data to be sent and transmits it together.</p>
+<p>Redundant code calculation steps:</p>
+<ol>
+<li>Construct the divisor: add the maximum number of polynomials to be generated after the data to be sent 0</li>
+</ol>
+<p>Two. Construct divisors: generate a bit string composed of coefficients of polynomials as divisors</p>
+<ol start="3">
+<li><p>Do binary module 2 division: equivalent to the logical difference or operation of the corresponding bit</p>
+</li>
+<li><p>Check the remainder: The number of digits of the remainder should be the same as the maximum number of times to generate a polynomial. If the number of digits is insufficient, add 0 before the remainder to make up the number of digits.</p>
+</li>
+</ol>
+<p>After the recipient receives the data and redundant code, it calculates whether the received data and redundant code have errors through <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>G</mi><mo stretchy="false">(</mo><mi>X</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">G(X)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">G</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mclose">)</span></span></span></span></p>
+<p>Specific steps:</p>
+<ol>
+<li>Construct the divisor: the received information is used as the divisor</li>
+</ol>
+<p>Two. Construct divisors: generate a bit string composed of coefficients of polynomials as divisors</p>
+<ol start="3">
+<li><p>Do binary module 2 division: equivalent to the logical difference or operation of the corresponding bit</p>
+</li>
+<li><p>Check the remainder: If the remainder is 0, it can be considered that there is no error code in the transmission process; if the remainder is not 0, it can be considered that there is an error code in the transmission process.</p>
+</li>
+</ol>
+<p>Error detection techniques such as parity checks and cyclic redundancy checks can only detect that an error occurred during transmission, but cannot locate the error, and therefore cannot correct it. To correct errors in transmission, error-correcting codes with more redundant information (such as Hamming codes) can be used for forward error correction. However, error-correcting codes have relatively high overhead and are rarely used in computer networks.</p>
+<p>In computer networks, the error detection and retransmission methods introduced later are usually used to correct errors in transmission, or frames in which errors are detected are simply discarded, depending on whether the data link layer provides reliable transmission service or unreliable transmission service to its upper layer.</p>
+<p><strong>Hamming code</strong></p>
+<p>Code word: an n-bit unit containing m data bits and r check bits, described as an (n, m) code, n=m+r</p>
+<p>Code rate: the proportion of a code word that does not contain redundant parts, which can be expressed as m/n</p>
+<p>Hamming distance: the number of corresponding bits that differ between two code words</p>
+<ul>
+<li><p>Example: the Hamming distance between 0000000000 and 0000011111 is 5</p>
+</li>
+<li><p>If the Hamming distance between two code words is d, then d single-bit corrections are needed to convert one code word into the other code word</p>
+</li>
+</ul>
+<p>Minimum Hamming distance: the smallest Hamming distance among all pairs of code words <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mi>min</mi><mo>⁡</mo></msub></mrow><annotation encoding="application/x-tex">d_{\min}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3175em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight"><span class="mtight">m</span><span class="mtight">i</span><span class="mtight">n</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></p>
+<ul>
+<li><p>Can detect at most <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>d</mi><mi>min</mi><mo>⁡</mo></msub><mn>1</mn></mrow><annotation encoding="application/x-tex">d_{\min} 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3175em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight"><span class="mtight">m</span><span class="mtight">i</span><span class="mtight">n</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord">1</span></span></span></span> errors</p>
+</li>
+<li><p>Can correct at most <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">⌊</mo><mstyle scriptlevel="0" displaystyle="true"><mfrac><mrow><msub><mi>d</mi><mi>min</mi><mo>⁡</mo></msub><mo>−</mo><mn>1</mn></mrow><mn>2</mn></mfrac></mstyle><mo stretchy="false">⌋</mo></mrow><annotation encoding="application/x-tex">\lfloor \dfrac{d_{\min} - 1}{2} \rfloor</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.0574em;vertical-align:-0.686em;"></span><span class="mopen">⌊</span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">2</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal">d</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3175em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mop mtight"><span class="mtight">m</span><span class="mtight">i</span><span class="mtight">n</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose">⌋</span></span></span></span> errors</p>
+</li>
+</ul>
+<p>Goal of Hamming codes: based on parity checking, how to find the error location and provide 1-bit error correction capability</p>
+<h3 id="Reliable-Transmission">1.3 Reliable Transmission</h3>
+<p>Unreliable transmission service: simply discards frames with bit errors and does nothing else.</p>
+<p>Reliable transmission service: ensures that whatever the sender sends can ultimately be correctly received by the receiver.</p>
+<p>In general, the bit error rate of wired links is relatively low. Therefore, to reduce overhead, the data link layer is not required to provide reliable transmission service to its upper layers; even if bit errors occur, the problem of reliable transmission is handled by its upper layers.</p>
+<p>Wireless links are susceptible to interference and have a relatively high bit error rate. Therefore, the data link layer is required to provide reliable transmission service to its upper layers.</p>
+<p>Transmission errors (the first three situations occur in the upper layers of the data link layer, and the last one occurs in the data link layer and its lower layers):</p>
+<ul>
+<li><p>Bit errors (bit errors): just introduced above.</p>
+</li>
+<li><p>Packet loss: when the input queue is almost full, received packets are actively discarded.</p>
+</li>
+<li><p>Packet out-of-order: the order in which packets arrive differs from the order in which they were sent.</p>
+</li>
+<li><p>Packet duplication: when a router is busy, packets wait for a long time in the input queue, causing the sender to time out and retransmit, so that the receiver ultimately receives multiple identical packets.</p>
+</li>
+</ul>
+<p>Reliable transmission service is not limited to the data link layer; all other layers may also choose to implement reliable transmission.</p>
+<p>The implementation of reliable transmission is relatively complex and has relatively high overhead. Whether to use reliable transmission depends on application requirements.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/68.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p><strong>Stop-and-wait protocol</strong>:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/69.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>If the receiver does not receive the data packet, it will not send the corresponding ACK or NAK. If no measures are taken, the sender will remain in the state of waiting for the receiver&#39;s ACK or NAK.</p>
+<p>To solve the above problem, the sender can start a timeout timer each time it finishes sending a data packet.</p>
+<p>If the retransmission time-out (RTO) set by the timeout timer is reached but the sender still has not received the receiver&#39;s ACK or NAK, it retransmits the data packet that was previously sent. Generally, the RTO can be set slightly larger than the average round-trip time RTT between the sender and receiver.</p>
+<p>To avoid the transmission error of duplicate packets, each packet must carry a sequence number. For the stop-and-wait protocol, since the sender stops and waits after sending each data packet, it is enough to ensure that each time a new data packet is sent, its sequence number is different from that of the previously sent data packet. Therefore, one bit is enough for numbering (0/1).</p>
+<p>If the receiver receives a duplicate data packet, it discards it and sends another acknowledgment packet. The acknowledgment packet also needs to be numbered to prevent the sender from mistaking which data packet the acknowledgment packet corresponds to. The number of bits used is the same as the number of bits used for the data packet.</p>
+<blockquote>
+<p>After using the timeout retransmission mechanism, the negative acknowledgment mechanism can be omitted, which makes the protocol simpler to implement. However, if the bit error rate of the point-to-point link is relatively high, using the negative acknowledgment mechanism can enable the sender to retransmit as soon as possible before the timeout timer expires.</p>
+</blockquote>
+<blockquote>
+<p>The stop-and-wait protocol belongs to the automatic repeat request (ARQ) protocol, that is, the retransmission request is automatically made by the sender, rather than the receiver requesting the sender to retransmit a certain erroneous data packet.</p>
+</blockquote>
+<p>Channel utilization:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/72.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/73.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>If timeout retransmission occurs, the channel utilization rate will be even lower for transmitting useful data information.</p>
+</li>
+<li><p>When the RTT is relatively large, in order to improve channel utilization, the sender and receiver are not suitable for using the stop-and-wait protocol, and instead can choose to use the Go-Back-N (GBN) protocol or the Selective Repeat (SR) protocol.</p>
+</li>
+</ul>
+<p><strong>Go-Back-N Protocol (GBN)</strong></p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/74.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Using pipelined transmission can significantly improve channel utilization.</p>
+<p>At this time, the sender cannot continuously send data packets without limit; otherwise, routers in the network or the receiver may not have enough time to process these data packets, which may lead to the loss of data packets. This is actually a waste of network resources.</p>
+<p>Therefore, in addition to using pipelined transmission, the Go-Back-N protocol also uses a sending window to limit the number of data packets the sender can continuously send. This belongs to the continuous ARQ protocol.</p>
+<ul>
+<li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span> bits are used to number the packets, and the sequence number range is <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn><mo>∼</mo><mo stretchy="false">(</mo><msup><mn>2</mn><mi>n</mi></msup><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">0 \sim (2^n - 1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∼</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6644em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span> (in this example, it is assumed that 3 bits are used to number the packets).</li>
+</ul>
+<p>The sender needs to maintain a sending window <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>T</mi></msub></mrow><annotation encoding="application/x-tex">W_T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> (range <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mo>&lt;</mo><msub><mi>W</mi><mi>T</mi></msub><mo>≤</mo><mo stretchy="false">(</mo><msup><mn>2</mn><mi>n</mi></msup><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">1 &lt; W_T \le (2^n - 1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6835em;vertical-align:-0.0391em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6644em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span>). Without receiving an acknowledgment packet from the receiver, the sender can continuously send all data packets whose sequence numbers fall within <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>T</mi></msub></mrow><annotation encoding="application/x-tex">W_T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> (below, take <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>T</mi></msub><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">W_T = 5</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">5</span></span></span></span>).</p>
+<p>The receiver needs to maintain a receiving window <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>R</mi></msub></mrow><annotation encoding="application/x-tex">W_R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>. Only data packets that arrive correctly at the receiver (without errors) and whose sequence numbers fall within <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>R</mi></msub></mrow><annotation encoding="application/x-tex">W_R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> are received by the receiver; the value of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>R</mi></msub></mrow><annotation encoding="application/x-tex">W_R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> can only be 1, which is the same as the stop-and-wait protocol.</p>
+<p>Each time the receiver correctly receives a data packet whose sequence number falls within the receiving window, it slides the receiving window forward by one position, so that a new sequence number falls within the receiving window; at the same time, the receiver also needs to send an acknowledgment packet for that data packet to the sender.</p>
+<p>Each time the sender receives an acknowledgment packet that is acknowledged in order, it slides the sending window forward by one position, so that a new sequence number falls within the sending window, and data packets whose sequence numbers fall within the sending window can continue to be sent.</p>
+<p>During the operation of the Go-Back-N protocol, the sender&#39;s sending window and the receiver&#39;s receiving window continuously slide forward according to the above rules (because this type of protocol is also called a sliding window protocol).</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/75.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>In the absence of transmission errors, the channel utilization of the Go-Back-N protocol is significantly higher than that of the Stop-and-Wait protocol; the degree of improvement depends on the size of the sending window.</p>
+<p>At this time, the channel utilization is: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>η</mi><mo>=</mo><mstyle scriptlevel="0" displaystyle="true"><mfrac><mrow><mi>W</mi><mo>×</mo><msub><mi>t</mi><mi>f</mi></msub></mrow><mrow><msub><mi>t</mi><mi>f</mi></msub><mo>+</mo><mtext>RTT</mtext></mrow></mfrac></mstyle></mrow><annotation encoding="application/x-tex">\eta = \dfrac{W \times t_f}{t_f + \text{RTT}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">η</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.3324em;vertical-align:-0.9721em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3603em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.10764em;">f</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord text"><span class="mord">RTT</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.10764em;">f</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9721em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span>, where <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mi>f</mi></msub></mrow><annotation encoding="application/x-tex">t_f</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9012em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.10764em;">f</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span> is the time required to send a single frame.</p>
+<p>An error in one data packet may cause the retransmission of a large number of data packets. When the channel quality is poor (error-prone), the channel utilization of the Go-Back-N protocol is not higher than that of the Stop-and-Wait protocol.</p>
+<p>The receiver uses cumulative acknowledgment: the receiver does not have to send an acknowledgment packet for every data packet it receives; instead, after receiving several data packets with consecutive sequence numbers, it can send an acknowledgment packet for the last data packet that arrived in order. When the receiver sends a cumulative acknowledgment packet is determined by the specific implementation. An acknowledgment packet ACKn indicates that all data packets with sequence number n and before have been correctly received.</p>
+<p>Advantages:</p>
+<ul>
+<li><p>Reduces the number of acknowledgment packets injected into the network</p>
+</li>
+<li><p>Even if an acknowledgment packet is lost, it may not be necessary to retransmit the data packet</p>
+</li>
+</ul>
+<p>Disadvantage: It cannot promptly and accurately reflect to the sender the number of all data packets that the receiver has correctly received.</p>
+<hr>
+<p>Use <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mtext> </mtext><mo stretchy="false">(</mo><mi>n</mi><mo>&gt;</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">n\ (n &gt; 1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">n</span><span class="mspace"> </span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span> bits to number the packets.</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mrow><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mn>1</mn><mo>&lt;</mo><msub><mi>W</mi><mi>R</mi></msub><mo>≤</mo><msub><mi>W</mi><mi>T</mi></msub></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><msub><mi>W</mi><mi>T</mi></msub><mo>+</mo><msub><mi>W</mi><mi>R</mi></msub><mo>≤</mo><msup><mn>2</mn><mi>n</mi></msup></mrow></mstyle></mtd></mtr></mtable><mo fence="true">}</mo></mrow><mn>1</mn><mo>&lt;</mo><msub><mi>W</mi><mi>R</mi></msub><mo>≤</mo><msup><mn>2</mn><mrow><mo stretchy="false">(</mo><mi>n</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo></mrow></msup></mrow><annotation encoding="application/x-tex">\left.
+\begin{aligned}
+&amp;1 &lt; W_R \le W_T \\
+&amp;W_T + W_R \le 2^n
+\end{aligned}
+\right\} 1 &lt; W_R \le 2^{(n-1)}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:3em;vertical-align:-1.25em;"></span><span class="minner"><span class="mopen nulldelimiter"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.75em;"><span style="top:-3.75em;"><span class="pstrut" style="height:2.84em;"></span><span class="mord"></span></span><span style="top:-2.25em;"><span class="pstrut" style="height:2.84em;"></span><span class="mord"></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.25em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.75em;"><span style="top:-3.91em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7144em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.25em;"><span></span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size4">}</span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.938em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.938em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathnormal mtight">n</span><span class="mbin mtight">−</span><span class="mord mtight">1</span><span class="mclose mtight">)</span></span></span></span></span></span></span></span></span></span></span></span></span></p>
+<p>And, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>R</mi></msub></mrow><annotation encoding="application/x-tex">W_R</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> exceeding <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>T</mi></msub></mrow><annotation encoding="application/x-tex">W_T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> has no meaning, and in general <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>W</mi><mi>R</mi></msub><mo>=</mo><msub><mi>W</mi><mi>T</mi></msub></mrow><annotation encoding="application/x-tex">W_R = W_T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.00773em;">R</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">T</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> is taken.</p>
+<p>Ensure that after the receive window slides forward, the new sequence numbers falling within the receive window do not overlap with the previous old sequence numbers, so as to avoid being unable to distinguish between old and new data packets.</p>
+<p>Sender:</p>
+<ul>
+<li><p>It can send all multiple data packets whose sequence numbers fall within the send window even without having received acknowledgment packets from the receiver.</p>
+</li>
+<li><p>Only when acknowledgment packets for the sent data packets are received in order can the send window slide forward to the corresponding position.</p>
+</li>
+<li><p>If acknowledgment packets that arrive out of order are received, they should be recorded to prevent timeout retransmission of their corresponding data packets, but the send window cannot slide forward.</p>
+</li>
+</ul>
+<p>Receiver:</p>
+<ul>
+<li><p>It can receive data packets that arrive out of order but have no bit errors and whose sequence numbers fall within the receive window.</p>
+</li>
+<li><p>In order to make the sender retransmit only the packets in which errors occurred, the receiver no longer uses cumulative acknowledgment, but instead needs to acknowledge each correctly received data packet one by one.</p>
+</li>
+<li><p>Only after receiving data packets in order can the receive window slide forward to the corresponding position.</p>
+</li>
+</ul>
+<h2 id="32-Point-to-Point-Protocol">2 Point-to-Point Protocol</h2>
+<p>The Point-to-Point Protocol (PPP) is currently the most widely used point-to-point data link layer protocol.</p>
+<p>Two applications:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/82.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Frame-Format">2.1 Frame Format</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/83.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Flag field: The delimiter of a PPP frame, with a value of 0x7E</p>
+<p>Address field: The value is 0xFF, reserved</p>
+<p>Control field: The value is 0x03, reserved</p>
+<blockquote>
+<p>To improve efficiency, this field may be omitted during frame transmission</p>
+</blockquote>
+<p>Protocol field: Its value is used to indicate to which protocol the frame&#39;s data payload should be delivered for processing</p>
+<p>Frame check sequence (FCS) field: Its value is the error-detection code calculated using CRC</p>
+<p>Possible PDUs are: IP datagram / LCP packet / NCP packet</p>
+<h3 id="Transparent-Transmission">2.2 Transparent Transmission</h3>
+<p>Byte-oriented asynchronous links use byte stuffing to achieve transparent transmission. Specifically, the data payload of a frame contains several flag fields whose value is equal to the delimiter value of a PPP frame, which is 0x7E.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/84.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Processing at the sender:</p>
+<ul>
+<li><p>For each 0x7E that appears in the data payload, subtract 0x20 (equivalent to XORing with 0x20), and then insert the escape character 0x7D before it.</p>
+</li>
+<li><p>If the data payload originally contains 0x7D, subtract 0x20 from each 0x7D, and then insert the escape character 0x7D before it.</p>
+</li>
+<li><p>For each ASCII control character that appears in the data payload (that is, a character whose value is less than 0x20), add 0x20 (equivalent to XORing with 0x20, converting it into a non-control character), and then insert the escape character 0x7D before it.</p>
+</li>
+</ul>
+<p>Processing at the receiver: perform the reverse transformation of the sender, and the original data payload that has not undergone byte stuffing can be correctly recovered.</p>
+<hr>
+<p>Bit-oriented synchronous links use zero-bit stuffing to achieve transparent transmission.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/85.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Processing at the sender: scan the data payload of the frame (generally done by hardware), and whenever 5 consecutive 1 bits appear, stuff one 0 bit after them.</p>
+<p>Processing at the receiver: scan the data payload of the frame, and whenever 5 consecutive 1 bits appear, delete the one 0 bit after them.</p>
+<h3 id="Error-Detection">2.3 Error Detection</h3>
+<p>Error detection is implemented using the FCS field in the frame.</p>
+<p>The generator polynomial of the CRC algorithm used in this field is: <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>CRC-CCITT</mtext><mo>=</mo><msup><mi>x</mi><mn>16</mn></msup><mo>+</mo><msup><mi>x</mi><mn>12</mn></msup><mo>+</mo><msup><mi>x</mi><mn>5</mn></msup><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\text{CRC-CCITT} = x^{16} + x^{12} + x^5 + 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord text"><span class="mord">CRC-CCITT</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8974em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">16</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8974em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">12</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.8974em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">5</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span></p>
+<p>Whenever the receiver receives a PPP frame, it performs a CRC check; if the CRC check is correct, it accepts the frame; otherwise, it discards the frame.</p>
+<p>Therefore, the data link layer using PPP provides an unreliable data transmission service to the layer above.</p>
+<h3 id="Working-States">2.4 Working States</h3>
+<p>Take the process in which a user host dials in to the dial-up server of an ISP as an example:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/86.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h2 id="33-Shared-Ethernet">3 Shared Ethernet</h2>
+<p>Ethernet is named after &quot;Ether,&quot; the hypothetical medium for electromagnetic wave propagation.</p>
+<h3 id="Network-Adapters-and-MAC-Addresses">3.1 Network Adapters and MAC Addresses</h3>
+<p>To connect a computer to Ethernet, a corresponding network adapter is required, commonly referred to simply as a &quot;network card.&quot; The structure of a network card is as follows:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/88.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Inside the computer, communication between the network card and the CPU is generally carried out in parallel transmission via the I/O bus on the computer motherboard.</p>
+<p>Communication between the network card and the external Ethernet (local area network) is generally carried out in serial mode via transmission media (coaxial cable, twisted-pair cable, optical fiber).</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/89.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>In addition to implementing physical layer and data link layer functions, another important function of the network card is to convert between parallel transmission and serial transmission.</p>
+<p>Since the transmission rate of the network and the transmission rate on the computer&#39;s internal bus are not the same, the core chip of every network card includes memory for buffering data.</p>
+<p>Assuming the network card hardware is correct, for the network card to work properly, a corresponding device driver must be installed for it in the computer&#39;s operating system; the driver is responsible for driving the network card to send and receive frames.</p>
+<hr>
+<p>In point-to-point channels, the data link layer does not need addresses; however, in broadcast channels, the data link layer must use addresses as unique identifiers to distinguish hosts. The header of each frame sent by a host carries the data link layer addresses of the sending host (source host) and the receiving host (destination host). Since such addresses are used for medium access control (MAC), they are called MAC addresses.</p>
+<p>MAC addresses are generally burned into the electrically erasable programmable read-only memory (EEPROM) of the network card, so MAC addresses are also called hardware addresses or physical addresses (having nothing to do with the &quot;physical&quot; in &quot;physical layer&quot;).</p>
+<p>Generally, an ordinary user&#39;s computer often contains two network cards: one is an Ethernet card for connecting to a wired local area network, and the other is a Wi-Fi card for connecting to a wireless local area network. Each network card has a globally unique MAC address. Switches and routers often have more network interfaces, so they possess more MAC addresses. Therefore, strictly speaking, a MAC address is a unique identifier for each interface on the network, not for each device on the network.</p>
+<p>MAC address transmission order:</p>
+<ul>
+<li><p>Byte transmission order: 1st byte -&gt; 6th byte</p>
+</li>
+<li><p>Bit transmission order: b0 -&gt; b7</p>
+</li>
+</ul>
+<p>Each time the network card receives a frame from the network, it checks the destination MAC address in the frame header and handles it as follows:</p>
+<ol>
+<li><p>If the destination MAC address is the broadcast address (FF-FF-FF-FF-FF-FF), the frame is accepted.</p>
+</li>
+<li><p>If the destination MAC address is the same as the globally unique unicast MAC address burned into the network card, the frame is accepted.</p>
+</li>
+<li><p>If the destination MAC address is a multicast address supported by the network card, the frame is accepted.</p>
+</li>
+<li><p>If none of the above three cases apply, the frame is discarded.</p>
+</li>
+</ol>
+<p>A network card can also be set to a special working mode: promiscuous mode. A network card working in promiscuous mode will accept any frame received from the shared medium, regardless of what the frame&#39;s destination MAC address is.</p>
+<p>For network maintenance and management personnel, this mode allows monitoring and analysis of traffic on the local area network in order to identify specific measures to improve network performance.</p>
+<p>A sniffer is a type of network card working in promiscuous mode; combined with corresponding tool software (WireShark), it can serve as a very useful network tool for learning about and analyzing networks.</p>
+<p>Promiscuous mode is like a &quot;double-edged sword&quot;; hackers often use this mode to illegally obtain network users&#39; passwords.</p>
+<p>A globally unique unicast MAC address is like the ID number on an ID card—it is unique and is often bound to the user&#39;s personal information. Therefore, users should try their best to ensure that the globally unique unicast MAC addresses they own are not leaked.</p>
+<p>To avoid the security problem of MAC address leakage when user devices connect to Wi-Fi hotspots, most mobile devices currently already employ random MAC address technology.</p>
+<h3 id="CSMACD-Protocol">3.2 CSMA/CD Protocol</h3>
+<p>To solve the problem of stations contending for the bus, shared bus Ethernet uses a dedicated protocol called CSMA/CD (carrier sense multiple access / collision detection). The basic principles of this protocol are:</p>
+<p>Multiple access (MA): Multiple stations are connected to a single bus and compete to use the bus.</p>
+<p>Carrier sense (CS): Before sending a frame, each station must first check whether any other station is sending a frame on the bus (&quot;listen before talking&quot;).</p>
+<ul>
+<li><p>If the bus is detected as idle for 96 bit times (the time required to transmit 96 bits, also called the minimum interframe gap), then the frame is sent.</p>
+</li>
+<li><p>If the bus is detected as busy, the station continues to monitor and waits until the bus becomes idle for 96 bit times, then sends the frame.</p>
+</li>
+</ul>
+<p>Collision detection (CD): Each station that is sending a frame detects collisions while sending (&quot;listen while talking&quot;).</p>
+<ul>
+<li>Once a collision is detected on the bus, the station immediately stops sending, backs off for a random period of time, and then starts again from carrier sense before sending.</li>
+</ul>
+<p>Collision reinforcement: Once a station sending a frame detects a collision, in addition to immediately stopping transmission of the frame, it also continues to send a 32-bit or 48-bit artificial jamming signal so that there are enough collision signals for all stations to detect the collision.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/100.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>On a shared-bus Ethernet using the CSMA/CD protocol, each station only tries to avoid collisions and, when a collision occurs, performs backoff and retransmits; collisions cannot be completely avoided.</p>
+</blockquote>
+<blockquote>
+<p>When using the CSMA/CD protocol, because a station that is sending a frame must &quot;detect collisions while sending the frame,&quot; a station cannot send and receive at the same time. That is, full-duplex communication is impossible; only half-duplex communication (two-way alternating communication) is possible.</p>
+</blockquote>
+<hr>
+<p>Any station on a shared-bus Ethernet using the CSMA/CD protocol may encounter a collision while sending a frame. Then, from the moment a station starts sending a frame, what is the longest time it may take to detect that its frame has collided with a frame sent by another station? This is analyzed in detail below.</p>
+<img loading="lazy" src="" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>In summary, from the moment a station starts sending a frame, it takes at most a duration of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi>τ</mi></mrow><annotation encoding="application/x-tex">2 \tau</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">2</span><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span></span></span></span> (i.e., <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>δ</mi><mo>→</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\delta \rightarrow 0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.03785em;">δ</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span>) to detect whether the frame it sent has encountered a collision; this end-to-end round-trip time is called the contention period or collision window. If a station has not detected a collision after the contention period from the start of sending a frame, it can be certain that this transmission will not produce a collision.</p>
+<p>From the concept of the contention period, it can be seen that every station on a shared-bus Ethernet may encounter a collision from the moment it starts sending a frame until a short time afterward, and the length of this short time is uncertain. It depends on the distance between the station sending the other frame and this station, but it will not exceed the end-to-end round-trip propagation delay of the bus, that is, one contention period. Obviously, the longer the bus (the greater the one-way end-to-end propagation delay) and the more stations in the network, the greater the probability of collision. Therefore, the bus length of a shared Ethernet cannot be too long, and the number of connected stations cannot be too large.</p>
+<p>A 10 Mb/s shared-bus Ethernet (traditional Ethernet) specifies that the contention period is the transmission time of 512 bits, i.e., 51.2 μs.</p>
+<p>In addition to the signal propagation delay, consideration is also given to the delay caused by repeaters that may exist in the network and the duration for which a 32-bit or 48-bit artificial jamming signal continues to be sent when a collision occurs.</p>
+<p>A shared-bus Ethernet specifies that the bus length cannot exceed 2500 m.</p>
+<hr>
+<p>To ensure that every station on a shared-bus Ethernet can detect whether a collision has occurred before it finishes sending a complete frame, the frame transmission delay cannot be less than one contention period. For a 10 Mb/s shared-bus Ethernet, the minimum frame length is 512 b, i.e., 64 B.</p>
+<p>When a station is sending a frame, if the first 64 B of the frame do not encounter a collision, then the subsequent part of the frame will not encounter a collision either; that is, if a collision occurs, it must occur within the first 64 B of the frame.</p>
+<p>Because a station sending a frame detects collisions while sending the frame, once a collision is detected it immediately aborts transmission of the frame. At this time, the amount of data already sent must be less than 64 B; therefore, when a receiving station receives a frame whose length is less than 64 B, it can determine that this is an invalid frame that was abnormally aborted due to a collision and can simply discard it.</p>
+<p>Generally speaking, the length of the frame&#39;s data payload should be much greater than the total length of the frame header and trailer, so that the frame transmission efficiency can be improved. However, if the upper limit of the data payload length is not restricted, the frame length may become too long, which brings some problems.</p>
+<hr>
+<p>In a shared bus Ethernet using the CSMA/CD protocol, a station that is sending a frame detects collisions while sending the frame. When a collision is detected, it immediately stops sending, backs off for a random period of time, and then resends. Each station uses the truncated binary exponential backoff algorithm to select the random backoff time.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/105.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>If collisions occur repeatedly over multiple consecutive transmissions, it indicates that there may be more stations competing for the channel. However, using the above backoff algorithm can make the average delay required for retransmission increase with the number of retransmissions (i.e., dynamic backoff), thereby reducing the probability of collisions.</p>
+<p>When retransmission still fails after 16 attempts, it indicates that there are too many stations intending to send frames at the same time, resulting in continuous collisions. At this point, retransmission should be abandoned and reported to the higher layer.</p>
+<hr>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/106.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Consider the following ideal situation:</p>
+<p>As soon as the bus becomes idle, a station immediately sends a frame.</p>
+<p>No collisions occur when stations send frames.</p>
+<p>The time a frame occupies the bus is <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mn>0</mn></msub><mo>+</mo><mi>τ</mi></mrow><annotation encoding="application/x-tex">T_0 + \tau</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span></span></span></span>, while the transmission time of the frame itself is <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>T</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">T_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/107.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Shared-Ethernet-Using-Hubs">3.3 Shared Ethernet Using Hubs</h3>
+<p>In the early days, Ethernet used a device called a hub that replaced the bus with a large-scale integrated circuit and was very reliable; the transmission medium connected to the hub also turned to cheaper and more flexible twisted pair cables.</p>
+<p>Characteristics of the huser:</p>
+<ul>
+<li><p>Although the physical topology of Ethernet using the hub is star, it is still a bus network logically; each station on the bus shares bus resources and still uses the CSMA/CD protocol.</p>
+</li>
+<li><p>The hub only works at the physical layer, and each interface of it simply forwards bits without collision detection; the task of collision detection is the responsibility of the network card in each site.</p>
+</li>
+<li><p>The hub generally has a small amount of fault tolerance and network management functions; for example, if the network card of a site in the network fails and keeps sending frames, the hub can detect this problem and disconnect the connection with the faulty network card internally, so that the entire Ethernet can work normally.</p>
+</li>
+</ul>
+<p>IEEE formulated the 10BASE-T star Ethernet standard 802.3i in 1990, which is a very important milestone in the history of LAN development, laying a solid foundation for Ethernet&#39;s dominance in LAN.</p>
+<p>The communication distance of 10BASE-T Ethernet is relatively short, and the distance from each station to the hub cannot exceed 100m.</p>
+<p>IEEE 802.3 Ethernet can also use optical fiber as a transmission medium. The corresponding standard is 10BASE-F, where &quot;F&quot; means optical fiber, which is mainly used for remote connection between hubs.</p>
+<h3 id="Extending-Ethernet-at-the-Physical-Layer">3.4 Extending Ethernet at the Physical Layer</h3>
+<p>In a shared bus Ethernet, the distance between two stations cannot be too far; otherwise, the signals transmitted between them will attenuate to the point where the CSMA/CD protocol cannot work properly.</p>
+<p>In the early days when thick coaxial cable or thin coaxial cable was widely used for shared bus Ethernet, in order to improve the network&#39;s geographic coverage, repeaters operating at the physical layer were commonly used. The IEEE 802.3 standard stipulates that two network segments can be connected by one repeater, and any two stations can pass through at most three network segments.</p>
+<p>As 10BASE-T star Ethernet using twisted pair and hubs became the mainstream type of Ethernet, repeaters were rarely used to extend network coverage.</p>
+<p>In 10BASE-T star Ethernet, the distance from each station to the hub cannot exceed 100 m, so the maximum communication distance between two stations cannot exceed 200 m. Optical fiber and a pair of fiber modems are generally used to extend the distance between a station and the hub.</p>
+<p>This extension method is relatively simple, but the price to pay is: adding one fiber modem for converting electrical signals and optical signals to each station and each hub, as well as a pair of communication optical fibers between them.</p>
+<p>Because signal attenuation and distortion in optical fiber are very small, this method can very simply extend the distance between a station and the hub to more than 1000 m.</p>
+<hr>
+<p>An Ethernet hub generally has 8 to 32 interfaces. If the number of stations to be connected exceeds the number of interfaces that a single hub can provide, multiple hubs need to be used, so that a multilevel star Ethernet covering a larger area and connecting more stations can be formed. A multilevel star Ethernet formed by connecting multiple hubs expands network coverage and the number of stations, but also brings some negative factors.</p>
+<p>A shared Ethernet extended at the physical layer is still one collision domain and cannot connect too many stations; otherwise, a large number of collisions may occur, resulting in average throughput that is too low.</p>
+<h3 id="Extending-Ethernet-at-the-Data-Link-Layer">3.5 Extending Ethernet at the Data Link Layer</h3>
+<p>A bridge operates at the data link layer (including the physical layer beneath it), so a bridge has the relevant capabilities that fall within the scope of the data link layer.</p>
+<ul>
+<li><p>It can identify the structure of frames.</p>
+</li>
+<li><p>It can forward or discard received frames based on the destination MAC address in the frame header and the bridge&#39;s own frame forwarding table.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/115.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>When forwarding frames to the network segments to which it is connected, a bridge&#39;s interfaces execute the corresponding medium access control protocol; for shared Ethernet, this is the CSMA/CD protocol.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/116.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/117.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/118.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>A transparent bridge establishes a forwarding table through a self-learning algorithm.</p>
+<ul>
+<li><p>&quot;Transparent&quot; in a transparent bridge means that each station in the Ethernet does not know which bridges will forward the frames it sends before they finally reach the destination station; that is, to each station, the bridges in the Ethernet are invisible.</p>
+</li>
+<li><p>The standard for transparent bridges is IEEE 802.1D.</p>
+</li>
+</ul>
+<p>The specific process is:</p>
+<ol>
+<li><p>After receiving a frame, the bridge registers it (i.e., self-learning). The registered content is the source MAC address of the frame and the port number through which it entered the bridge.</p>
+</li>
+<li><p>The bridge forwards the frame according to the destination MAC address of the frame and the bridge&#39;s forwarding table, including the following three cases:</p>
+<ul>
+<li><p>Explicit forwarding: the bridge knows from which port the frame should be forwarded.</p>
+</li>
+<li><p>Blind forwarding: the bridge does not know from which port the frame should be forwarded, so it can only forward it through all ports other than the port through which it entered the bridge.</p>
+</li>
+<li><p>Discarding: the bridge knows that the frame should not be forwarded and discards it.</p>
+</li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p>If a bridge receives a frame with bit errors, it simply discards it.</p>
+</blockquote>
+<blockquote>
+<p>If a bridge receives a broadcast frame with no bit errors, it does not need to look up the forwarding table; instead, it forwards the broadcast frame directly from all interfaces other than the one on which the broadcast frame was received.</p>
+</blockquote>
+<blockquote>
+<p>Each record in the forwarding table has a valid lifetime and is automatically deleted upon expiration. This is because the correspondence between the MAC address of each station and the bridge interface is not permanent; for example, if a station replaces its network interface card, its MAC address will change.</p>
+</blockquote>
+<p>To improve the reliability of Ethernet, it is sometimes necessary to use multiple transparent bridges between two Ethernets to provide redundant links. However, while adding redundant links improves Ethernet reliability, it also introduces loops into the network: broadcast frames in the network will circulate forever in the loop, causing broadcast frames to flood the entire network, wasting network resources, and preventing hosts in the network from communicating normally.</p>
+<p>To avoid this problem, transparent bridges use the spanning tree protocol (STP), which can improve network reliability by adding redundant links while avoiding the problems caused by loops.</p>
+<p>No matter how complex a looped topology the bridges are connected into, the bridges interact through bridge protocol data units (BPDUs) to find a connected subset of the original network topology (that is, a spanning tree) in which there are no loops in the entire connected network.</p>
+<p>When bridges are connected for the first time or when the network topology changes (due to manual changes or failures), the bridges reconstruct the spanning tree to ensure network connectivity.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/123.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h2 id="34-Switched-Ethernet">4 Switched Ethernet</h2>
+<p>Bridges have very few interfaces, usually only 2 to 4, and are generally used only to connect different network segments. The switching hub that appeared in 1990 is essentially a bridge with multiple interfaces, commonly called an Ethernet switch or a Layer 2 switch.</p>
+<ul>
+<li><p>&quot;Layer 2&quot; means that the Ethernet switch operates at the data link layer (including the physical layer).</p>
+</li>
+<li><p>Like a bridge, the forwarding table inside a switch is also gradually and automatically established through a self-learning algorithm based on communication among hosts in the network.</p>
+</li>
+<li><p>In addition, switches also use STP to generate communication paths that can connect the entire network without creating loops.</p>
+</li>
+</ul>
+<p>An Ethernet that uses only switches (and no hubs) is a switched Ethernet.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/124.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/125.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<hr>
+<p>Each port on a switch can connect to a computer, or to a hub or another switch.</p>
+<p>When a switch port is connected to a computer or a switch, it can operate in full-duplex mode and can simultaneously connect multiple pairs of ports internally, so that each pair of communicating computers can transmit data without collisions, just as if each had exclusive use of the transmission medium; thus there is no need to use the CSMA/CD protocol.</p>
+<p>When a switch port is connected to a hub, that port can only use the CSMA/CD protocol and can only operate in half-duplex mode.</p>
+<p>Switches and network interface cards in computers today can automatically recognize the above two situations and automatically switch to the corresponding operating mode.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/126.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Switches generally have interfaces of multiple rates, such as 10 Mb/s, 100 Mb/s, 1 Gb/s, and even 10 Gb/s interfaces, and most interfaces support multi-rate auto-negotiation.</p>
+<p>Ordinary switches generally use the &quot;store-and-forward&quot; method.</p>
+<p>To reduce the forwarding delay of switches, some switches use cut-through switching. This type of switch immediately determines the forwarding interface for a frame based on the frame&#39;s destination MAC address while receiving the frame, and then forwards it through its internal hardware-based crossbar matrix, without having to buffer the entire frame before processing it. Therefore, the delay of cut-through switching is very small. However, because frames are forwarded directly without error checking, some invalid frames may be forwarded to other hosts.</p>
+<h3 id="Shared-Ethernet-vs-Switched-Ethernet">4.1 Shared Ethernet vs. Switched Ethernet</h3>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/127.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/129.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/130.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>In summary, the network performance of switched Ethernet is far higher than that of shared Ethernet, and hubs have long been replaced by switches.</p>
+<blockquote>
+<p>Routers isolate both broadcast domains and collision domains.</p>
+</blockquote>
+<h2 id="35-Ethernet-MAC-Frame-Format">5 Ethernet MAC Frame Format</h2>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/131.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Meaning of each field:</p>
+<ul>
+<li><p>Destination address / Source address: Used to fill in the destination MAC address and source MAC address of the frame.</p>
+</li>
+<li><p>Type: Its value is used to indicate which protocol of the upper layer encapsulates the content in the data payload, so that the data payload of the received MAC frame can be handed over to this protocol of the upper layer.</p>
+<ul>
+<li><p>0x0800: TCP/IP network layer IP protocol</p>
+</li>
+<li><p>0x8137: Novell network layer IPX protocol</p>
+</li>
+</ul>
+</li>
+<li><p>FCS: The frame check sequence FCS generated using CRC. The receiving party&#39;s network card can use the content of the FCS to detect whether bit errors occurred during frame transmission.</p>
+</li>
+<li><p>Data payload: Meets the requirement of a minimum frame length of 64B, and the maximum length is limited to 1500B.</p>
+</li>
+</ul>
+<p>After a MAC frame enters the physical layer, an 8-byte preamble is also added:</p>
+<p>Invalid MAC frames that the receiver may receive include the following:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/132.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>The length of the MAC frame is not an integer number of bytes.</p>
+</li>
+<li><p>The value of the FCS field of the MAC frame indicates that the frame contains bit errors.</p>
+</li>
+<li><p>The length of the MAC frame is not between 64 and 1518 bytes.</p>
+</li>
+</ul>
+<p>When the receiver receives an invalid MAC frame, it simply discards it, because the Ethernet data link layer has no retransmission mechanism.</p>
+<h2 id="36-Virtual-Local-Area-Network">6 Virtual Local Area Network</h2>
+<p>A virtual local area network (VLAN) is a technology that divides stations within a local area network into logical groups unrelated to physical location. One logical group is one VLAN, and the stations in a VLAN have certain common application requirements.</p>
+<p>Stations belonging to the same VLAN can communicate directly with each other, while stations in different VLANs cannot communicate directly.</p>
+<p>A network administrator can configure each switch in the local area network to establish multiple logically independent VLANs.</p>
+<p>Multiple stations connected to the same switch can belong to different VLANs, and multiple stations belonging to the same VLAN can be connected to different switches.</p>
+<p>A VLAN is not a new type of network; it is merely a service that a local area network can provide to users.</p>
+<p>VLAN implementation mechanism: The most common approach is to implement VLANs based on Ethernet switch interfaces, which requires Ethernet switches to implement the following two functions:</p>
+<h3 id="IEEE-8021Q-frames">6.1 IEEE 802.1Q frames</h3>
+<p>The ability to process frames carrying VLAN tags, that is, IEEE 802.1Q frames.</p>
+<ul>
+<li>It extends the Ethernet V2 MAC frame format: a 4-byte VLAN tag field is inserted between the source address field and the type field.</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/135.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>Tag Protocol Identifier (TPID): 16 bits long, with a fixed value of 0x8100, indicating that the frame is an IEEE 802.1Q frame.</p>
+</li>
+<li><p>Priority (PRI): 3 bits long, with a value range of 0 to 7; the larger the value, the higher the priority. When the network is congested, devices preferentially send 802.1Q frames with higher priority.</p>
+</li>
+<li><p>Canonical Format Indicator (CFI): 1 bit long; a value of 0 indicates that the MAC address is encapsulated in canonical format, and a value of 1 indicates that the MAC address is encapsulated in non-canonical format; for Ethernet, the value of CFI is 0.</p>
+</li>
+<li><p>VLAN Identifier (VID): 12 bits long, with a value range of 0 to 4095, of which 0 and 4095 are reserved and not used.</p>
+<ul>
+<li><p>The VID is the number of the VLAN to which the 802.1Q frame belongs, and devices use the VID to identify the VLAN to which the frame belongs.</p>
+</li>
+<li><p>Broadcast frames are forwarded only within the same VLAN, thus limiting the broadcast domain to a single VLAN.</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="Ethernet-Switches">6.2 Ethernet Switches</h3>
+<p>802.1Q frames are generally not handled by user hosts, but by Ethernet switches:</p>
+<ul>
+<li><p>When a switch receives an ordinary Ethernet MAC frame, it inserts a 4-byte VLAN tag into it to make it an 802.1Q frame. This process is referred to as &quot;tagging.&quot;</p>
+</li>
+<li><p>When a switch forwards an 802.1Q frame, it may remove its 4-byte VLAN tag to make it an ordinary Ethernet MAC frame. This process is referred to as &quot;untagging.&quot; When a switch forwards an 802.1Q frame, it may also not perform &quot;untagging.&quot; Whether &quot;untagging&quot; is performed depends on the interface type of the switch.</p>
+</li>
+</ul>
+<hr>
+<p>The interfaces of a switch can support different interface types, and interfaces of different interface types handle frames differently.</p>
+<ul>
+<li><p>According to the different ways interfaces handle frames when receiving and sending frames, as well as the different objects to which the interfaces connect, the interface types of Ethernet switches are generally divided into two types: Access and Trunk.</p>
+</li>
+<li><p>After an Ethernet switch is powered on and started, if no VLAN-related settings have been previously made for its interfaces, the interface type of each interface defaults to Access, and the default VLAN ID of each interface is 1, that is, each interface belongs to VLAN1 by default.</p>
+<ul>
+<li><p>For Cisco switches, the default VLAN ID of an interface is called the native VLAN.</p>
+</li>
+<li><p>For Huawei switches, the default VLAN ID of an interface is called the port VLAN ID, abbreviated as PVID; each interface of the switch has one and only one PVID.</p>
+</li>
+</ul>
+</li>
+<li><p>Access interface: generally used to connect to user computers.</p>
+<ul>
+<li><p>Since it can belong to only one VLAN, its PVID value is the same as the ID of the VLAN to which it belongs, and its default value is 1.</p>
+</li>
+<li><p>Receive processing: generally only accepts &quot;untagged&quot; ordinary Ethernet MAC frames, and &quot;tags&quot; the frame according to the PVID of the interface receiving the frame, that is, inserts a 4-byte VLAN tag field. The VID value in the VLAN tag field is the PVID value of the interface.</p>
+</li>
+<li><p>Forwarding processing: if the VID value in the frame is equal to the PVID value of the interface, the frame is &quot;untagged&quot; before being forwarded; otherwise, the frame is not forwarded. Therefore, frames forwarded from an Access interface are ordinary Ethernet MAC frames without VLAN tags.</p>
+</li>
+</ul>
+</li>
+<li><p>Trunk interface: generally used for interconnection between switches.</p>
+<ul>
+<li><p>This interface can belong to multiple VLANs, that is, it can pass frames belonging to different VLANs.</p>
+</li>
+<li><p>The default PVID value is 1, and users are generally not advised to modify it; if the PVID values of interconnected Trunk interfaces are not equal, forwarding errors may occur.</p>
+</li>
+<li><p>Receive processing: it can receive both &quot;untagged&quot; ordinary Ethernet MAC frames and &quot;tagged&quot; 802.1Q frames; if an ordinary Ethernet MAC frame is received, the frame is &quot;tagged&quot; according to the PVID of the interface receiving the frame, which is the same as the processing of an Access interface.</p>
+</li>
+<li><p>Forwarding processing: for an 802.1Q frame whose VID value is equal to the PVID value of the interface, it is &quot;untagged&quot; and forwarded; for an 802.1Q frame whose VID value is not equal to the PVID value of the interface, it is forwarded directly. Therefore, frames forwarded from a Trunk interface may be ordinary Ethernet MAC frames or 802.1Q frames.</p>
+</li>
+</ul>
+</li>
+<li><p>Hybrid interface: an interface type proprietary to Huawei switches.</p>
+<ul>
+<li><p>It can be used both for interconnection between switches (the same as a Trunk interface) and for interconnection between a switch and user computers (the same as an Access interface).</p>
+</li>
+<li><p>In addition, most functions of a Hybrid interface are the same as those of a Trunk interface. The difference lies in the forwarding processing of a Hybrid interface: a Hybrid interface checks whether the VID value of the frame is in the interface&#39;s &quot;untagging&quot; list. If it is present, the frame is &quot;untagged&quot; and then forwarded; if it is not present, the frame is forwarded directly.</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>In addition, VLAN division can also be based on MAC addresses or network-layer protocols.</p>
+<h2 id="37-80211-Wireless-Local-Area-Network">7 802.11 Wireless Local Area Network</h2>
+<h3 id="Composition">7.1 Composition</h3>
+<p>With the development of mobile communication technology, wireless local area networks (WLANs) have gradually entered the market since the late 1980s. In 1997, IEEE formulated the protocol standard 802.11 for wireless local area networks. This is one of the most widely used wireless local area networks, and people more commonly refer to it simply as Wi-Fi (wireless fidelity).</p>
+<p>802.11 wireless local area networks can be divided into the following two categories:</p>
+<ol>
+<li>Those with fixed infrastructure</li>
+</ol>
+<ul>
+<li>Basic Service Set (BSS): Communication between stations within a BSS, as well as communication with stations outside the BSS, must be forwarded through the access point (AP) within the BSS. Network administrators need to assign the AP a service set identifier (SSID) of up to 32 bytes and a wireless communication channel; the SSID is actually the name of the 802.11 wireless local area network using that AP.</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/140.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li>Extended Service Set (ESS)</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/141.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li>The 802.11 standard does not define specific methods for implementing roaming; it only defines the following basic services. Association service: There are two methods for a mobile station to establish an association with an AP: passive scanning and active scanning. Beacon frame: Contains parameters such as the SSID, the AP&#39;s MAC address, supported rates, encryption algorithms, and security configurations.</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/142.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<blockquote>
+<p>Reassociation service and dissociation service: If a mobile station wants to transfer its association with one AP to another AP, it can use the reassociation service; if it wants to terminate the association service, it should use the dissociation service.</p>
+</blockquote>
+<ol start="2">
+<li>Those without fixed infrastructure: ad hoc networks</li>
+</ol>
+<ul>
+<li><p>Forwarding stations need to have routing functionality.</p>
+</li>
+<li><p>Ad hoc networks are easy to set up, do not require base stations, and have very good survivability, which gives ad hoc networks good application prospects in both military and civilian fields.</p>
+</li>
+<li><p>The ad hoc mode of 802.11 wireless local area networks allows stations in the network to communicate directly within their communication range, that is, it supports single-hop communication between stations, while the standard does not include multi-hop routing functionality, so this mode is rarely used.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/143.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="Physical-Layer">7.2 Physical Layer</h3>
+<p>The physical layer of 802.11 wireless LANs is very complex. It can be divided into multiple physical layer standards based on operating frequency band, modulation method, transmission rate, and so on.</p>
+<p>802.11 wireless network cards are generally made multimode so that they can adapt to a variety of different physical layer standards.</p>
+<p>Wireless LANs initially also used infrared (IR) technology and frequency hopping spread spectrum (FHSS) technology, but these are rarely used now.</p>
+<h3 id="CSMACA-Protocol">7.3 CSMA/CA Protocol</h3>
+<p>Wireless LANs use another protocol called CSMA/CA, namely Carrier Sense Multiple Access/Collision Avoidance. Compared with CSMA/CD, the protocol only changes collision detection to collision avoidance; however, it cannot actually avoid all collisions, but rather minimizes the probability of collisions.</p>
+<p>Reasons for not using collision detection</p>
+<ul>
+<li><p>Because the transmission environment of wireless channels is complex and the dynamic range of signal strength is very large, the signal strength received on an 802.11 wireless network card is generally far smaller than the strength of the transmitted signal, and the signal strength may even differ by a million times; therefore, if collision detection were to be implemented on an 802.11 wireless network card, the hardware requirements would be very high.</p>
+</li>
+<li><p>Even if the collision detection function could be implemented in hardware, due to the particularity of radio wave propagation (the hidden station problem), there would still be cases in which collisions cannot be detected, so implementing collision detection is meaningless.</p>
+</li>
+</ul>
+<p>Basic working principles of the CSMA/CA protocol:</p>
+<ul>
+<li><p>DCF (distributed coordination function)</p>
+<ul>
+<li><p>The length of the interframe space DIFS is 128 μs, used for sending data frames and management frames.</p>
+</li>
+<li><p>In DCF mode, there is no central control station, and each station uses the CSMA/CA protocol to obtain the right to transmit by contending for the channel.</p>
+</li>
+<li><p>It is the default mode defined by 802.11 (mandatory to implement).</p>
+</li>
+<li><p>Waiting for the DIFS interval takes into account that other stations may have high-priority frames to send.</p>
+</li>
+</ul>
+</li>
+<li><p>Virtual carrier sense mechanism</p>
+<ul>
+<li><p>The value of the &quot;Duration&quot; field in the frame header indicates the time the source station wants to occupy the channel (including the time required for the destination station to send back an acknowledgment frame).</p>
+</li>
+<li><p>When a station detects the &quot;Duration&quot; field in the header of a frame being transmitted on the channel, it adjusts its own network allocation vector (NAV); the NAV indicates the time required to complete the transmission of this frame and for the channel to transition to the idle state.</p>
+</li>
+</ul>
+</li>
+<li><p>The length of the short interframe space (SIFS) is 28 μs. It is the shortest interframe space and is used to separate frames belonging to one dialogue.</p>
+<ul>
+<li><p>A station should be able to switch from transmit mode to receive mode within this time.</p>
+</li>
+<li><p>Frame types that use SIFS include ACK frames, CTS frames, and so on.</p>
+</li>
+</ul>
+</li>
+<li><p>Because the bit error rate of wireless channels is relatively high, the CSMA/CA protocol also needs to use a stop-and-wait acknowledgment mechanism to achieve reliable transmission (this is different from shared Ethernet using the CSMA/CD protocol).</p>
+</li>
+</ul>
+<p>Backoff algorithm:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/146.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>When a station wants to send a data frame, the backoff algorithm is not used only in this case: the channel is detected as idle, and the data frame is not a data frame sent immediately and continuously after the previous data frame was successfully sent.</p>
+</li>
+<li><p>In all other cases, the backoff algorithm must be used: when the channel is detected as busy before sending a frame; when retransmitting a frame each time; and when continuously sending the next frame after each successful frame transmission.</p>
+</li>
+<li><p>When executing the backoff algorithm, the station sets a random backoff time for the backoff timer: when the backoff timer decreases to zero, it starts sending data; when the backoff timer has not yet decreased to zero and the channel becomes busy again, it freezes the value of the backoff timer, waits again for the channel to become idle, and after DIFS, continues to start the backoff timer.</p>
+</li>
+<li><p>During the <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6595em;"></span><span class="mord mathnormal">i</span></span></span></span>th backoff, the backoff time is randomly selected from the slot numbers <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">{</mo><mn>0</mn><mo separator="true">,</mo><mn>1</mn><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msup><mn>2</mn><mrow><mn>2</mn><mo>+</mo><mi>i</mi></mrow></msup><mo>−</mo><mn>1</mn><mo stretchy="false">}</mo></mrow><annotation encoding="application/x-tex">\{0, 1, \dots, 2^{2+i} - 1\}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0747em;vertical-align:-0.25em;"></span><span class="mopen">{</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">1</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8247em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span><span class="mbin mtight">+</span><span class="mord mathnormal mtight">i</span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">}</span></span></span></span>, and then multiplied by the basic backoff time (that is, the length of one slot) to obtain the random backoff time; when the slot number reaches 255 (corresponding to the 6th backoff), it no longer increases.</p>
+</li>
+</ul>
+<p>To further reduce the probability of collisions, 802.11 wireless LANs allow the source station to reserve the channel.</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/360.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>The RTS (request to send) frame is a short control frame. It includes the source address, the destination address, and the duration required for this communication (including the time required for the destination station to send back an acknowledgment frame).</p>
+</li>
+<li><p>The CTS (clear to send) frame is a short response control frame. It also includes the duration required for this communication (this duration is copied from the RTS frame into the CTS frame).</p>
+</li>
+<li><p>Stations other than the source station and destination station defer access to the channel after receiving the CTS frame or data frame, thus ensuring that the communication between the source station and destination station will not be interfered with by other stations.</p>
+</li>
+<li><p>If an RTS frame collides, the source station cannot receive the CTS frame, and the source station will execute the backoff algorithm to retransmit the RTS.</p>
+</li>
+<li><p>Using RTS frames and CTS frames for channel reservation brings additional overhead; however, since RTS frames and CTS frames are both very short, the probability of collision, the overhead caused by collision, and their own overhead are all small. For ordinary data frames, their transmission delay is often much greater than the propagation delay (because it is a local area network), so the probability of collision is high, and once a collision occurs and causes the data frame to be retransmitted, a lot of time is wasted. Therefore, reserving the channel at a very small cost is often worthwhile.</p>
+</li>
+<li><p>Nevertheless, 802.11 wireless LANs still provide users with the following three choices: use RTS frames and CTS frames; use RTS frames and CTS frames only when the length of the data frame exceeds a certain value; do not use RTS frames and CTS frames.</p>
+</li>
+<li><p>Since RTS frames and CTS frames both carry the duration required for communication, this is the same as the virtual carrier sense mechanism described earlier in which data frames can carry the duration required for communication. Therefore, using RTS frames and CTS frames for channel reservation also belongs to the virtual carrier sense mechanism. With the virtual carrier sense mechanism, as long as a station overhears any one of a data frame, RTS frame, or CTS frame, it can know the duration for which the channel will be occupied without needing to actually sense the signal on the channel. Therefore, the virtual carrier sense mechanism can reduce the collision problem caused by hidden stations.</p>
+</li>
+</ul>
+<h3 id="MAC-Frame">7.4 MAC Frame</h3>
+<p>MAC frames are divided into:</p>
+<ul>
+<li><p>Data frames: used to transmit data between stations</p>
+</li>
+<li><p>Control frames: usually used together with data frames, responsible for clearing the area, maintaining virtual carrier sensing, and channel access, and acknowledging upon receipt of data frames. ACK frames, RTS frames, and CTS frames all belong to control frames.</p>
+</li>
+<li><p>Management frames: used to join or leave a wireless network, and to handle connection transfers between APs. Beacon frames, association request frames, and authentication frames all belong to management frames.</p>
+</li>
+</ul>
+<p>Data frame format:</p>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/148.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>Duration: used to implement the virtual carrier sensing and channel reservation mechanism of CSMA/CA; in data frames, RTS frames, and CTS frames, this field indicates the duration for which the channel will be continuously occupied.</p>
+</li>
+<li><p>Sequence control: used to implement reliable transmission in 802.11 by numbering data frames.</p>
+</li>
+<li><p>The four address fields depend on the values of the two fields &quot;To DS&quot; (to the distribution system) and &quot;From DS&quot; (from the distribution system) in the frame control field.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/web/cn/images/149.png" style="max-width: 40%; display: block; margin: 0 auto;">
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-2/" rel="prev"><span>← Previous chapter</span>Chapter 2 Physical Layer</a>
+  <a href="../chapter-4/" rel="next"><span>Next chapter →</span>Chapter 4 Network Layer</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

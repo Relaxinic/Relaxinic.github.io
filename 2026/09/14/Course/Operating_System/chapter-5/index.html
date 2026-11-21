@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 5 CPU Scheduling — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  <link rel="stylesheet" href="../../../../../../media/katex/katex.min.css">
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Operating System</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-10-25">25 Oct 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-5-CPU-Scheduling">Chapter 5 CPU Scheduling</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#51-Basic-Concepts">1 Basic Concepts</a>
+      <ul class="toc-subsections">
+        <li><a href="#CPU-IO-Burst-Cycle">1.1 CPU-I/O Burst Cycle</a></li>
+        <li><a href="#CPU-Scheduler">1.2 CPU Scheduler</a></li>
+        <li><a href="#Preemptive-and-Nonpreemptive-Scheduling">1.3 Preemptive and Nonpreemptive Scheduling</a></li>
+        <li><a href="#Dispatcher">1.4 Dispatcher</a></li>
+      </ul>
+    </li>
+    <li><a href="#52-Scheduling-Criteria">2 Scheduling Criteria</a></li>
+    <li><a href="#53-Scheduling-Algorithms">3 Scheduling Algorithms</a>
+      <ul class="toc-subsections">
+        <li><a href="#First-Come-First-Served-Scheduling">3.1 First-Come, First-Served Scheduling</a></li>
+        <li><a href="#Shortest-Job-First-Scheduling">3.2 Shortest-Job-First Scheduling</a></li>
+        <li><a href="#Round-Robin-Scheduling">3.3 Round-Robin Scheduling</a></li>
+        <li><a href="#Priority-Scheduling">3.4 Priority Scheduling</a></li>
+        <li><a href="#Multilevel-Queue-Scheduling">3.5 Multilevel Queue Scheduling</a></li>
+        <li><a href="#Multilevel-Feedback-Queue-Scheduling">3.6 Multilevel Feedback Queue Scheduling</a></li>
+      </ul>
+    </li>
+    <li><a href="#54-Thread-Scheduling">4 Thread Scheduling</a>
+      <ul class="toc-subsections">
+        <li><a href="#Contention-Scope">4.1 Contention Scope</a></li>
+        <li><a href="#Pthread-Scheduling">4.2 Pthread Scheduling</a></li>
+      </ul>
+    </li>
+    <li><a href="#55-Multi-Processor-Scheduling">5 Multi-Processor Scheduling</a>
+      <ul class="toc-subsections">
+        <li><a href="#Approaches-to-Multiple-Processor-Scheduling">5.1 Approaches to Multiple-Processor Scheduling</a></li>
+        <li><a href="#Multicore-Processors">5.2 Multicore Processors</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<h2 id="51-Basic-Concepts">1 Basic Concepts</h2>
+<p>In multiprogramming, we try to use CPU time efficiently. For example, when a process needs to wait, the OS takes back the CPU usage rights from that process and gives them to another process, and this cycle repeats. Such scheduling operations are a basic and important function in an OS; almost all computer resources need scheduling when they are used. Let us first get to know some basic concepts related to scheduling.</p>
+<h3 id="CPU-IO-Burst-Cycle">1.1 CPU-I/O Burst Cycle</h3>
+<p>The success of CPU scheduling depends on a property of processes: process execution consists of a cycle of CPU execution and I/O wait, that is, a process alternates between these two states.</p>
+<ul>
+<li><p>Process execution begins with a CPU burst cycle, followed by an I/O burst cycle.</p>
+</li>
+<li><p>This is immediately followed by another CPU burst cycle, and then another I/O burst cycle, and so on.</p>
+</li>
+<li><p>The final CPU burst terminates the process&#39;s execution through a system request.</p>
+</li>
+</ul>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C5/1.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Although the length of CPU burst times varies greatly between different processes and different computers, their frequency curve often resembles that shown in the following figure:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C5/2.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>This curve usually appears in exponential or hyperexponential form, including a large number of short CPU bursts and a small number of long CPU bursts.</p>
+<p>I/O-bound programs usually have many short CPU bursts.</p>
+<p>CPU-bound programs, on the other hand, may have only a few long CPU bursts.</p>
+<p>When implementing CPU scheduling algorithms, the above distribution characteristics are crucial.</p>
+<h3 id="CPU-Scheduler">1.2 CPU Scheduler</h3>
+<p>Whenever the CPU enters an idle state, the OS, with the help of the CPU scheduler, selects a process from memory (specifically, from the ready queue, which stores records of the relevant process PCBs) and allocates a CPU (core) to execute that process.</p>
+<p>It should be noted that the ready queue is not necessarily a FIFO queue; it can also be a priority queue, a tree structure, or simply an unordered linked list. This will be described in detail later in the &quot;Scheduling Algorithms&quot; section.</p>
+<h3 id="Preemptive-and-Nonpreemptive-Scheduling">1.3 Preemptive and Nonpreemptive Scheduling</h3>
+<p>The CPU needs to make a scheduling decision when one of the following situations occurs: when a process</p>
+<ol>
+<li><p>Running state -&gt; Waiting state</p>
+</li>
+<li><p>Running state -&gt; Ready state</p>
+</li>
+<li><p>Waiting state -&gt; Ready state</p>
+</li>
+<li><p>Terminates</p>
+</li>
+</ol>
+<p>For situations 1 and 4, the only scheduling strategy is: a new process must be selected from the ready queue (if one exists) to execute. But for situations 2 and 3, there can also be other choices. We consider that the scheduling that occurs in situations 1 and 4 is nonpreemptive or cooperative; the opposite of this strategy is preemptive scheduling.</p>
+<p>Under non-preemptive scheduling, once the CPU has been allocated to a process, that process keeps occupying the CPU until it releases it by terminating or switching to a waiting state (corresponding to the first and last cases).</p>
+<p>In fact, almost all modern OSs use preemptive scheduling algorithms.</p>
+<p>When data is shared among multiple processes, preemptive scheduling may lead to race conditions.</p>
+<ul>
+<li><p>Consider the case where two processes share data: when one process is in the middle of updating the data, it is preempted so that a second process can run; the second process then tries to read this data, which is in an inconsistent state.</p>
+</li>
+<li><p>This issue will be discussed in detail in the next lecture on &quot;process synchronization.&quot;</p>
+</li>
+</ul>
+<p>The preemption mechanism affects kernel design.</p>
+<ul>
+<li><p>During the execution of a system call, the kernel may be busy carrying out activities on behalf of a process, and such activities may involve modifying critical kernel data; if the process is preempted during this modification, and the kernel then needs to read or modify the same structure, the result will be a mess.</p>
+</li>
+<li><p>A non-preemptive kernel waits for the system call to complete, or performs a context switch only after the process blocks waiting for an I/O operation to complete.</p>
+<ul>
+<li><p>&quot;A context switch caused by a process blocking while waiting for an I/O operation to complete&quot; is a kind of overlap operation that can improve CPU utilization.</p>
+</li>
+<li><p>This approach ensures the simplicity of kernel structures, because the kernel will not preempt a process while kernel data structures are in an inconsistent state.</p>
+</li>
+<li><p>However, for real-time computing, which must ensure that tasks are completed within specified deadlines, this kernel execution model performs poorly.</p>
+</li>
+</ul>
+</li>
+<li><p>A preemptive kernel, by contrast, requires mechanisms such as mutex locks to prevent race conditions when accessing shared kernel data structures. At present, most modern OSs have fully implemented preemptive processing capability when running in kernel mode.</p>
+</li>
+</ul>
+<p>Because interrupts may occur at any time and the kernel cannot ignore them, code sections affected by interrupts must be protected from concurrent use.</p>
+<ul>
+<li><p>The OS needs to accept interrupts at almost any time; otherwise input may be lost or output may be overwritten.</p>
+</li>
+<li><p>To avoid code sections being accessed concurrently by multiple processes, they disable interrupts at entry and re-enable interrupts at exit.</p>
+</li>
+<li><p>However, code sections that disable interrupts are not common and usually contain only a small number of instructions.</p>
+</li>
+</ul>
+<h3 id="Dispatcher">1.4 Dispatcher</h3>
+<p>The dispatcher is a component within the CPU scheduling function, and is the module that hands over control of the CPU core to the process selected by the CPU scheduler. Its functions include:</p>
+<ul>
+<li><p>Switching the context from one process to another</p>
+</li>
+<li><p>Switching to user mode</p>
+</li>
+<li><p>Jumping to the appropriate location in the user program to resume execution of that program</p>
+</li>
+</ul>
+<p>The dispatcher should be as fast as possible, because it is invoked on every context switch. The time required for the dispatcher to stop one process and start another is called dispatch latency.</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C5/3.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Note the distinction between voluntary and nonvoluntary context switches:</p>
+<ul>
+<li><p>A voluntary context switch occurs when a process gives up control of the CPU because a resource it needs is currently unavailable.</p>
+</li>
+<li><p>A nonvoluntary context switch, by contrast, occurs when the CPU is forcibly taken away from a process, such as when its time slice has expired or it is preempted by a higher-priority process.</p>
+</li>
+</ul>
+<h2 id="52-Scheduling-Criteria">2 Scheduling Criteria</h2>
+<p>Different CPU scheduling algorithms have their own characteristics, and choosing a particular algorithm may be more favorable to a certain type of process. Therefore, when selecting which algorithm to use, the characteristics of various algorithms must be considered. There are already multiple criteria for comparing CPU scheduling algorithms, including:</p>
+<p>CPU utilization:</p>
+<ul>
+<li><p>We want to keep the CPU as busy as possible.</p>
+</li>
+<li><p>Theoretically, CPU utilization can vary from 0% to 100%.</p>
+</li>
+<li><p>In real systems, however, it should usually range from 40% (for lightly loaded systems) to 90% (for heavily loaded systems).</p>
+</li>
+</ul>
+<p>Throughput: the number of processes completed per unit time.</p>
+<p>Turnaround time: the time interval from when a process is submitted (arrives) to when it is completed, including the total time the process spends waiting in the ready queue, executing on the CPU, and performing I/O operations.</p>
+<ul>
+<li>It is a performance metric.</li>
+</ul>
+<p>Waiting time: the sum of all waiting periods in the ready queue.</p>
+<ul>
+<li><p>CPU scheduling algorithms do not affect the total amount of time a process spends executing or performing I/O operations; they only affect the amount of time a process waits in the ready queue.</p>
+</li>
+<li><p>Waiting time = turnaround time - running time.</p>
+</li>
+</ul>
+<p>Response time: the time from when a request is submitted (arrives) to when the first response is produced.</p>
+<ul>
+<li><p>It is often used in interactive systems.</p>
+</li>
+<li><p>Sometimes response time also refers to the time from when a request arrives to when the system first schedules it, which is slightly different from the definition above.</p>
+</li>
+<li><p>It is a fairness metric, that is, on a small time scale, allocating the CPU evenly among active processes.</p>
+</li>
+</ul>
+<hr>
+<p>Ideally, we want to maximize CPU utilization and throughput while minimizing turnaround time, waiting time, and response time.</p>
+<p>In most scenarios, what we optimize is the average metric.</p>
+<p>However, in certain specific cases, we prefer to optimize the minimum or maximum value rather than the average.</p>
+<p>For example, to ensure that all users receive a good service experience, we may want to minimize the maximum response time.</p>
+<p>For interactive systems, reducing the variance in response time is more critical than reducing the average response time.</p>
+<p>A system with reasonable and predictable response time, even if its average speed is not the fastest but its performance is stable, is usually considered better than systems with fast average speed but large fluctuations.</p>
+<p>However, research on CPU scheduling algorithms optimized for reducing variance is still insufficient.</p>
+<h2 id="53-Scheduling-Algorithms">3 Scheduling Algorithms</h2>
+<blockquote>
+<p>Currently, only the case of a single available processing core is considered, that is, the case where a CPU can run only one process within a certain time period, while the CPU scheduling problem in multiprocessor systems will be discussed later.</p>
+</blockquote>
+<blockquote>
+<p>If, when introducing an algorithm, it is not explicitly stated whether it is preemptive, then it can be either preemptive or non-preemptive.</p>
+</blockquote>
+<h3 id="First-Come-First-Served-Scheduling">3.1 First-Come, First-Served Scheduling</h3>
+<p>The simplest CPU scheduling algorithm is the first-come first-served (FCFS) scheduling algorithm.</p>
+<p>The first process to request the CPU is allocated the CPU first.</p>
+<p>The FCFS policy can be easily implemented with a first-in first-out (FIFO) queue.</p>
+<p>When a process enters the ready queue, its PCB is linked to the tail of the queue.</p>
+<p>The idle CPU is then allocated to the process at the head of the queue, and that process is subsequently removed from the queue.</p>
+<p>Writing and understanding the code for FCFS scheduling is very simple.</p>
+<p>However, the disadvantage is that the average waiting time is usually long.</p>
+<hr>
+<p>Suppose there is one CPU-bound process and multiple I/O-bound processes. As these processes move through the system, the following situation may occur:</p>
+<ul>
+<li><p>The CPU-bound process acquires and occupies the CPU. During this time, all other processes complete their I/O operations and enter the ready queue, waiting to use the CPU, while the I/O devices are idle.</p>
+</li>
+<li><p>Afterward, the CPU-bound process finishes its CPU burst and moves to some I/O device; at this point, those I/O-bound processes with short CPU bursts execute quickly and return to their respective I/O queues, and the CPU then becomes idle.</p>
+</li>
+<li><p>Subsequently, that CPU-bound process returns to the ready queue and uses the CPU again; all the I/O processes again wait in the ready queue for that process to finish.</p>
+</li>
+<li><p>This is the so-called convoy effect: many relatively small resource consumers (processes) line up behind one consumer that occupies a large amount of resources, resulting in very low CPU and device utilization.</p>
+</li>
+</ul>
+<p>Note that the FCFS scheduling algorithm is non-preemptive, so once the CPU has been allocated to a process, that process keeps the CPU until it releases it. Therefore, for interactive systems, the FCFS algorithm performs very poorly.</p>
+<h3 id="Shortest-Job-First-Scheduling">3.2 Shortest-Job-First Scheduling</h3>
+<p>The second algorithm to introduce is the shortest-job-first (SJF) scheduling algorithm.</p>
+<p>This algorithm associates with each process the length of its next CPU burst.</p>
+<p>Therefore, a more accurate name for this scheduling method would be the &quot;shortest-next-CPU-burst&quot; algorithm.</p>
+<p>The term SJF is used because everyone says so ...</p>
+<p>When the CPU is idle, it is assigned to the process with the shortest next CPU execution cycle.</p>
+<p>If two processes have the same next CPU execution cycle, FCFS scheduling is used to determine the order.</p>
+<hr>
+<p>The SJF scheduling algorithm has been proven to be optimal, because it provides the minimum average waiting time for a given set of processes. Moving a short process before a long process reduces the waiting time of the short process by an amount greater than the increase in the waiting time of the long process, so the average waiting time is reduced.</p>
+<p>Although the SJF algorithm is optimal, it cannot be implemented precisely in practice because we cannot know the length of the next CPU burst in advance. One approach to this problem is to try to approximate SJF scheduling. It is generally believed that the next CPU burst length will be similar to the previous one, so we can choose the process with the shortest estimated processing time to execute.</p>
+<p>More precisely, the prediction of the next CPU burst is usually based on the exponential average of previous CPU burst lengths. Let <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">t_n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> be the burst length of the <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">n</span></span></span></span>th CPU, and <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>τ</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub></mrow><annotation encoding="application/x-tex">\tau_{n+1}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6389em;vertical-align:-0.2083em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1132em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">+</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span></span></span></span> be the predicted value of the next CPU burst. For <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn><mo>≤</mo><mi>α</mi><mo>≤</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">0 \le \alpha \le 1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7804em;vertical-align:-0.136em;"></span><span class="mord">0</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7719em;vertical-align:-0.136em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1</span></span></span></span>, the predicted value is defined as:</p>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>τ</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mi>α</mi><msub><mi>t</mi><mi>n</mi></msub><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>α</mi><mo stretchy="false">)</mo><msub><mi>τ</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">\tau_{n+1} = \alpha t_n + (1 - \alpha) \tau_n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6389em;vertical-align:-0.2083em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1132em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">+</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mclose">)</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.1132em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></p>
+<p>where</p>
+<ul>
+<li><p>The value of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>t</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">t_n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> contains recent information.</p>
+</li>
+<li><p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>τ</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">\tau_n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.1132em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> stores the past history, and the initial value <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>τ</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">\tau_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1132em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> can be defined as a constant or the overall system average.</p>
+</li>
+<li><p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi></mrow><annotation encoding="application/x-tex">\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span></span></span></span> controls the relative weight of recent and past history in the prediction. Generally, <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi><mo>=</mo><mstyle scriptlevel="0" displaystyle="true"><mfrac><mn>1</mn><mn>2</mn></mfrac></mstyle></mrow><annotation encoding="application/x-tex">\alpha = \dfrac{1}{2}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.0074em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3214em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">2</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span> is taken, so that recent history and past history are given the same weight.</p>
+</li>
+</ul>
+<p>To understand exponential averaging, we can expand the formula for <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>τ</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub></mrow><annotation encoding="application/x-tex">\tau_{n+1}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6389em;vertical-align:-0.2083em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1132em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">+</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span></span></span></span> by substituting <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>τ</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">\tau_n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5806em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.1132em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>, yielding:</p>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>τ</mi><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mi>α</mi><msub><mi>t</mi><mi>n</mi></msub><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>α</mi><mo stretchy="false">)</mo><mi>α</mi><msub><mi>t</mi><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><mo>⋯</mo><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>α</mi><msup><mo stretchy="false">)</mo><mi>j</mi></msup><mi>α</mi><msub><mi>t</mi><mrow><mi>n</mi><mo>−</mo><mi>j</mi></mrow></msub><mo>+</mo><mo>⋯</mo><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>α</mi><msup><mo stretchy="false">)</mo><mrow><mi>n</mi><mo>+</mo><mn>1</mn></mrow></msup><msub><mi>τ</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">\tau_{n+1} = \alpha t_n + (1 - \alpha)\alpha t_{n-1} + \cdots + (1 - \alpha)^j \alpha t_{n-j} + \cdots + (1 - \alpha)^{n+1}\tau_0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6389em;vertical-align:-0.2083em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1132em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">+</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mclose">)</span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">−</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2083em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="minner">⋯</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.1108em;vertical-align:-0.2861em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mclose"><span class="mclose">)</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8247em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span></span></span></span></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">−</span><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="minner">⋯</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.0641em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mclose"><span class="mclose">)</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">+</span><span class="mord mtight">1</span></span></span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.1132em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></p>
+<h3 id="Round-Robin-Scheduling">3.3 Round-Robin Scheduling</h3>
+<p>The round-robin (RR) scheduling algorithm is similar to FCFS scheduling, but it introduces a preemption mechanism that enables the system to switch between processes. This algorithm defines a very small time interval called a time quantum/slice, whose length is typically 10 to 100 ms.</p>
+<p>The CPU scheduler allocates at most 1 time slice to each process.</p>
+<p>The time slice size must be a multiple of the timer interrupt period.</p>
+<p>The RR scheduling algorithm is said to be preemptive because a process that has not finished executing after more than 1 time slice will be preempted (unable to continue using the CPU core) and placed at the end of the ready queue (still a FIFO queue) (unless it is the only runnable process at the moment), and then the CPU scheduler selects the first process from the ready queue to execute. Specifically:</p>
+<p>Process CPU burst period &lt;= 1 time slice: the process voluntarily releases the CPU, and then the scheduler selects the next process in the ready queue.</p>
+<p>Process CPU burst period &gt; 1 time slice: the timer will trigger and send an interrupt signal to the OS; at this point a context switch is performed, and the process is moved to the end of the ready queue; then the CPU scheduler selects the next process in the ready queue to continue execution.</p>
+<p>It is not difficult to see that the average waiting time under the RR policy is usually very long.</p>
+<hr>
+<p>The performance of the RR algorithm depends to a large extent on the size of the time slice:</p>
+<ul>
+<li><p>If the time slice is very large, then the RR policy ≈ the FCFS policy, so responsiveness is poor.</p>
+</li>
+<li><p>If the time slice is very small, a large amount of context-switching overhead will be introduced.</p>
+</li>
+</ul>
+<blockquote>
+<p>Context-switching overhead includes: saving and restoring register values, handling the state of hardware such as the CPU cache, TLB, and branch predictor.</p>
+</blockquote>
+<p>Therefore, we want the time slice to be sufficiently large relative to the context-switching time; in practice, the time slice range of most modern OSs is between 10-100 ms, while the time required for one context switch is usually &lt; 10 μs, so there is no need to worry about this issue.</p>
+<p>Using turnaround time (submission -&gt; completion) as the metric, the RR algorithm is the worst among the three algorithms already introduced, because after using the RR algorithm, the completion time of each process is pushed back, which obviously increases the turnaround time.</p>
+<p>In fact, all algorithms that emphasize fairness like RR perform poorly in terms of turnaround time. This reflects a trade-off:</p>
+<ul>
+<li><p>If unfairness is allowed, then the shortest process can be allowed to finish running first, at the cost of harming response time.</p>
+</li>
+<li><p>If fairness is emphasized, response time is reduced, but at the cost of harming turnaround time.</p>
+</li>
+</ul>
+<p>So response time and turnaround time are (seemingly) in a relationship where &quot;you cannot have your cake and eat it too.&quot;</p>
+<h3 id="Priority-Scheduling">3.4 Priority Scheduling</h3>
+<p>The SJF algorithm introduced earlier is a special case of priority-scheduling algorithms (priority = the reciprocal of the next CPU burst).</p>
+<ul>
+<li><p>Each process is associated with a priority, and the CPU is allocated to the process with the highest priority.</p>
+</li>
+<li><p>Processes with equal priority are scheduled in FCFS order.</p>
+</li>
+<li><p>Priorities are generally represented by a fixed range of numbers.</p>
+</li>
+<li><p>However, there is still no consensus on whether 0 is the highest or the lowest priority; from now on, we will assume that small numbers represent high priority.</p>
+</li>
+</ul>
+<p>The definition of priority can come from internal or external sources.</p>
+<ul>
+<li><p>Internal priority: The priority of a process is calculated using some measurable quantity, for example: time limits, memory requirements, the number of open files, the ratio of average I/O burst to average CPU burst, etc.</p>
+</li>
+<li><p>External priority: Set by criteria external to the OS, such as the importance of the process, the type and amount of money paid for computer use, the department funding the work, and other often political factors.</p>
+</li>
+</ul>
+<p>The main problem with priority scheduling algorithms is indefinite blocking, also known as starvation: numerous high-priority processes consume the CPU, while low-priority processes can only wait and may even never get to use the CPU.</p>
+<p>One way to solve this problem is aging (also called priority boost), which periodically increases the priority of processes that have been waiting in the system for a long time (a variant is to boost all processes to the highest priority). However, the aging period needs to be decided by the OS administrator and must be set reasonably.</p>
+<h3 id="Multilevel-Queue-Scheduling">3.5 Multilevel Queue Scheduling</h3>
+<p>In the priority + RR scheduling algorithm, all processes are placed in a single queue, so a search of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span> is required to find the process with the highest priority. In practice, it is often easier to set up separate queues for different priorities; in this case, processes only need to be scheduled using the priority scheduling algorithm within the highest-priority queue. This approach is called a multilevel queue.</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C5/21.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>This method can still be combined with RR scheduling: if there are multiple processes in the highest-priority queue, they will be executed in RR order.</p>
+<p>The multilevel queue scheduling algorithm can also divide processes into multiple independent queues based on process type, where each queue has absolute priority over lower-priority queues, as shown in the figure below:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C5/22.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>A common division is to separate foreground (interactive) processes from background (batch) processes.</p>
+<ul>
+<li><p>Because these two types of processes have different response time requirements, they may need different scheduling policies.</p>
+</li>
+<li><p>Foreground processes may have higher priority than background processes (externally defined).</p>
+</li>
+<li><p>Queues can be set up separately for foreground and background processes, and each queue can use a different scheduling algorithm; for example, the foreground queue may use RR scheduling, while the background queue uses FCFS scheduling.</p>
+</li>
+</ul>
+<p>In addition, scheduling must be performed between queues, generally implemented through preemptive scheduling with fixed priorities.</p>
+<p>Another approach is to use an RR-like method between queues: each queue receives a certain proportion of CPU time, which can then be scheduled among its various processes. For example, in the foreground-background queue example, the foreground queue can allocate 80% of the CPU time to its processes for RR scheduling, while the background queue receives 20% of the CPU time, allocated to its processes in FCFS order.</p>
+<h3 id="Multilevel-Feedback-Queue-Scheduling">3.6 Multilevel Feedback Queue Scheduling</h3>
+<p>Generally speaking, when a multilevel queue scheduling algorithm is used, once a process enters the system, it is permanently assigned to a certain queue. The advantage of this setup is low scheduling overhead, but it lacks flexibility.</p>
+<p>In contrast, the multilevel feedback queue scheduling algorithm allows processes to move between different queues.</p>
+<p>Its core idea is to classify processes based on the characteristics of their CPU execution time: if a process occupies too much CPU time, it will be moved to a lower-priority queue.</p>
+<p>In this way, I/O-bound and interactive processes, which are usually characterized by short CPU execution, can remain in higher-priority queues.</p>
+<p>In addition, processes that have waited too long in low-priority queues may also be promoted to higher-priority queues. This aging mechanism effectively prevents starvation.</p>
+<p>The multilevel feedback queue scheduler is defined by the following parameters:</p>
+<ul>
+<li><p>The number of queues</p>
+</li>
+<li><p>The scheduling algorithm for each queue</p>
+</li>
+<li><p>The method used to determine when to promote a process to a higher-priority queue</p>
+</li>
+<li><p>The method used to determine when to demote a process to a lower-priority queue</p>
+</li>
+<li><p>The method used to determine which queue a process enters when it needs service</p>
+</li>
+</ul>
+<p>The multilevel feedback queue scheduler is the most general CPU scheduling algorithm and can simultaneously minimize turnaround time and response time. However, this also makes it the most complex algorithm.</p>
+<h2 id="54-Thread-Scheduling">4 Thread Scheduling</h2>
+<p>This section will discuss the scheduling issues of user-level and kernel-level threads, and provide specific examples for Pthreads scheduling.</p>
+<h3 id="Contention-Scope">4.1 Contention Scope</h3>
+<p>One difference between user-level threads and kernel-level threads lies in how they are scheduled.</p>
+<p>In systems implementing the many-to-one and many-to-many models, the thread library schedules user-level threads to run on available lightweight processes (LWPs), a mechanism known as process-contention scope (PCS), because CPU contention occurs among threads belonging to the same process.</p>
+<p>Typically, PCS is based on priority: the scheduler selects the runnable thread with the highest priority to run. This priority is set by the programmer and is not adjusted by the thread library, although some thread libraries may allow the programmer to change a thread&#39;s priority.</p>
+<p>It should be noted that PCS typically preempts the currently running thread to run a higher-priority thread, but among threads of equal priority, there is no guarantee of time-slice allocation.</p>
+<p>To decide which kernel-level thread is scheduled onto the CPU, the kernel uses system-contention scope (SCS). Under this scheduling, all threads in the system compete for the CPU. Systems using the one-to-one model use only SCS to schedule threads.</p>
+<h3 id="Pthread-Scheduling">4.2 Pthread Scheduling</h3>
+<p>Pthreads defines the following contention scope values:</p>
+<ul>
+<li><p><code>PTHREAD_SCOPE_PROCESS</code>: use PCS-scheduled threads</p>
+</li>
+<li><p><code>PTHREAD_SCOPE_SYSTEM</code>: use SCS-scheduled threads</p>
+</li>
+</ul>
+<p>In systems using the many-to-many model,</p>
+<ul>
+<li><p>The <code>PTHREAD_SCOPE_PROCESS</code> policy schedules user-level threads onto available LWPs; their number is maintained by the thread library and may use scheduling activation</p>
+</li>
+<li><p>The <code>PTHREAD_SCOPE_SYSTEM</code> scheduling policy creates and binds one LWP for each user-level thread, effectively mapping threads using a one-to-one policy</p>
+</li>
+</ul>
+<p>Pthread IPC (interprocess communication) provides two functions for setting and getting the contention scope policy:</p>
+<ul>
+<li><p><code>pthread_attr_setscope(pthread_attr_t *attr, int scope)</code></p>
+</li>
+<li><p><code>pthread_attr_getscope(pthread_attr_t *attr, int *scope)</code></p>
+</li>
+</ul>
+<p>The first parameter of both functions contains a pointer to a thread attributes set. As for the second parameter,</p>
+<ul>
+<li><p><code>pthread_attr_setscope()</code> is passed the value <code>PTHREAD_SCOPE_SYSTEM</code> or <code>PTHREAD_SCOPE_PROCESS</code> to indicate the contention scope</p>
+</li>
+<li><p><code>pthread_attr_getscope()</code> is passed a pointer to an integer value, which is set to the value of the current contention scope</p>
+</li>
+</ul>
+<p>If an error occurs, these functions return a nonzero value.</p>
+<h2 id="55-Multi-Processor-Scheduling">5 Multi-Processor Scheduling</h2>
+<p>The current discussion mainly focuses on how to schedule CPUs on a single-core processor system. When a system has multiple CPUs, load sharing can be achieved, allowing multiple threads to run in parallel, but at the same time the scheduling problem becomes correspondingly more complex. Extensive practice has shown that no optimal scheduling algorithm exists in this case.</p>
+<p>Traditionally, the term &quot;multiprocessor&quot; referred to systems equipped with multiple physical processors, each containing a single-core CPU. However, the definition of &quot;multiprocessor&quot; has evolved significantly, and in modern computing systems it refers to system architectures including the following:</p>
+<ul>
+<li><p>Multicore CPUs</p>
+</li>
+<li><p>Multithreaded cores</p>
+</li>
+<li><p>NUMA systems</p>
+</li>
+<li><p>Heterogeneous multiprocessing</p>
+</li>
+</ul>
+<p>Next, we will first focus on functionally identical, that is, homogeneous, processor systems, which means that any available CPU can be used to run any process in the queue. Finally, we will discuss the case of systems with differing processor capabilities.</p>
+<h3 id="Approaches-to-Multiple-Processor-Scheduling">5.1 Approaches to Multiple-Processor Scheduling</h3>
+<p>In a multiprocessor system, one CPU scheduling approach is to assign all scheduling decisions, I/O processing, and other system activities to a single processor—the master server; the remaining processors execute only user code. This asymmetric multiprocessing approach is relatively simple, because only one core accesses system data structures, thereby reducing the need for data sharing. However, the drawback of this approach is that the master server may become a bottleneck, causing overall system performance to degrade.</p>
+<p>The standard practice for supporting multiprocessors is symmetric multiprocessing (SMP), in which each processor can self-schedule. In this case, there are two strategies for organizing schedulable threads:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C5/24.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>All threads are placed in one common ready queue (left figure)</p>
+<ul>
+<li><p>Race conditions may exist on the common ready queue, so it must be ensured that two independent processors do not schedule the same thread at the same time, and that threads are not lost from the queue.</p>
+</li>
+<li><p>Some form of lock can be used to protect the common ready queue, but doing so shifts contention to the lock, because all accesses to the queue require ownership of the lock, and thus access to the shared queue may become a performance bottleneck.</p>
+</li>
+</ul>
+<p>Each processor has its own private thread queue (right figure)</p>
+<ul>
+<li><p>It does not encounter the performance problems associated with a shared run queue, so this is the most common approach in systems that support SMP.</p>
+</li>
+<li><p>This design can use caches more effectively.</p>
+</li>
+<li><p>The biggest problem is differences in workload, but load balancing algorithms can balance the load across all processors.</p>
+</li>
+</ul>
+<h3 id="Multicore-Processors">5.2 Multicore Processors</h3>
+<p>Most modern computer hardware integrates multiple computing cores onto a single physical chip, forming a multicore processor. Each core maintains its own architectural state, so to the OS they appear as independent logical CPUs. SMP systems using multicore processors are faster and more energy-efficient than systems in which each CPU has its own separate physical chip.</p>
+<p>Multicore processors can complicate scheduling. When a processor accesses memory, it spends a considerable amount of time waiting for the data to become ready, a phenomenon known as a memory stall, as shown in the figure below. The reason is that modern processors operate much faster than memory; in addition, cache misses (i.e., the accessed data is not in the cache) can also cause memory stalls.</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C5/25.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>To address this situation, many recent hardware designs use multithreaded processing cores, with each core assigned two (or more) hardware threads. In this way, if a hardware thread stalls while waiting for memory, the core can switch to another thread. The figure below shows an example of a two-thread processing core, in which the execution of thread 0 and thread 1 is interleaved.</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C5/26.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>From the OS perspective, each hardware thread maintains its own architectural state, existing like a logical CPU on which software threads can run. This technique, known as chip multithreading (CMT), is shown in the figure below: the processor contains 4 computing cores, each equipped with 2 hardware threads; to the OS, this is equivalent to having 8 logical CPUs available.</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C5/27.png" style="max-width: 40%; display: block; margin: 0 auto;">
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-4/" rel="prev"><span>← Previous chapter</span>Chapter 4 Threads and Concurrency</a>
+  <a href="../chapter-6/" rel="next"><span>Next chapter →</span>Chapter 6 Synchronization Tools</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

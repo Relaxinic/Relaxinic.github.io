@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 6 Operator Overloading — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Object-Oriented Programing</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-05-07">07 May 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-6-Operator-Overloading">Chapter 6 Operator Overloading</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#61-Declaration">1 Declaration</a></li>
+    <li><a href="#62-General-Design-Guideline">2 General Design Guideline</a></li>
+    <li><a href="#63-Details-for-Special-Operators">3 Details for Special Operators</a>
+      <ul class="toc-subsections">
+        <li><a href="#IncrementDecrement-Operators">3.1 Increment/Decrement Operators</a></li>
+        <li><a href="#Relation-Operators">3.2 Relation Operators</a></li>
+        <li><a href="#Stream-Operators">3.3 Stream Operators</a></li>
+        <li><a href="#Assignment-Operator">3.4 Assignment Operator</a></li>
+      </ul>
+    </li>
+    <li><a href="#64-Value-Classes">4 Value Classes</a></li>
+    <li><a href="#65-Type-Conversion-and-Casting">5 Type Conversion and Casting</a>
+      <ul class="toc-subsections">
+        <li><a href="#Modern-Casting">5.1 Modern Casting</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<p>Operator overloading provides us with a more intuitive and mathematically or logically natural way to call an object&#39;s member functions or global functions.</p>
+<p>Unary or binary operators that can be overloaded:</p>
+<pre><code class="language-cpp">+ - * / % ^ &amp; | ~
+= &lt; &gt; += -= *= /= %=
+^= &amp;= |= &lt;&lt; &gt;&gt; &gt;&gt;= &lt;&lt;= ==
+!= &lt;= &gt;= ! &amp;&amp; || ++ --
+, -&gt;* -&gt; () []
+new delete
+new[] delete[]
+</code></pre>
+<p>Operators that cannot be overloaded:</p>
+<pre><code class="language-cpp">.        // Member Access Operator
+.*       // Member pointer access operator
+::       // Scope Resolution Operator
+?:       // Conditional Operator (Ternary Operator)
+sizeof   // Length operator
+typeid   // Type identification operator
+static_cast 
+dynamic_cast 
+const_cast
+reinterpret_cast
+</code></pre>
+<p>At least one operand must be of a user-defined type (class type or enumeration type): This prevents altering the behavior of built-in type operators (e.g., the behavior of adding two ints cannot be changed).</p>
+<p>Preserved characteristics:</p>
+<ul>
+<li><p>Arity: The number of operands an operator takes cannot be changed. That is, a unary operator remains unary after overloading, and a binary operator remains binary.</p>
+</li>
+<li><p>Precedence: The precedence of operators is fixed and cannot be changed through overloading. For example, the precedence of * is always higher than that of +.</p>
+</li>
+<li><p>Associativity: The associativity of operators (left-associative or right-associative) also remains unchanged.</p>
+</li>
+</ul>
+<h2 id="61-Declaration">1 Declaration</h2>
+<p>The declaration of an overloaded operator is very similar to that of a regular function, except that the function name is special: it consists of the keyword <code>operator</code> followed by the operator symbol to be overloaded. For example, the function name for overloading the addition operator <code>+</code> would be <code>operator+</code>.</p>
+<p>When an operator is overloaded as a member function of a class:</p>
+<ul>
+<li><p>For binary operators, the left operand is the object itself that calls the member function (i.e., the object pointed to by the <code>this</code> pointer). Therefore, a binary operator in member function form requires only one explicit parameter (representing the right operand). Unary operators, on the other hand, require no explicit parameters.</p>
+</li>
+<li><p>The left operand (i.e., the <code>this</code> object) does not undergo implicit type conversion.</p>
+</li>
+</ul>
+<pre><code class="language-cpp">class Integer {
+private:
+    int i;
+public:
+    Integer(int val = 0) : i(val) {}
+
+    // Binary + as a member function
+    // this-&gt;i is the left operand, n.i is the right operand
+    const Integer operator+(const Integer&amp; n) const {
+        return Integer(this-&gt;i + n.i);
+    }
+
+    // Unary minus - as a member function (prefix negation)
+    // this-&gt;i is the operand
+    const Integer operator-() const {
+        return Integer(-(this-&gt;i));
+    }
+
+    void display() const { std::cout &lt;&lt; i; }
+};
+
+int main() {
+    Integer a(10), b(5);
+    Integer c = a + b;    // Equivalent to a.operator+(b)
+    Integer d = -a;       // Equivalent to a.operator-()
+    c.display();          // Output 15
+    d.display();          // Output -10
+}
+</code></pre>
+<p>When an operator is overloaded as a global function:</p>
+<ul>
+<li><p>All operands must be passed as explicit parameters, meaning a binary operator requires two parameters, and a unary operator requires one parameter.</p>
+</li>
+<li><p>All parameters can participate in implicit type conversion. This is especially useful when the left operand also needs to undergo type conversion.</p>
+</li>
+<li><p>By default, a global function cannot access the private and protected members of a class. If such access is needed, the class must declare it as a friend; otherwise, the global function can only manipulate objects through the class&#39;s public interface.</p>
+</li>
+</ul>
+<pre><code class="language-cpp">class Integer {
+private:
+    int i;
+public:
+    Integer(int val = 0) : i(val) {}
+
+    // Declare the global operator+ as a friend so that it can access the private member i.
+    friend const Integer operator+(const Integer&amp; lhs, const Integer&amp; rhs);
+
+    void display() const { std::cout &lt;&lt; i; }
+};
+
+// Definition of global operator+
+const Integer operator+(const Integer&amp; lhs, const Integer&amp; rhs) {
+    return Integer(lhs.i + rhs.i);
+}
+
+int main() {
+    Integer a(10), b(5);
+    Integer c = a + b;    // Equivalent to operator+(a, b)
+    // If Integer has a converting constructor that accepts an int (non-explicit):
+    // Integer e = 3 + a; // Equivalent to operator+(Integer(3), a)
+    c.display(); // Output 15
+}
+</code></pre>
+<h2 id="62-General-Design-Guideline">2 General Design Guideline</h2>
+<p>Parameter Passing:</p>
+<ul>
+<li><p>For operators that do not modify the operand values, parameters are usually passed by <code>const</code> reference to avoid unnecessary copying and ensure the original objects are not modified.</p>
+</li>
+<li><p>For member function operators, if the operation does not modify the object&#39;s own state, the member function should be declared as <code>const</code>.</p>
+</li>
+<li><p>For operators that modify the left operand (e.g., <code>+=</code>), if implemented as a global function, the left operand should be passed by non-<code>const</code> reference; if implemented as a member function, the implicit <code>this</code> pointer already points to the object to be modified.</p>
+</li>
+</ul>
+<p>Return Values:</p>
+<ul>
+<li><p>The return type depends on the semantics of the operator.</p>
+</li>
+<li><p>Arithmetic operators (e.g., <code>operator+</code>) typically return a newly created object (by value), so they can return a <code>const</code> object to prevent accidental assignment to the result (usually a temporary object / rvalue).</p>
+</li>
+<li><p>Assignment operators (e.g., <code>operator=</code>, <code>operator+=</code>) usually return a reference to the left operand (<code>*this</code>) to support chaining.</p>
+</li>
+<li><p>Logical and comparison operators (e.g., <code>operator==</code>, <code>operator&lt;</code>) should return a <code>bool</code> type.</p>
+</li>
+<li><p>Dereference operators (e.g., <code>operator*</code> for smart pointers) typically return a reference.</p>
+</li>
+<li><p>The subscript operator <code>operator[]</code> usually returns a reference to allow reading and writing of elements.</p>
+</li>
+</ul>
+<h2 id="63-Details-for-Special-Operators">3 Details for Special Operators</h2>
+<p>Arithmetic / Bitwise Operators:</p>
+<ul>
+<li><p>Member function: <code>const T T::operatorX(const T&amp; rhs) const;</code></p>
+</li>
+<li><p>Global function: <code>const T operatorX(const T&amp; lhs, const T&amp; rhs);</code></p>
+</li>
+</ul>
+<p>Logical / Comparison Operators:</p>
+<ul>
+<li><p>Unary:</p>
+<ul>
+<li><p>Member: <code>bool T::operator!() const;</code></p>
+</li>
+<li><p>Global: <code>bool operator!(const T&amp; operand);</code></p>
+</li>
+</ul>
+</li>
+<li><p>Binary:</p>
+<ul>
+<li><p>Member: <code>bool T::operatorX(const T&amp; rhs) const;</code></p>
+</li>
+<li><p>Global: <code>bool operatorX(const T&amp; lhs, const T&amp; rhs);</code></p>
+</li>
+</ul>
+</li>
+<li><p>Subscript operator <code>[]</code>:</p>
+<ul>
+<li><p>Must be a member function</p>
+</li>
+<li><p>Typically provides two versions: a <code>const</code> version returning a <code>const</code> reference (for <code>const</code> objects), and a non-<code>const</code> version returning a regular reference (for non-<code>const</code> objects, allowing modification).</p>
+</li>
+<li><p>Prototypes:</p>
+<ul>
+<li><p><code>ValueType&amp; T::operator[](IndexType index);</code></p>
+</li>
+<li><p><code>const ValueType&amp; T::operator[](IndexType index) const;</code></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="IncrementDecrement-Operators">3.1 Increment/Decrement Operators</h3>
+<p>Prefix form:</p>
+<ul>
+<li><p>Member function: <code>T&amp; T::operator++();</code></p>
+</li>
+<li><p>Global function: <code>T&amp; operator++(T&amp; obj);</code></p>
+</li>
+<li><p>Behavior: First modifies the object, then returns a reference to the modified object.</p>
+</li>
+</ul>
+<p>Postfix form:</p>
+<ul>
+<li><p>Member function: <code>T T::operator++(int);</code></p>
+</li>
+<li><p>Global function: <code>T operator++(T&amp; obj, int);</code></p>
+</li>
+<li><p>Special feature: The postfix version accepts an additional, unnamed int parameter. This parameter is only used to distinguish the postfix form from the prefix form. The compiler automatically passes a 0 as the value of this int parameter when calling, but this value is typically not used.</p>
+</li>
+<li><p>Behavior: First saves a copy of the object&#39;s current value, then modifies the object, and finally returns the copy of the original value (returned by value).</p>
+</li>
+</ul>
+<pre><code class="language-cpp">class Integer {
+private:
+    int i;
+public:
+    Integer(int val = 0) : i(val) {}
+
+    // Prefix ++
+    Integer&amp; operator++() {
+        i += 1;
+        return *this;
+    }
+
+    // Postfix ++
+    Integer operator++(int) {
+        Integer old(*this); // Save a copy of the original value
+        ++(*this);          // Using the prefix ++ to modify the object (or directly i += 1;)
+        return old;         // Returns a copy of the original value
+    }
+
+    void display() const { std::cout &lt;&lt; i; }
+};
+
+int main() {
+    Integer num(5);
+    Integer res1 = ++num;
+    num.display(); res1.display(); std::cout &lt;&lt; std::endl;
+
+    Integer num2(10);
+    Integer res2 = num2++;
+    num2.display(); res2.display(); std::cout &lt;&lt; std::endl;
+}
+</code></pre>
+<p>Prefix increment/decrement is usually more efficient than the postfix form. Therefore, when it does not affect the logic (for example, when only incrementing a counter in a loop), prefer the prefix form.</p>
+<h3 id="Relation-Operators">3.2 Relation Operators</h3>
+<p>We usually only need to implement operator== and operator&lt;, and the other relational operators can be implemented based on these two to reduce code duplication and maintain consistency.</p>
+<pre><code class="language-cpp">class Integer {
+private:
+    int i;
+public:
+    Integer(int val = 0) : i(val) {}
+
+    bool operator==(const Integer&amp; rhs) const {
+        return i == rhs.i;
+    }
+
+    bool operator&lt;(const Integer&amp; rhs) const {
+        return i &lt; rhs.i;
+    }
+
+    // Implement other relational operators based on == and &lt;
+    bool operator!=(const Integer&amp; rhs) const { return !(*this == rhs); }
+    bool operator&gt;(const Integer&amp; rhs) const { return rhs &lt; *this; }
+    bool operator&lt;=(const Integer&amp; rhs) const { return !(*this &gt; rhs); } // Or !(rhs &lt; *this)
+    bool operator&gt;=(const Integer&amp; rhs) const { return !(*this &lt; rhs); }
+};
+</code></pre>
+<h3 id="Stream-Operators">3.3 Stream Operators</h3>
+<p>Stream operators must be overloaded as global/free functions (usually friends).</p>
+<p>The stream extraction operator <code>operator&gt;&gt;</code>:</p>
+<ul>
+<li><p>Prototype: <code>std::istream&amp; operator&gt;&gt;(std::istream&amp; is, YourType&amp; obj);</code></p>
+</li>
+<li><p>The first parameter is a reference to <code>std::istream</code> (e.g., <code>cin</code>)</p>
+</li>
+<li><p>The second parameter is a reference to the object that will receive the data (non-<code>const</code>, because it will be modified)</p>
+</li>
+<li><p>Inside the function, data is read from the input stream <code>is</code> and filled into <code>obj</code></p>
+</li>
+<li><p>Returns <code>is</code> (a reference to the input stream) to support chaining, e.g., <code>cin &gt;&gt; a &gt;&gt; b</code>;</p>
+</li>
+</ul>
+<p>The stream insertion operator <code>operator&lt;&lt;</code>:</p>
+<ul>
+<li><p>Prototype: <code>std::ostream&amp; operator&lt;&lt;(std::ostream&amp; os, const YourType&amp; obj);</code></p>
+</li>
+<li><p>The first parameter is a reference to <code>std::ostream</code> (e.g., <code>cout</code>)</p>
+</li>
+<li><p>The second parameter is a <code>const</code> reference to the object to be output (the object should generally not be modified during output)</p>
+</li>
+<li><p>Inside the function, the content of <code>obj</code> is formatted and written to the output stream <code>os</code></p>
+</li>
+<li><p>Returns <code>os</code> (a reference to the output stream) to support chaining, e.g., <code>cout &lt;&lt; a &lt;&lt; b;</code></p>
+</li>
+</ul>
+<pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;sstream&gt;
+
+class Point {
+private:
+    int x, y;
+public:
+    Point(int x_val = 0, int y_val = 0) : x(x_val), y(y_val) {}
+
+    friend std::ostream&amp; operator&lt;&lt;(std::ostream&amp; os, const Point&amp; p);
+    friend std::istream&amp; operator&gt;&gt;(std::istream&amp; is, Point&amp; p);
+};
+
+std::ostream&amp; operator&lt;&lt;(std::ostream&amp; os, const Point&amp; p) {
+    os &lt;&lt; &quot;(&quot; &lt;&lt; p.x &lt;&lt; &quot;, &quot; &lt;&lt; p.y &lt;&lt; &quot;)&quot;;
+    return os;
+}
+
+std::istream&amp; operator&gt;&gt;(std::istream&amp; is, Point&amp; p) {
+    // Assume the input format is (x, y) or x y
+    char delim1, comma, delim2;
+    // Attempting to read (x, y) format
+    if (is &gt;&gt; delim1 &amp;&amp; delim1 == &#39;(&#39; &amp;&amp;
+        is &gt;&gt; p.x &gt;&gt; comma &amp;&amp; comma == &#39;,&#39; &amp;&amp;
+        is &gt;&gt; p.y &gt;&gt; delim2 &amp;&amp; delim2 == &#39;)&#39;) {
+    } else {
+        if (is.fail()) {
+            is.clear(); // Clear error flag
+            // Attempt to roll back the stream pointer (if supported and necessary)
+            // Here, it is simply assumed that it can be read again.
+            is &gt;&gt; p.x &gt;&gt; p.y;
+        }
+    }
+    return is;
+}
+
+int main() {
+    Point p1(1, 2), p2;
+    std::cout &lt;&lt; &quot;P1: &quot; &lt;&lt; p1 &lt;&lt; std::endl; // ((cout &lt;&lt; &quot;P1: &quot;) &lt;&lt; p1) &lt;&lt; endl;
+
+    std::cout &lt;&lt; &quot;Enter point p2 (e.g., 3 4 or (5,6)): &quot;;
+    std::cin &gt;&gt; p2;
+    std::cout &lt;&lt; &quot;P2 entered: &quot; &lt;&lt; p2 &lt;&lt; std::endl;
+}
+</code></pre>
+<h3 id="Assignment-Operator">3.4 Assignment Operator</h3>
+<p>Must be a member function</p>
+<p>If you do not provide a custom <code>operator=</code>, the compiler will automatically generate one for you. This default assignment operator performs memberwise assignment, similar to the memberwise copy behavior of the default copy constructor. For simple classes (those that do not dynamically allocate memory or manage other resources), the default version is usually sufficient.</p>
+<p>The necessity of a custom <code>operator=</code>: If a class manages dynamically allocated memory (or other resources that require special handling, such as file handles), you must provide a custom assignment operator.</p>
+<p>Design considerations:</p>
+<ul>
+<li><p>Check for self-assignment to prevent issues such as premature resource release when an object is assigned to itself, and to improve efficiency.</p>
+<pre><code class="language-cpp">class Bitmap { ... };
+class Widget {
+    ...
+private:
+    Bitmap* pb;
+}
+</code></pre>
+<ul>
+<li><p>Identity test: Immediately return <code>*this</code> upon detecting self-assignment.</p>
+<pre><code>```cpp
+Widget&amp; Widget::opeator=(const Widget&amp; rhs) {
+    if (this == &amp;rhs) return *this;
+
+    delete pb;
+    pb = new Bitmap(*rhs.pb);
+    return *this;
+}
+```
+</code></pre>
+</li>
+<li><p>Carefully arrange statements: Sometimes, simply adjusting the order of statements can avoid self-assignment issues.</p>
+<pre><code>```cpp
+Widget&amp; Widget::opeator=(const Widget&amp; rhs) {
+    Bitmap *pOrig = pb;           // Remember the original pb
+    pb = new Bitmap(*rhs.pb);     
+    delete pOrig;                 // Delete the original pb
+    return *this;
+}
+```
+</code></pre>
+</li>
+<li><p>Copy and swap: copy the incoming parameter (rvalue), then swap <code>*this</code> with the copy.</p>
+<pre><code>```cpp
+class Widget {
+...
+void swap(Widget&amp; rhs);
+...
+};
+
+Widget&amp; Widget::opeator=(const Widget&amp; rhs) {
+    Widget temp(rhs);        // Create a copy of rhs
+    swap(temp);              // Swap *this with the copy above.
+    return *this;
+}
+```
+</code></pre>
+</li>
+</ul>
+</li>
+<li><p>Properly handle resources: Before copying resources from <code>rhs</code>, the old resources currently held by the <code>*this</code> object must be correctly released.</p>
+</li>
+<li><p>Assign values to all data members: Ensure that all relevant data from the source object is correctly copied to the target object.</p>
+</li>
+<li><p>Return a reference to <code>*this</code>: This supports chained assignments, such as <code>a = b = c</code>; (which is parsed as <code>a = (b = c)</code>;).</p>
+</li>
+<li><p>Prevent assignment: If you want objects of a class to be non-assignable, you can declare <code>operator=</code> as <code>private</code> (traditional approach) or use C++11&#39;s <code>= delete</code>; (recommended approach).</p>
+</li>
+</ul>
+<h2 id="64-Value-Classes">4 Value Classes</h2>
+<p><strong>Value classes</strong> refer to those classes that behave like built-in primitive data types.</p>
+<ul>
+<li>They can be passed as function parameters and returned like ordinary values.</li>
+<li>They often overload various operators to make their usage natural and intuitive (e.g., Complex, Date, String classes).</li>
+<li>They may support conversions (implicit or explicit) to and from other types.</li>
+</ul>
+<h2 id="65-Type-Conversion-and-Casting">5 Type Conversion and Casting</h2>
+<p>If a constructor can be called with a single argument (or has multiple arguments, but all arguments after the first have default values), it can be used by the compiler to perform an implicit conversion from the argument type to the class type.</p>
+<pre><code class="language-cpp">class PathName {
+private:
+    std::string name;
+public:
+    // This constructor allows implicit conversion from std::string to PathName.
+    PathName(const std::string&amp; s) : name(s) {
+        std::cout &lt;&lt; &quot;PathName created from string: &quot; &lt;&lt; name &lt;&lt; std::endl;
+    }
+    void print() const { std::cout &lt;&lt; name; }
+};
+
+void processPath(PathName p) {
+    p.print();
+}
+
+int main() {
+    std::string str_path = &quot;/usr/local&quot;;
+    PathName pn1(str_path);    // Explicit construction
+    processPath(str_path);     // Implicit Conversion: str_path -&gt; PathName(str_path)
+}
+</code></pre>
+<p>To prevent unwanted implicit conversions (which can lead to hard-to-detect errors or ambiguity), the <code>explicit</code> keyword can be used before a single-argument constructor, so that conversions must be explicit.</p>
+<pre><code class="language-cpp">class PathNameExplicit {
+private:
+    std::string name;
+public:
+    explicit PathNameExplicit(const std::string&amp; s) : name(s) {}
+    // ...
+};
+
+PathNameExplicit pn_expl = std::string(&quot;/usr&quot;); 
+// Error! Explicit constructors cannot be used for implicit conversions.
+PathNameExplicit pn_expl(std::string(&quot;/usr&quot;)); 
+// Correct, explicit call.
+</code></pre>
+<p>Conversion operators: These are special member functions used to define a conversion from a class type to another type T. (Where T is the target type, such as <code>double</code>, <code>int</code>, or other class types)</p>
+<ul>
+<li><p>Typically have no parameters (since the conversion is from the *this object)</p>
+</li>
+<li><p>Should generally be declared as const, because the conversion operation should not modify the source object</p>
+</li>
+</ul>
+<pre><code class="language-cpp">operator T() const;
+
+class Rational 
+{
+private:
+    int numerator_;
+    int denominator_;
+public:
+    Rational(int num = 0, int den = 1) : numerator_(num), denominator_(den == 0 ? 1 : den) {}
+
+    // Type conversion operator: converts Rational to double
+    operator double() const 
+    {
+        return static_cast&lt;double&gt;(numerator_) / denominator_;
+    }
+};
+
+int main() 
+{
+    Rational r(1, 2);
+    double d = r; // Implicit call to r.operator double()
+    std::cout &lt;&lt; &quot;d = &quot; &lt;&lt; d &lt;&lt; std::endl; // Output d = 0.5
+
+    double val = 0.5 + r; // `r` is converted to double, and then addition is performed.
+    std::cout &lt;&lt; &quot;val = &quot; &lt;&lt; val &lt;&lt; std::endl; // output val = 1.0
+}
+</code></pre>
+<p>Over-reliance on implicit type conversions can make code difficult to understand and maintain, and can easily introduce ambiguity. It is generally recommended to:</p>
+<ul>
+<li><p>Use <code>explicit</code> for single-argument constructors unless implicit conversion is truly needed and its behavior is very intuitive.</p>
+</li>
+<li><p>Prefer named conversion functions (such as <code>toDouble()</code>, <code>toString()</code>) over implicit type conversion operators, so that the conversion intent is clearer.</p>
+</li>
+</ul>
+<h3 id="Modern-Casting">5.1 Modern Casting</h3>
+<p><code>const_cast</code>: Used for casting away the constness, simply put, it removes the original <code>const</code> and <code>volatile</code> qualifiers.</p>
+<p><code>dynamic_cast</code>: Mainly used for safe downcasting, i.e., converting a base class reference/pointer to a derived class reference/pointer (opposite of upcasting).</p>
+<ul>
+<li><p>If the types do not match, pointer type conversion returns <code>nullptr</code>, while reference type conversion throws <code>std::bad_cast</code>.</p>
+</li>
+<li><p>The base class must be polymorphic (i.e., have at least one <code>virtual</code> function).</p>
+</li>
+</ul>
+<p><code>reinterpret_cast</code>: Used for low-level casting, whose actual behavior (and results) may depend on the compiler, meaning it is not portable.</p>
+<p><code>static_cast</code>: Used for forcing implicit conversions.</p>
+<pre><code class="language-cpp">static_cast&lt;new_type&gt;(expression)
+</code></pre>
+<ul>
+<li><p>Mainly used for type conversion in the following scenarios:</p>
+<ul>
+<li><p>Conversion between related types: Converting between types that have a well-defined conversion path, including: conversions between basic types; conversion of subclass pointers/references to parent class pointers/references; conversion between <code>void</code> pointers and pointers of other types</p>
+</li>
+<li><p>Explicitly invoking implicit conversions: When an implicit conversion path exists (e.g., through a single-argument constructor or a type conversion operator), <code>static_cast</code> can make the intent of such a conversion clearer.</p>
+</li>
+<li><p>Resolving ambiguity: In certain expressions, implicit conversions may lead to ambiguity; using <code>static_cast</code> can explicitly specify the desired conversion.</p>
+</li>
+</ul>
+</li>
+<li><p>The safety of <code>static_cast</code> is reflected in: compile-time checking &amp; no runtime checking</p>
+</li>
+</ul>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-5/" rel="prev"><span>← Previous chapter</span>Chapter 5 Copying and Moving</a>
+  <a href="../chapter-7/" rel="next"><span>Next chapter →</span>Chapter 7 Templates</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

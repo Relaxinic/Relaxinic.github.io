@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 2 Operating-System Structures — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Operating System</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-09-23">23 Sept 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-2-Operating-System-Structures">Chapter 2 Operating-System Structures</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#21-Operating-System-Services">1 Operating-System Services</a>
+      <ul class="toc-subsections">
+        <li><a href="#User">1.1 User</a></li>
+        <li><a href="#System">1.2 System</a></li>
+      </ul>
+    </li>
+    <li><a href="#22-User-and-Operating-System-Interface">2 User and Operating-System Interface</a>
+      <ul class="toc-subsections">
+        <li><a href="#Command-Interpreters">2.1 Command Interpreters</a></li>
+        <li><a href="#Graphic-User-Interface">2.2 Graphic User Interface</a></li>
+        <li><a href="#Touch-Screen-Interface">2.3 Touch-Screen Interface</a></li>
+      </ul>
+    </li>
+    <li><a href="#23-System-Calls">3 System Calls</a>
+      <ul class="toc-subsections">
+        <li><a href="#Application-Programming-Interface">3.1 Application Programming Interface⚓︎</a></li>
+        <li><a href="#Types-of-System-Calls">3.2 Types of System Calls</a></li>
+      </ul>
+    </li>
+    <li><a href="#24-System-Services">4 System Services</a></li>
+    <li><a href="#25-Linkers-and-Loaders">5 Linkers and Loaders</a></li>
+    <li><a href="#26-Why-Applications-Are-Operating-System-Specific">6 Why Applications Are Operating-System Specific</a></li>
+    <li><a href="#27-Operating-System-Design-and-Implementation">7 Operating-System Design and Implementation</a>
+      <ul class="toc-subsections">
+        <li><a href="#Mechanisms-and-Policies">7.1 Mechanisms and Policies</a></li>
+        <li><a href="#Implementation">7.2 Implementation</a></li>
+      </ul>
+    </li>
+    <li><a href="#28-Operating-System-Structure">8 Operating-System Structure</a>
+      <ul class="toc-subsections">
+        <li><a href="#Monolithic-Structure">8.1 Monolithic Structure</a></li>
+        <li><a href="#Layered-Approach">8.2 Layered Approach</a></li>
+        <li><a href="#Microkernels">8.3 Microkernels</a></li>
+        <li><a href="#Modules">8.4 Modules</a></li>
+        <li><a href="#Hybrid-Systems">8.5 Hybrid Systems</a></li>
+      </ul>
+    </li>
+    <li><a href="#29-Building-and-Booting-an-Operating-System">9 Building and Booting an Operating System</a>
+      <ul class="toc-subsections">
+        <li><a href="#Operating-System-Generation">9.1 Operating-System Generation</a></li>
+        <li><a href="#System-Boot">9.2 System Boot</a></li>
+      </ul>
+    </li>
+    <li><a href="#210-Operating-System-Debugging">10 Operating-System Debugging</a>
+      <ul class="toc-subsections">
+        <li><a href="#Failure-Analysis">10.1 Failure Analysis</a></li>
+        <li><a href="#Performance-Monitoring-and-Tuning">10.2 Performance Monitoring and Tuning</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<h2 id="21-Operating-System-Services">1 Operating-System Services</h2>
+<p>Although the specific services provided by different OSs vary, there are still some common services. The following briefly introduces them from the two perspectives of users and systems:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C2/1.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<h3 id="User">1.1 User</h3>
+<p>User interface:</p>
+<ul>
+<li><p>Graphic user interface (GUI)</p>
+</li>
+<li><p>Touch-screen interface</p>
+</li>
+<li><p>Command-line interface (CLI)</p>
+</li>
+</ul>
+<p>Program execution: load into memory, run, (normal / abnormal) exit</p>
+<p>I/O operations: for files or I/O devices</p>
+<p>File-system manipulation:</p>
+<ul>
+<li><p>Read and write files / directories</p>
+</li>
+<li><p>Create / delete / search / list files</p>
+</li>
+<li><p>Permission management</p>
+</li>
+</ul>
+<p>Communication:</p>
+<ul>
+<li><p>Includes communication between different processes within the same computer, as well as communication between processes on different computer systems connected through a network</p>
+</li>
+<li><p>Implementation techniques: shared memory, message passing</p>
+</li>
+</ul>
+<p>Error detection:</p>
+<ul>
+<li><p>Errors may occur at the hardware level (CPU, memory, I/O devices) or at the software level</p>
+</li>
+<li><p>Solutions: correct or terminate, and sometimes return an error code</p>
+</li>
+</ul>
+<h3 id="System">1.2 System</h3>
+<p>Resource allocation:</p>
+<ul>
+<li>Some resources may have special allocation code, while other resources may have more general request code and release code</li>
+</ul>
+<p>Logging: usage statistics, tracking the use of computing resources, facilitating administrator configuration</p>
+<p>Protection and security:</p>
+<ul>
+<li><p>Protection: when multiple processes run concurrently, processes must not interfere with one another, which requires ensuring that all access to system resources is controlled</p>
+</li>
+<li><p>Security: requires users to verify their identity</p>
+</li>
+</ul>
+<h2 id="22-User-and-Operating-System-Interface">2 User and Operating-System Interface</h2>
+<h3 id="Command-Interpreters">2.1 Command Interpreters</h3>
+<p>Compared with the term &quot;command interpreters,&quot; we may be more familiar with &quot;shell&quot;; in fact, the two are roughly equivalent. In Unix and Linux systems, the commonly used ones today are bash (Bourne-Again shell), zsh (Z shell), and fish (C shell and Korn shell are already rarely used). Readers can use the echo $e command to check the shell currently in use. For convenience in the following explanation, the term &quot;command interpreter&quot; will still be used below rather than &quot;shell.&quot;</p>
+<p>As the name suggests, the main function of a command interpreter is to obtain and execute the next command specified by the user. These commands are roughly implemented in the following ways:</p>
+<ul>
+<li><p>The command interpreter itself contains the code to execute commands.</p>
+</li>
+<li><p>Most commands are implemented through system programs (this is exactly what UNIX does).</p>
+</li>
+</ul>
+<h3 id="Graphic-User-Interface">2.2 Graphic User Interface</h3>
+<p>For the vast majority of users today, the first way they come into contact with a computer may be the GUI. Today&#39;s mainstream operating systems all have their own GUIs. Even Linux, commonly used by programmers, has open-source desktop environments such as KDE and GNOME. So there is not much to say here.</p>
+<h3 id="Touch-Screen-Interface">2.3 Touch-Screen Interface</h3>
+<p>Today&#39;s smartphones and tablets basically all use touch-screen interfaces.</p>
+<h2 id="23-System-Calls">3 System Calls</h2>
+<p>System calls provide an interface for accessing OS services. These calls are usually functions written in C and C++, but some low-level tasks may have to be written using assembly language instructions.</p>
+<h3 id="Application-Programming-Interface">3.1 Application Programming Interface⚓︎</h3>
+<p>In fact, even a very simple program will make extensive use of the OS; moreover, the OS usually has to execute thousands of system calls per second. Most developers do not see these low-level details because they use an application programming interface (API) when designing programs, such as the Windows API, POSIX API, Java API, and so on. Programmers access the API through code libraries provided by the OS. For example, in UNIX and Linux systems written in C, such a library is libc. Behind the scenes, the functions that make up the API usually call the actual system calls on behalf of the application programmer.</p>
+<p>The reason programmers prefer programming based on APIs rather than calling system calls directly is that using APIs has the following benefits:</p>
+<p>Program portability: programs written using the same set of APIs can be compiled and run on systems with the same API. Compared with APIs, system calls are more complex and harder to work with.</p>
+<p>Runtime environment (RTE): a complete set of software used to execute programs, including compilers, interpreters, libraries, loaders, and so on. The RTE provides a system-call interface as the link to the system calls provided by the OS. Usually, each system call is associated with a number, and the system-call interface maintains a table based on these numbers. It then invokes the expected system call in the operating system kernel and returns the status of the system call. Most details of the operating system interface are hidden by the API and managed by the RTE.</p>
+<p>Common methods for passing parameters to the OS: pass parameters using registers; parameters are stored in memory in the form of a block or table, and the address of the block is passed to a register as a parameter; parameters are pushed onto a stack or popped from a stack.</p>
+<h3 id="Types-of-System-Calls">3.2 Types of System Calls</h3>
+<p>Process control: create / terminate processes, load / execute, get / set process attributes, wait for events / send event signals, allocate / free memory</p>
+<p>File management: create / delete files, open / close, read / write / reposition, get / set file attributes</p>
+<p>Device management: request / release devices, read / write / reposition, get / set device attributes, logically attach or detach devices</p>
+<p>Information maintenance: get / set time / date, get / set system data, get process / file / device attributes, set process / file / device attributes</p>
+<p>Communication: create / delete communication connections, send / receive messages, transfer status information, connect / disconnect remote devices</p>
+<p>Protection: get / set permissions</p>
+<h2 id="24-System-Services">4 System Services</h2>
+<p>System services (also known as system utilities) provide a convenient environment for program development and execution. Some of them are simply user interfaces to system calls, while others are considerably more complex. They can be divided into the following categories:</p>
+<ul>
+<li><p>File management: creation/deletion/copying/renaming/printing/listing, as well as general access to and manipulation of files/directories</p>
+</li>
+<li><p>Status information: date, time, available memory or disk space, number of users, or more complex detailed performance, logging, and debugging information. Some systems also support a registry for storing and retrieving configuration information</p>
+</li>
+<li><p>File modification: text editors, special commands for searching file contents or transforming text</p>
+</li>
+<li><p>Programming-language support: compilers, assemblers, debuggers, interpreters, etc.</p>
+</li>
+<li><p>Program loading and execution: once a program has been assembled or compiled, it must be loaded into memory in order to execute. The system may provide absolute loaders, relocatable loaders, linkage editors, and overlay loaders. Debugging systems for high-level languages or machine language are also needed</p>
+</li>
+<li><p>Communication: provides mechanisms for creating virtual connections among processes, users, and computer systems</p>
+</li>
+<li><p>Background services: continuously running system program processes are called services, subsystems, or daemons. A typical system has dozens of daemons. An OS that runs important activities in the user context rather than the kernel context may use daemons to perform these activities.</p>
+</li>
+</ul>
+<h2 id="25-Linkers-and-Loaders">5 Linkers and Loaders</h2>
+<p>Normally, a program is stored on disk as a binary file (such as a.out or prog.exe). For the program to run on the CPU, it must first be loaded into memory and placed within the context of a process. The following figure summarizes this flow well:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C2/6.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<ul>
+<li><p>Source files are compiled into object files that can be loaded into any physical memory location; this format is called relocatable object files.</p>
+</li>
+<li><p>Next, the linker combines these relocatable object files into a single binary executable file. During the linking phase, other object files or libraries may also be included (specified using the flag -lm).</p>
+</li>
+<li><p>The loader is used to load the binary executable file into memory so that it can run on a CPU core.</p>
+</li>
+<li><p>The activity associated with linking and loading is relocation, which assigns final addresses to parts of the program and adjusts the code and data in the program to match these addresses.</p>
+</li>
+</ul>
+<p>To run the loader, simply enter the name of the executable file on the command line. When the program name is typed on the command line (for example, ./main),</p>
+<ul>
+<li><p>The shell first creates a new process to run the program via the fork() system call.</p>
+</li>
+<li><p>Then, the shell uses the exec() system call to invoke the loader and passes the name of the executable file to exec().</p>
+</li>
+<li><p>The loader then uses the address space of the newly created process to load the specified program into memory.</p>
+</li>
+</ul>
+<p>So far, we have assumed that all libraries are linked into the executable file and loaded into memory. In reality, most systems allow programs to dynamically link to libraries at load time; for example, Windows supports dynamically linked libraries (DLLs). The advantage of this approach is that it avoids linking and loading libraries that may ultimately go unused into the executable file (thereby reducing extra overhead), because libraries are conditionally linked and loaded only when needed while the program is running. This is possible because the linker inserts relocation information, allowing libraries to be dynamically linked and loaded when the program is loaded.</p>
+<p>Object files and executable files usually have a standard format, including compiled machine code, as well as a symbol table containing metadata about functions and variables referenced in the program. For UNIX and Linux systems, this standard format is called ELF (executable and linkable format). There are separate ELF formats for relocatable and executable files. One piece of information in the ELF file of an executable file is the program&#39;s entry point, which contains the address of the first instruction to be executed when the program runs.</p>
+<h2 id="26-Why-Applications-Are-Operating-System-Specific">6 Why Applications Are Operating-System Specific</h2>
+<p>There are several ways to make an application run on multiple OSes:</p>
+<ul>
+<li><p>Write the application in an interpreted language, and the interpreter is available on multiple OSes (such as Python, Ruby).</p>
+</li>
+<li><p>Write the application in a language that includes a virtual machine for running the application (such as Java).</p>
+</li>
+<li><p>Application developers can use standard languages or APIs, and the compiler generates binary code specific to the machine and operating system (such as the POSIX API).</p>
+</li>
+</ul>
+<p>In theory, these methods provide solutions for running applications on different OSes, but implementation is fraught with difficulties, for the following reasons:</p>
+<p>At the application level: applications that call certain APIs cannot run on OSes that do not provide those APIs.</p>
+<p>At the system level: each OS has a binary format specified for applications, and this format determines the layout of headers, instructions, and variables. These components need to be in specific locations within a specific structure in the executable file so that the operating system can open the file and load the application for correct execution. Both UNIX and Linux have adopted the ELF format as the standard for binary executable files, but this format is not tied to any particular computer architecture, so it cannot guarantee that an executable file will run on different hardware platforms. CPUs have different instruction sets, and only applications containing the appropriate instructions can execute correctly. The system calls provided by different OSes differ in many ways, including the specific operands used and the order of operands, how applications invoke system calls, and so on.</p>
+<p>Similar to how APIs specify concrete functions at the application level, at the architecture level there is something called an ABI (application binary interface), which defines how different binary code components interact with a specific OS on a specific architecture.</p>
+<ul>
+<li><p>The ABI specifies low-level details, including address width, the method for passing parameters to system calls, the organization of the runtime stack, the binary format of system libraries, and the sizes of data types, among others.</p>
+</li>
+<li><p>So if a binary executable file is compiled and linked according to a specific ABI, it should be able to run on different systems that support that ABI.</p>
+</li>
+<li><p>However, because a specific ABI is defined for a specific operating system running on a given architecture, the ABI has limited usefulness in providing cross-platform compatibility.</p>
+</li>
+</ul>
+<h2 id="27-Operating-System-Design-and-Implementation">7 Operating-System Design and Implementation</h2>
+<h3 id="Mechanisms-and-Policies">7.1 Mechanisms and Policies</h3>
+<p>Mechanism: A low-level method or protocol for implementing a functional fragment; it is a low-level kind of &quot;machinery,&quot; such as a context switch.</p>
+<blockquote>
+<p>It provides an answer to the &quot;how&quot; question about a certain system.</p>
+</blockquote>
+<p>Policy: An algorithm for making decisions within an OS; it is a high-level kind of &quot;intelligence,&quot; such as a scheduling policy.</p>
+<blockquote>
+<p>It provides an answer to the &quot;which&quot; question.</p>
+</blockquote>
+<p>By separating mechanism from policy, we can easily change the policy without having to reconsider the mechanism. Therefore, this is a form of modularity and also conforms to a general principle of software design.</p>
+<h3 id="Implementation">7.2 Implementation</h3>
+<p>Early OSes were written in assembly language, while most OSes today are written in high-level languages such as C or C++, with only a few systems written in assembly. The advantages of using high-level languages to implement an OS include:</p>
+<ul>
+<li><p>The same benefits gained in application development: code can be written faster, is more compact in structure, and is easier to understand and debug.</p>
+</li>
+<li><p>In addition, advances in compiler technology have improved the quality of code generated for the entire OS (through simple recompilation).</p>
+</li>
+<li><p>Finally, if an OS is written in a high-level language, porting it to other hardware platforms is much easier, which is especially important for an OS that needs to run on many different hardware systems.</p>
+</li>
+</ul>
+<p>The only potential disadvantages of implementing an OS in a high-level language may be reduced execution speed and increased storage requirements. But from today&#39;s perspective, this is not really a problem.</p>
+<p>Although assembly language experts can write efficient small routines, for large programs, modern compilers can perform complex analysis and apply sophisticated optimization techniques, thereby generating excellent code.</p>
+<p>In addition, modern processors have deep pipelines and multiple functional units, and their ability to handle the details of complex dependencies far exceeds what the human brain can manage.</p>
+<h2 id="28-Operating-System-Structure">8 Operating-System Structure</h2>
+<p>A large and complex system must be carefully designed if it is to function properly and be easy to modify. The usual approach is to break the task down into small components or modules rather than building a single monolithic system. Each module should be a clearly defined part of the system, with clearly defined interfaces and functions. The following will explore how the common components of an OS are connected to one another and form a kernel.</p>
+<h3 id="Monolithic-Structure">8.1 Monolithic Structure</h3>
+<p>The simplest structure for organizing an operating system is no structure at all—that is, placing all kernel functionality into a single, static binary file that runs in a single address space. This approach is known as monolithic structure and is a common technique for designing operating systems.</p>
+<p>A typical example is this: the earliest UNIX operating system consisted of two parts: the kernel and system programs. The kernel was further divided into a series of interfaces and device drivers, which were continuously added and expanded over the years as UNIX evolved. We can regard the traditional UNIX operating system as layered to some extent, as shown in the figure below.</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C2/7.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>Everything below the system call interface and above the physical hardware is the kernel. The kernel provides the file system, CPU scheduling, memory management, and other operating-system functions through system calls. Taken in sum, that is an enormous amount of functionality to be combined into just one single address space.</p>
+<p>The Linux operating system is based on UNIX and has a similar structure, as shown in the figure on the right. Applications typically use the glibc standard C library to communicate with the system call interface in order to access the kernel. The Linux kernel is monolithic because it runs entirely in a single address space in kernel mode. But as we will mention later, it also has a modular design that allows it to be modified while the kernel is running.</p>
+<p>Although monolithic kernels are simple enough, they are difficult to implement and extend. However, this structure has a significant performance advantage: the overhead of the system call interface is very small, and communication within the kernel is fast. Therefore, despite its various disadvantages, quite a few operating systems still adopt this structure today.</p>
+<h3 id="Layered-Approach">8.2 Layered Approach</h3>
+<p>Monolithic architecture is often referred to as a tightly coupled system, because a change in one part of the system may have widespread effects on other parts. Another option is to design a loosely coupled system. Such a system is divided into independent, small components with specific and limited functionality, all of which together form the kernel. The advantage of a modular approach is that modifications to one component affect only that component itself and do not波及 other parts, thereby giving system implementers greater freedom in creating and changing the internal working mechanisms of the system.</p>
+<p>There are many ways to achieve system modularity. One approach is the layered approach, which decomposes the OS into several layers (levels). The lowest layer (Layer 0) is the hardware, and the highest layer (Layer N) is the user interface.</p>
+<p>A layer of an OS is an implementation of an abstract object composed of data and the operations that can act on that data. A typical OS layer—for example, Layer M—contains data structures and a set of functions that can be called by higher layers. Correspondingly, Layer M can call operations of lower layers.</p>
+<p>The main advantage of the layered approach is that it makes construction and debugging simple: the first layer can be debugged without considering the rest of the system, because by definition it implements functionality using only the underlying hardware (assuming it is correct). Once the first layer has been debugged, the second layer can be debugged on the assumption that it operates correctly, and so on. If an error is found during the debugging of a particular layer, then the error must exist in that layer, because the layers below it have already been debugged. In this way, the design and implementation of the system are simplified, and each layer hides the existence of certain data structures, operations, and hardware from higher layers.</p>
+<p>Layered systems have been successfully used in computer networks (such as the TCP/IP protocol) and Web applications. However, relatively few OSs adopt a purely layered approach, for reasons including:</p>
+<ul>
+<li><p>It is difficult to properly define the functionality of each layer.</p>
+</li>
+<li><p>User programs need to traverse multiple layers to obtain OS services, which introduces considerable overhead.</p>
+</li>
+</ul>
+<h3 id="Microkernels">8.3 Microkernels</h3>
+<p>The microkernel approach constructs the OS by removing all unnecessary components from the kernel and implementing them as user-level programs placed in separate address spaces. The result is a smaller kernel. There is currently little consensus on which services should remain in the kernel and which should be implemented in user space. However, it is certain that the microkernel provides only the most basic process and memory management functions, as well as communication mechanisms. The figure below shows a typical microkernel architecture:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/os/images/C2/10.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>The main function of a microkernel is to provide communication between client programs and various services that also run in user space. This communication is achieved through message passing. For example, if a client program wants to access a file, it must interact with the file server. Client programs and services never interact directly, but instead communicate indirectly by exchanging messages with the microkernel.</p>
+<p>The benefits of adopting the microkernel approach include:</p>
+<ul>
+<li><p>It is easier to extend the OS: all new services are added to user space, so there is no need to modify the kernel. When the kernel does need to be modified, because the microkernel itself is small, the required changes are relatively few. The resulting OS is easier to port from one hardware design to another.</p>
+</li>
+<li><p>In addition, because most services run as user processes rather than kernel processes, the microkernel also provides greater security and reliability. Even if a service fails, the rest of the OS is not affected.</p>
+</li>
+</ul>
+<p>However, the performance of a microkernel may suffer because of the increased overhead of system functions. When two user-level services need to communicate, messages must be copied between those services, which are located in different address spaces. In addition, the OS may need to switch between processes to exchange information. Therefore, the overhead caused by message copying and process switching has always been the biggest obstacle hindering the development of microkernel-based OSs.</p>
+<h3 id="Modules">8.4 Modules</h3>
+<p>The best approach to current OS design is perhaps to use loadable kernel modules (LKMs). In this design, the kernel contains a set of core components and can link additional services through modules at boot time or at runtime. This design pattern is very common in modern UNIX implementations.</p>
+<p>The core idea of this design is to have the kernel provide basic services, while other functions are implemented dynamically while the kernel is running. Compared with adding new functionality directly to the kernel, which requires recompiling the kernel for every modification, dynamically linking services is preferable. For example, we can build CPU scheduling and memory management algorithms directly into the kernel, and then add support for different file systems through loadable modules.</p>
+<p>The overall architecture is similar to a layered system: each kernel part has a clear and protected interface; but it is more flexible than a layered system because any module can call other modules.</p>
+<p>This approach also has similarities with microkernel architecture: the main module contains only core functionality and the mechanisms for loading and communicating with other modules; but it is more efficient because modules do not need to communicate through message passing.</p>
+<p>Linux mainly uses LKMs to support device drivers and file systems. LKMs can be &quot;inserted&quot; into the kernel at system boot time or at runtime. If the Linux kernel lacks a required driver, it can be loaded dynamically. At the same time, LKMs can also be removed from the kernel at runtime. For Linux, LKMs achieve a dynamic, modular kernel design while maintaining the performance advantages of a monolithic system.</p>
+<h3 id="Hybrid-Systems">8.5 Hybrid Systems</h3>
+<p>In practice, few OSs adopt a single, strictly defined structure—they often combine different structures, forming hybrid systems to address performance, security, and usability issues. For example:</p>
+<p>Linux is monolithic, because placing the OS within a single address space provides very efficient performance; but at the same time, it is also modular, so that new functionality can be dynamically added to the kernel.</p>
+<p>Windows is likewise largely monolithic in structure (also mainly for performance reasons), but it retains some behaviors typical of microkernel systems, including support for independent subsystems that run as user-mode processes. Windows systems also support dynamically loadable kernel modules.</p>
+<h2 id="29-Building-and-Booting-an-Operating-System">9 Building and Booting an Operating System</h2>
+<h3 id="Operating-System-Generation">9.1 Operating-System Generation</h3>
+<p>Steps to generate (or build) an OS from scratch:</p>
+<ol>
+<li><p>Write the operating system source code (or obtain previously written source code)</p>
+</li>
+<li><p>Configure the target system for the operating system to be run</p>
+</li>
+<li><p>Compile the operating system</p>
+</li>
+<li><p>Install the operating system</p>
+</li>
+<li><p>Boot the computer and its new operating system</p>
+</li>
+</ol>
+<h3 id="System-Boot">9.2 System Boot</h3>
+<p>Most system startup processes proceed as follows:</p>
+<ol>
+<li><p>A piece of code called a bootstrap program or boot loader, used to locate the kernel</p>
+</li>
+<li><p>The kernel is loaded into memory and started</p>
+</li>
+<li><p>The kernel initializes the hardware</p>
+</li>
+<li><p>The root file system is mounted</p>
+</li>
+</ol>
+<blockquote>
+<p>The boot loader is not part of the operating system!</p>
+</blockquote>
+<p>Some computer systems use a multi-stage boot process:</p>
+<ol>
+<li><p>When the computer is first powered on, a small boot loader located in non-volatile firmware (called BIOS (Basic Input/Output System)) runs</p>
+</li>
+<li><p>This initial boot loader is usually responsible only for loading a second boot loader, which is located at a fixed position on the hard disk, the so-called boot block</p>
+</li>
+<li><p>The program stored in the boot block may be complex enough to load the entire OS into memory and begin execution. But more commonly: it is simply code (because it must fit within a single disk block) that knows only the address and length of the remaining boot program on the disk</p>
+</li>
+</ol>
+<p>Many modern computer systems have replaced the BIOS-based boot process with UEFI (unified extensible firmware interface). Compared with BIOS, UEFI has several advantages, including better support for 64-bit systems and larger-capacity hard disks, but the greatest advantage is that it is a standalone and complete boot manager, and therefore faster than the multi-stage BIOS boot.</p>
+<p>Whether booting via BIOS or UEFI, the boot program can perform a variety of tasks.</p>
+<p>In addition to loading the file containing the kernel program into memory, it also runs diagnostics to detect the machine state, such as checking memory, the CPU, and identifying devices; if the diagnostics pass, the program continues with the subsequent boot steps</p>
+<p>The boot program can also initialize various aspects of the system, from CPU registers to device controllers and the contents of main memory</p>
+<p>Eventually it starts the operating system and mounts the root file system, and only then do we consider the system to be officially running</p>
+<p>To save space and shorten startup time, the Linux kernel image is a compressed file that is decompressed after being loaded into memory. During startup, the boot loader usually creates a temporary RAM file system called initramfs. This file system contains the necessary drivers and kernel modules that must be installed to support the actual root file system (which is not in main memory). Once the kernel starts and the required drivers are installed, the kernel switches the root file system from the temporary RAM location to the appropriate root file system location. Finally, Linux creates the systemd process (the initial process in the system), and then starts other services. Eventually the system will present a login prompt to the user.</p>
+<h2 id="210-Operating-System-Debugging">10 Operating-System Debugging</h2>
+<p>Broadly speaking, debugging is the activity of finding and fixing errors in a system, including both hardware and software. Performance issues are also regarded as defects, so debugging can also include performance tuning, that is, improving performance by eliminating processing bottlenecks. This section will discuss the debugging process as well as kernel errors and performance issues, but hardware debugging is outside the scope of this article.</p>
+<h3 id="Failure-Analysis">10.1 Failure Analysis</h3>
+<p>If a process fails, most operating systems write the error information to log files to alert a system administrator or user that a problem has occurred. The OS may also perform a core dump, capturing the memory contents of the process and storing them in a file for later analysis. A running program and core dumps can be explored by a debugger, allowing a programmer to examine a process&#39;s code and memory in depth when a failure occurs.</p>
+<p>Debugging user-level process code is difficult enough, but OS kernel debugging is even more complex because the kernel is large, complex, controls hardware resources, and lacks user-level debugging tools. A failure in the kernel is called a crash. When a crash occurs, error information is saved to a log file, and the memory state is saved to a crash dump file.</p>
+<p>Because the nature of the tasks is very different, OS debugging and process debugging often use different tools and techniques. One common technique is to save the kernel&#39;s memory state to a disk area specially reserved for this purpose that contains no file system. If the kernel detects an unrecoverable error, it writes the entire memory contents (or at least the portion of system memory occupied by the kernel) to that disk area. After the system reboots, a process runs to collect the data from that area and write it to a crash dump file located in some file system for analysis. Clearly, for the debugging of ordinary user-level processes, such a strategy is unnecessary.</p>
+<h3 id="Performance-Monitoring-and-Tuning">10.2 Performance Monitoring and Tuning</h3>
+<p>To identify bottlenecks in performance tuning, we must be able to monitor system performance. Therefore, the OS must have methods for computing and displaying metrics of system behavior. Tools can be categorized as providing either per-process or system-wide observation capabilities. To achieve these observations, tools can employ one of two approaches—counters or tracing techniques, and these two approaches are discussed one by one next.</p>
+<h4 id="Counters">Counters</h4>
+<p>Tools in Linux that use counters:</p>
+<p>Process-level:</p>
+<ul>
+<li><p><code>ps</code>: reports information about a single or selected processes</p>
+</li>
+<li><p><code>top</code>: reports real-time statistics of current processes (the more modern tool <code>btop</code> is recommended)</p>
+</li>
+</ul>
+<p>System-level:</p>
+<ul>
+<li><p><code>vmstat</code>: reports memory usage statistics</p>
+</li>
+<li><p><code>netstat</code>: reports statistics of network interfaces</p>
+</li>
+<li><p><code>iostat</code>: reports disk I/O usage</p>
+</li>
+</ul>
+<p>Most counter-based tools in Linux systems read statistics from the <code>/proc</code> filesystem. It is a &quot;pseudo&quot; filesystem that exists only in kernel memory and is mainly used to query various process-level and kernel statistics. This filesystem is organized in a directory hierarchy, with each process (assigned a unique integer value) appearing as a subdirectory under <code>/proc</code>. For example, the directory entry <code>/proc/2155</code> will contain the statistics of the process with ID 2155.</p>
+<h4 id="Tracing">Tracing</h4>
+<p>Tracing tools collect data on specific events, such as the various steps during the execution of a system call. The following are examples of Linux tools used to trace events:</p>
+<p>Process level:</p>
+<ul>
+<li><p><code>strace</code>: Traces the system calls invoked by a process</p>
+</li>
+<li><p><code>gdb</code>: Source-level debugger</p>
+</li>
+</ul>
+<p>System level:</p>
+<ul>
+<li><p><code>perf</code>: A collection of Linux performance tools</p>
+</li>
+<li><p><code>tcpdump</code>: Collects network packets</p>
+</li>
+</ul>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-1/" rel="prev"><span>← Previous chapter</span>Chapter 1 Introduction</a>
+  <a href="../chapter-3/" rel="next"><span>Next chapter →</span>Chapter 3 Processes</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

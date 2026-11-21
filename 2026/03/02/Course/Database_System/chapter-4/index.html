@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 4 Intermediate SQL — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  <link rel="stylesheet" href="../../../../../../media/katex/katex.min.css">
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Database System</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-03-11">11 Mar 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-4-Intermediate-SQL">Chapter 4 Intermediate SQL</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#41-Join-Expressions">1 Join Expressions</a>
+      <ul class="toc-subsections">
+        <li><a href="#The-Natural-Join">1.1 The Natural Join</a></li>
+        <li><a href="#Outer-Joins">1.2 Outer Joins</a></li>
+      </ul>
+    </li>
+    <li><a href="#42-SQL-and-Multiset-Relational-Algebra">2 SQL and Multiset Relational Algebra</a></li>
+    <li><a href="#43-Views">3 Views</a>
+      <ul class="toc-subsections">
+        <li><a href="#View-Definition-and-Usages">3.1 View Definition and Usages</a></li>
+        <li><a href="#Materialized-Views">3.2 Materialized Views</a></li>
+        <li><a href="#Update-of-a-View">3.3 Update of a View</a></li>
+      </ul>
+    </li>
+    <li><a href="#44-Transactions">4 Transactions</a></li>
+    <li><a href="#45-Integrity-Constraints">5 Integrity Constraints</a>
+      <ul class="toc-subsections">
+        <li><a href="#Not-Null-Constraint">5.1 Not Null Constraint</a></li>
+        <li><a href="#Unique-Constraint">5.2 Unique Constraint</a></li>
+        <li><a href="#The-Check-Clause">5.3 The Check Clause</a></li>
+        <li><a href="#Referential-Integrity">5.4 Referential Integrity</a></li>
+        <li><a href="#Complex-Check-Conditions-and-Assertions">5.5 Complex Check Conditions and Assertions</a></li>
+      </ul>
+    </li>
+    <li><a href="#46-SQL-Data-Types-and-Schemas">6 SQL Data Types and Schemas</a></li>
+    <li><a href="#47-Index-Definition-in-SQL">7 Index Definition in SQL</a></li>
+    <li><a href="#48-Authorization">8 Authorization</a>
+      <ul class="toc-subsections">
+        <li><a href="#Granting-and-Revoking-of-Privileges">8.1 Granting and Revoking of Privileges</a></li>
+        <li><a href="#Roles">8.2 Roles</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<h2 id="41-Join-Expressions">1 Join Expressions</h2>
+<h3 id="The-Natural-Join">1.1 The Natural Join</h3>
+<p>Concatenate tuples from two relations where all attributes with the same name have equal values (retaining only one of the attributes with the same name)</p>
+<p>Order: Common attributes of the two relations - Attributes unique to the first relation - Attributes unique to the second relation</p>
+<pre><code class="language-sql">SELECT name, title
+FROM (student NATURAL JOIN takes) JOIN course USING (course_id);
+
+SELECT *
+FROM student JOIN takes ON student.ID = takes.ID;
+-- ON retains tuples that do not meet the conditions
+-- WHERE discards tuples that do not meet the conditions
+</code></pre>
+<h3 id="Outer-Joins">1.2 Outer Joins</h3>
+<ul>
+<li><code>LEFT OUTER JOIN</code>: Keep only all tuples of the first relationship</li>
+<li><code>RIGHT OUTER JOIN</code>: Keep only all tuples of the second relationship</li>
+<li><code>FULL OUTER JOIN</code>: Preserve all relational tuples</li>
+<li><code>INNER JOIN</code>: Do not retain mismatched tuples</li>
+</ul>
+<h2 id="42-SQL-and-Multiset-Relational-Algebra">2 SQL and Multiset Relational Algebra</h2>
+<p>Use <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>γ</mi></mrow><annotation encoding="application/x-tex">\gamma</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.05556em;">γ</span></span></span></span> to denote the aggregation function operation</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mrow></mrow><mrow><mi>d</mi><mi>e</mi><mi>p</mi><mi>t</mi><mi mathvariant="normal">_</mi><mi>n</mi><mi>a</mi><mi>m</mi><mi>e</mi></mrow></msub><msub><mstyle mathsize="1.44em"><mi>γ</mi></mstyle><mrow><mrow><mi mathvariant="bold">a</mi><mi mathvariant="bold">v</mi><mi mathvariant="bold">e</mi><mi mathvariant="bold">r</mi><mi mathvariant="bold">a</mi><mi mathvariant="bold">g</mi><mi mathvariant="bold">e</mi></mrow><mo stretchy="false">(</mo><mi>s</mi><mi>a</mi><mi>l</mi><mi>a</mi><mi>r</mi><mi>y</mi><mo stretchy="false">)</mo></mrow></msub><mo stretchy="false">(</mo><mi>i</mi><mi>n</mi><mi>s</mi><mi>t</mi><mi>r</mi><mi>u</mi><mi>c</mi><mi>t</mi><mi>o</mi><mi>r</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">_{dept\_name} {\Large \gamma}_{\mathbf{average}(salary)}(instructor)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.2547em;vertical-align:-0.5047em;"></span><span class="mord"><span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="mord mathnormal mtight">e</span><span class="mord mathnormal mtight">pt</span><span class="mord mtight" style="margin-right:0.02778em;">_</span><span class="mord mathnormal mtight">nam</span><span class="mord mathnormal mtight">e</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.367em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord"><span class="mord mathnormal sizing reset-size6 size8" style="margin-right:0.05556em;">γ</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1953em;"><span style="top:-2.3703em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathbf mtight">average</span></span><span class="mopen mtight">(</span><span class="mord mathnormal mtight">s</span><span class="mord mathnormal mtight">a</span><span class="mord mathnormal mtight" style="margin-right:0.01968em;">l</span><span class="mord mathnormal mtight">a</span><span class="mord mathnormal mtight" style="margin-right:0.02778em;">r</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">y</span><span class="mclose mtight">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.5047em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">in</span><span class="mord mathnormal">s</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mord mathnormal">u</span><span class="mord mathnormal">c</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.02778em;">or</span><span class="mclose">)</span></span></span></span></span></p>
+<pre><code class="language-sql">SELECT A1, A2, SUM(A3)
+FROM r1, r2, ..., rm
+WHERE P
+GROUP BY A1, A2 HAVING COUNT(A4) &gt; 2;
+</code></pre>
+<p>Equivalent to:</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mi>t</mi><mn>1</mn><mo>←</mo><msub><mi>σ</mi><mi>P</mi></msub><mo stretchy="false">(</mo><msub><mi>r</mi><mn>1</mn></msub><mo>×</mo><msub><mi>r</mi><mn>2</mn></msub><mo>×</mo><mo>⋯</mo><mo>×</mo><msub><mi>r</mi><mi>m</mi></msub><mo stretchy="false">)</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><msub><mi mathvariant="normal">Π</mi><mrow><msub><mi>A</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>A</mi><mn>2</mn></msub><mo separator="true">,</mo><mi>S</mi><mi>u</mi><mi>m</mi><mi>A</mi><mn>3</mn><mo stretchy="false">(</mo><msub><mi>σ</mi><mrow><mi>c</mi><mi>o</mi><mi>u</mi><mi>n</mi><mi>t</mi><mi>A</mi><mn>4</mn><mo>&gt;</mo><mn>2</mn></mrow></msub><msub><mo stretchy="false">(</mo><mrow><msub><mi>A</mi><mn>1</mn></msub><mo separator="true">,</mo><msub><mi>A</mi><mn>2</mn></msub></mrow></msub><msub><mstyle mathsize="1.44em"><mi>γ</mi></mstyle><mrow><mi>s</mi><mi>u</mi><mi>m</mi><mo stretchy="false">(</mo><msub><mi>A</mi><mn>3</mn></msub><mo stretchy="false">)</mo><mtext> </mtext><mrow><mi mathvariant="bold">a</mi><mi mathvariant="bold">s</mi></mrow><mtext> </mtext><mi>S</mi><mi>u</mi><mi>m</mi><mi>A</mi><mn>3</mn><mo separator="true">,</mo><mtext> </mtext><mrow><mi mathvariant="bold">c</mi><mi mathvariant="bold">o</mi><mi mathvariant="bold">u</mi><mi mathvariant="bold">n</mi><mi mathvariant="bold">t</mi></mrow><mo stretchy="false">(</mo><msub><mi>A</mi><mn>4</mn></msub><mo stretchy="false">)</mo><mtext> </mtext><mrow><mi mathvariant="bold">a</mi><mi mathvariant="bold">s</mi></mrow><mtext> </mtext><mi>c</mi><mi>o</mi><mi>u</mi><mi>n</mi><mi>t</mi><mi>A</mi><mn>4</mn></mrow></msub><mo stretchy="false">)</mo><mo stretchy="false">)</mo></mrow></msub><mo stretchy="false">(</mo><mi>t</mi><mn>1</mn><mo stretchy="false">)</mo></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+&amp; t1 \leftarrow \sigma_P(r_1 \times r_2 \times \dots \times r_m) \notag \\
+&amp; \Pi_{A_1, A_2, SumA3(\sigma_{countA4 &gt; 2}( _{A_1, A_2} {\Large \gamma}_{sum(A_3)\ \mathbf{as}\ SumA3,\ \mathbf{count}(A_4)\ \mathbf{as}\ countA4}))}(t1) \notag
+\end{aligned}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:3.395em;vertical-align:-1.4475em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.9475em;"><span style="top:-3.9475em;"><span class="pstrut" style="height:2.84em;"></span><span class="mord"></span></span><span style="top:-2.4475em;"><span class="pstrut" style="height:2.84em;"></span><span class="mord"></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.4475em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.9475em;"><span style="top:-4.5475em;"><span class="pstrut" style="height:3.44em;"></span><span class="mord"><span class="mord"></span><span class="mord mathnormal">t</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">←</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">P</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="minner">⋯</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">m</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span><span style="top:-3.0475em;"><span class="pstrut" style="height:3.44em;"></span><span class="mord"><span class="mord"></span><span class="mord"><span class="mord">Π</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-3.1648em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:3.44em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3173em;"><span style="top:-2.357em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span><span class="mpunct mtight">,</span><span class="mord mtight"><span class="mord mathnormal mtight">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3173em;"><span style="top:-2.357em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight" style="margin-right:0.05764em;">S</span><span class="mord mathnormal mtight">u</span><span class="mord mathnormal mtight">m</span><span class="mord mathnormal mtight">A</span><span class="mord mtight">3</span><span class="mopen mtight">(</span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.03588em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3567em;margin-left:-0.0359em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">co</span><span class="mord mathnormal mtight">u</span><span class="mord mathnormal mtight">n</span><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight">A</span><span class="mord mtight">4</span><span class="mrel mtight">&gt;</span><span class="mord mtight">2</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1712em;"><span></span></span></span></span></span></span><span class="mopen mtight"><span class="mopen mtight">(</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3567em;margin-left:0em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3448em;margin-left:0em;margin-right:0.1em;"><span class="pstrut" style="height:2.6444em;"></span><span class="mord mtight">1</span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2996em;"><span></span></span></span></span></span></span><span class="mpunct mtight">,</span><span class="mord mtight"><span class="mord mathnormal mtight">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3448em;margin-left:0em;margin-right:0.1em;"><span class="pstrut" style="height:2.6444em;"></span><span class="mord mtight">2</span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2996em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3573em;"><span></span></span></span></span></span></span><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal sizing reset-size3 size8" style="margin-right:0.05556em;">γ</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.0643em;"><span style="top:-2.0643em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5357em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">s</span><span class="mord mathnormal mtight">u</span><span class="mord mathnormal mtight">m</span><span class="mopen mtight">(</span><span class="mord mtight"><span class="mord mathnormal mtight">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3448em;margin-left:0em;margin-right:0.1em;"><span class="pstrut" style="height:2.6444em;"></span><span class="mord mtight">3</span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2996em;"><span></span></span></span></span></span></span><span class="mclose mtight">)</span><span class="mspace mtight"><span class="mtight"> </span></span><span class="mord mtight"><span class="mord mathbf mtight">as</span></span><span class="mspace mtight"><span class="mtight"> </span></span><span class="mord mathnormal mtight" style="margin-right:0.05764em;">S</span><span class="mord mathnormal mtight">u</span><span class="mord mathnormal mtight">m</span><span class="mord mathnormal mtight">A</span><span class="mord mtight">3</span><span class="mpunct mtight">,</span><span class="mspace mtight"><span class="mtight"> </span></span><span class="mord mtight"><span class="mord mathbf mtight">count</span></span><span class="mopen mtight">(</span><span class="mord mtight"><span class="mord mathnormal mtight">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3448em;margin-left:0em;margin-right:0.1em;"><span class="pstrut" style="height:2.6444em;"></span><span class="mord mtight">4</span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2996em;"><span></span></span></span></span></span></span><span class="mclose mtight">)</span><span class="mspace mtight"><span class="mtight"> </span></span><span class="mord mtight"><span class="mord mathbf mtight">as</span></span><span class="mspace mtight"><span class="mtight"> </span></span><span class="mord mathnormal mtight">co</span><span class="mord mathnormal mtight">u</span><span class="mord mathnormal mtight">n</span><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight">A</span><span class="mord mtight">4</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.6854em;"><span></span></span></span></span></span></span><span class="mclose mtight">))</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.755em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">t</span><span class="mord">1</span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.4475em;"><span></span></span></span></span></span></span></span></span></span></span></span></p>
+<p>semijoin <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><msub><mo>⋉</mo><mrow><mi>r</mi><mi mathvariant="normal">.</mi><mi>A</mi><mo>=</mo><mi>s</mi><mi mathvariant="normal">.</mi><mi>B</mi></mrow></msub><mi>s</mi></mrow><annotation encoding="application/x-tex">r \ltimes_{r.A = s.B} s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7317em;vertical-align:-0.15em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin"><span class="mbin amsrm">⋉</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">r</span><span class="mord mtight">.</span><span class="mord mathnormal mtight">A</span><span class="mrel mtight">=</span><span class="mord mathnormal mtight">s</span><span class="mord mtight">.</span><span class="mord mathnormal mtight" style="margin-right:0.05017em;">B</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">s</span></span></span></span>: the result of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>⋈</mo><mi>s</mi></mrow><annotation encoding="application/x-tex">r \bowtie s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.51em;vertical-align:-0.005em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">⋈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">s</span></span></span></span> with the attributes of <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi></mrow><annotation encoding="application/x-tex">s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">s</span></span></span></span> removed</p>
+<p>antijoin <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mo lspace="0em" rspace="0em">⋉</mo><mo stretchy="true">‾</mo></mover></mrow><annotation encoding="application/x-tex">\overline{\ltimes}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8633em;vertical-align:-0.0817em;"></span><span class="mord overline"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7817em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord amsrm">⋉</span></span></span><span style="top:-3.7017em;"><span class="pstrut" style="height:3em;"></span><span class="overline-line" style="border-bottom-width:0.04em;"></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.0817em;"><span></span></span></span></span></span></span></span></span>：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi><mo>−</mo><mi>r</mi><mo>⋈</mo><mi>s</mi></mrow><annotation encoding="application/x-tex">r - r \bowtie s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.51em;vertical-align:-0.005em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">⋈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">s</span></span></span></span></p>
+<h2 id="43-Views">3 Views</h2>
+<h3 id="View-Definition-and-Usages">3.1 View Definition and Usages</h3>
+<p><code>CREATE VIEW</code> creates a view that can be used continuously thereafter until it is manually destroyed or the program terminates.</p>
+<pre><code class="language-sql">-- template
+CREATE VIEW v AS &lt;query expression&gt;;
+
+-- example
+CREATE VIEW faculty AS
+    SELECT ID, name, dept_name
+    FROM instructor;
+
+-- You can also specify the attribute name
+CREATE VIEW departments_total_salary(dept_name, total_salary) AS
+    SELECT dept_name, SUM(salary)
+    FROM instructor
+    GROUP BY dept_name;
+</code></pre>
+<h3 id="Materialized-Views">3.2 Materialized Views</h3>
+<p>General views only store query definitions, while materialized views also store <strong>actual data</strong> copies of the query results.</p>
+<p>The process of keeping materialized views updated is called materialized view maintenance.</p>
+<h3 id="Update-of-a-View">3.3 Update of a View</h3>
+<p>A view is updatable under the following conditions:</p>
+<ul>
+<li>The <code>FROM</code> clause contains only one database relation.</li>
+<li>The <code>SELECT</code> clause includes only attribute names from this relation, and no expressions, aggregate functions, or <code>DISTINCT</code> constraints are allowed.</li>
+<li>Any attributes not included in the <code>SELECT</code> clause will be set to null, so <code>NOT NULL</code> or <code>PRIMARY KEY</code> constraints are not permitted.</li>
+<li>The query must not include <code>GROUP BY</code> or <code>HAVING</code> clauses.</li>
+</ul>
+<pre><code class="language-sql">-- An example of an updatable view
+CREATE VIEW history_instructors AS
+SELECT *
+FROM instructor
+WHERE dept_name = &#39;History&#39;;
+</code></pre>
+<h2 id="44-Transactions">4 Transactions</h2>
+<p>A sequence of query/update statements that embodies an abstraction of the database—atomicity</p>
+<ul>
+<li><code>COMMIT WORK</code>: Saves changes made to the edited document</li>
+<li><code>ROLLBACK WORK</code>: Undoes all updates previously performed by SQL statements within the transaction</li>
+</ul>
+<p>The database system guarantees that if a commit operation is not executed when encountering a failure, the transaction will be automatically rolled back</p>
+<p>In many SQL implementations, by default, a single SQL statement is treated as a transaction</p>
+<p>Disable automatic commit for individual SQL statements: <code>SET AUTOCOMMIT OFF</code></p>
+<p>Place these statements within the keywords <code>BEGIN ATOMIC ... END</code>, at which point these statements will be treated as a transaction</p>
+<h2 id="45-Integrity-Constraints">5 Integrity Constraints</h2>
+<p>Ensure that authorized users&#39; changes to the database do not compromise data consistency.</p>
+<h3 id="Not-Null-Constraint">5.1 Not Null Constraint</h3>
+<p>The <code>PRIMARY KEY</code> constraint automatically includes this constraint, so there is no need to explicitly specify <code>NOT NULL</code> at this time.</p>
+<h3 id="Unique-Constraint">5.2 Unique Constraint</h3>
+<pre><code class="language-sql">UNIQUE(A_j1, A_j2, ..., A_jm)
+</code></pre>
+<p>Let the attributes <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>A</mi><msub><mi>j</mi><mn>1</mn></msub></msub><mo separator="true">,</mo><msub><mi>A</mi><msub><mi>j</mi><mn>2</mn></msub></msub><mo separator="true">,</mo><mo>…</mo><mo separator="true">,</mo><msub><mi>A</mi><msub><mi>j</mi><mi>m</mi></msub></msub></mrow><annotation encoding="application/x-tex">A_{j_1}, A_{j_2}, \ldots, A_{j_m}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9694em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3173em;"><span style="top:-2.357em;margin-left:-0.0572em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3173em;"><span style="top:-2.357em;margin-left:-0.0572em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">A</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1645em;"><span style="top:-2.357em;margin-left:-0.0572em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mathnormal mtight">m</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span> form a superkey</p>
+<p>The <code>UNIQUE</code> constraint allows the presence of nulls (note that null values are not equal to any value, including themselves)</p>
+<h3 id="The-Check-Clause">5.3 The Check Clause</h3>
+<pre><code class="language-sql">CREATE TABLE student 
+(
+    id INT,
+    age INT CHECK (age &gt;= 0)
+);
+
+CREATE TABLE card 
+(
+    type CHAR(1),
+    CONSTRAINT chk_type CHECK (type IN (&#39;T&#39;, &#39;G&#39;, &#39;U&#39;, &#39;O&#39;))
+);
+
+-- Deletion
+ALTER TABLE instructor DROP CONSTRAINT minsalary;
+</code></pre>
+<p>Each tuple in the relationship must satisfy the condition of the predicate.</p>
+<p>Without the <code>NOT NULL</code> constraint, null values can pass the check smoothly.</p>
+<h3 id="Referential-Integrity">5.4 Referential Integrity</h3>
+<p><strong>Referential integrity constraints</strong>: The specified attribute values of a certain relation (called the <strong>referencing relation</strong>) must also appear in the corresponding attributes of another relation (called the <strong>referenced relation</strong>).</p>
+<pre><code class="language-sql">CREATE TABLE employee 
+(
+    emp_id   INT PRIMARY KEY,
+    dept_id  INT,
+    mgr_id   INT,
+
+    FOREIGN KEY (dept_id)
+        REFERENCES department(dept_id)
+        ON DELETE CASCADE,
+
+    FOREIGN KEY (mgr_id)
+        REFERENCES manager(mgr_id)
+        ON DELETE SET NULL
+);
+</code></pre>
+<ul>
+<li><code>ON DELETE CASCADE</code>: Synchronous deletion from the referenced table to the referencing table</li>
+<li><code>ON UPDATE CASCADE</code>: Synchronous update from the referenced table to the referencing table</li>
+</ul>
+<p>You can also set <code>SET NULL</code> or <code>SET DEFAULT</code>, which will be triggered when the constraint is violated</p>
+<blockquote>
+<p>To avoid aborting transactions whenever integrity is violated, you can add the <code>INITIALLY DEFERRED</code> clause after the constraint declaration, specifying that the constraint should be checked only at the end of the transaction.</p>
+</blockquote>
+<h3 id="Complex-Check-Conditions-and-Assertions">5.5 Complex Check Conditions and Assertions</h3>
+<p><strong>Assertion</strong> is a predicate that expresses a condition that the database is expected to always satisfy</p>
+<pre><code class="language-sql">CREATE ASSERTION &lt;assertion-name&gt; CHECK &lt;predicate&gt;;
+
+CREATE ASSERTION credits_earned_constraint CHECK 
+(
+    NOT EXISTS 
+    (
+        SELECT ID
+        FROM student
+        WHERE tot_cred &lt;&gt; 
+        (
+            SELECT COALESCE(SUM(credits), 0)
+            FROM takes NATURAL JOIN course
+            WHERE student.ID = takes.ID AND grade IS NOT NULL AND grade &lt;&gt; &#39;F&#39;
+        )
+    )
+);
+</code></pre>
+<blockquote>
+<p><code>for all X, P(X)</code> == <code>not exists X such that not P(X)</code></p>
+</blockquote>
+<blockquote>
+<p>Assertion testing can incur significant overhead</p>
+</blockquote>
+<h2 id="46-SQL-Data-Types-and-Schemas">6 SQL Data Types and Schemas</h2>
+<blockquote>
+<p>This part doesn&#39;t seem like a key point, just skim through it to get a general impression.</p>
+</blockquote>
+<p><a href="https://note.noughtq.top/sys/db/4#sql-data-types-and-schemas" target="_blank">Related links</a></p>
+<h2 id="47-Index-Definition-in-SQL">7 Index Definition in SQL</h2>
+<p>Indexes can be established on multiple attributes.</p>
+<pre><code class="language-sql">-- tenmplate
+CREATE INDEX &lt;index-name&gt; ON &lt;relation-name&gt;(&lt;attribute-list&gt;);
+
+-- The key used for searching is the candidate key
+CREATE UNIQUE INDEX dept_index ON instructor(dept_name);
+
+-- Delete index
+DROP INDEX &lt;index-name&gt;;
+</code></pre>
+<h2 id="48-Authorization">8 Authorization</h2>
+<p>Authorization of data is divided into the following categories:</p>
+<ul>
+<li>Read data</li>
+<li>Insert new data</li>
+<li>Update data</li>
+<li>Delete data</li>
+</ul>
+<h3 id="Granting-and-Revoking-of-Privileges">8.1 Granting and Revoking of Privileges</h3>
+<pre><code class="language-sql">GRANT &lt;privilege list&gt;
+ON &lt;relation name or view name&gt;
+TO &lt;user/role list&gt;;
+
+-- SELECT
+GRANT SELECT ON department TO Amit, Satoshi;
+
+-- UPDATE
+GRANT UPDATE(budget) ON department TO Amit, Satoshi;
+
+REVOKE &lt;privilege list&gt;
+ON &lt;relation name or view name&gt;
+TO &lt;user/role list&gt;;
+</code></pre>
+<ul>
+<li>The privilege list can include one or more of the following privileges: <code>SELECT</code>, <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>, <code>ALL PRIVILEGES</code></li>
+<li><code>PUBLIC</code> refers to all users</li>
+</ul>
+<h3 id="Roles">8.2 Roles</h3>
+<pre><code class="language-sql">
+-- Create a role
+CREATE ROLE instructor;
+
+-- Grant privileges to roles
+GRANT SELECT ON takes TO instructor;
+
+-- Grant a certain role to a user or other role
+CREATE ROLE dean;
+GRANT instructor TO dean;
+GRANT dean TO Satoshi;
+
+-- Allows user Mariano to create relations that reference 
+-- the key dept_name of the department relation as a foreign key
+GRANT REFERENCES(dept_name) ON department TO Mariano;
+
+-- The privilege to grant privileges to other users
+GRANT SELECT ON department TO Amit WITH GRANT OPTION;
+
+-- cascade revocation: After revoking a user&#39;s privileges, the privileges granted by that user to other users will also be revoked.
+-- Prevent cascade revocation:
+REVOKE SELECT ON department FROM Amit, Satoshi RESTRICT;
+-- Privileges granted can also be revoked using the REVOKE statement
+REVOKE GRANT OPTION FOR SELECT ON department FROM Amit;
+</code></pre>
+<blockquote>
+<p>Users who are not granted update privileges and create views do not have update privileges on those views, and so on.</p>
+</blockquote>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-3/" rel="prev"><span>← Previous chapter</span>Chapter 3 Introduction to SQL</a>
+  <a href="../chapter-5/" rel="next"><span>Next chapter →</span>Chapter 5 Advanced SQL</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

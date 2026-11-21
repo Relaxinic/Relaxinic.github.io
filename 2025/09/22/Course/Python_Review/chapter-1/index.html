@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 1 Python Basic Syntax — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Python Review</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2025-09-22">22 Sept 2025</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-1-Python-Basic-Syntax">Chapter 1 Python Basic Syntax</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#11-Variables-and-Collections">1 Variables and Collections</a></li>
+    <li><a href="#12-Control-Flow-and-Iterables">2 Control Flow and Iterables</a></li>
+    <li><a href="#13-Functions">3 Functions</a></li>
+    <li><a href="#14-Modules">4 Modules</a></li>
+    <li><a href="#15-Classes">5 Classes</a>
+      <ul class="toc-subsections">
+        <li><a href="#Inheritance">5.1 Inheritance</a></li>
+        <li><a href="#Multiple-Inheritance">5.2 Multiple Inheritance</a></li>
+      </ul>
+    </li>
+    <li><a href="#16-Advanced">6 Advanced</a></li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<h2 id="11-Variables-and-Collections">1 Variables and Collections</h2>
+<pre><code class="language-python"># Floor division rounds towards negative infinity
+# True and False are actually 1 and 0 but with different keywords
+
+# List
+list = [1, 2]
+list.append(3) # list is now [1, 2, 3]
+list.pop() # =&gt; 3 and li is now [1, 2]
+# li[start:end:step]
+list[::-1] # Return list in reverse order
+list2 = list[:] # Make a one layer deep copy using slices
+del list[1] # list is now [1,]
+list.insert(1, 2)  # li is now [1, 2] again
+list.index(2)  # =&gt; 1
+list + other_list
+list.extend(other_list)
+1 in list  # =&gt; True
+len(li)  # =&gt; 2
+
+# Tuples (immutable)
+tup = (1, 2, 3)
+tup[0]      # =&gt; 1
+len(tup)         # =&gt; 3
+tup + (4, 5, 6)  # =&gt; (1, 2, 3, 4, 5, 6)
+2 in tup         # =&gt; True
+a, *b, c = (1, 2, 3, 4)  # unpack tuples (or lists) into variables
+
+# Dictionaries
+# Note keys for dictionaries have to be immutable types.
+filled_dict = {&quot;one&quot;: 1, &quot;two&quot;: 2, &quot;three&quot;: 3}
+filled_dict[&quot;one&quot;]  # =&gt; 1
+filled_dict.get(&quot;one&quot;)      # avoid the KeyError
+filled_dict.setdefault(&quot;five&quot;, 5)  # filled_dict[&quot;five&quot;] is set to 5
+list(filled_dict.keys())  # =&gt; [&quot;one&quot;, &quot;two&quot;, &quot;three&quot;]
+list(filled_dict.values())  # =&gt; [1, 2, 3]
+&quot;one&quot; in filled_dict  # =&gt; True
+1 in filled_dict      # =&gt; False
+filled_dict.update({&quot;four&quot;:4}) # Adding to a dictionary
+del filled_dict[&quot;one&quot;]  # Removes the key &quot;one&quot; from filled dict
+
+# Sets
+# elements of a set have to be immutable. 
+filled_set = {1, 1, 2, 2, 3, 4} # filled_set is now {1, 2, 3, 4}
+filled_set.add(5)  # filled_set is now {1, 2, 3, 4, 5}
+# Do set intersection with &amp;
+# set union with |
+# set difference with -
+# Do set symmetric difference with ^
+{1, 2} &lt;= {1, 2, 3}  # =&gt; True // Check subset
+2 in filled_set   # =&gt; True
+filled_set = some_set.copy()  # filled_set is {1, 2, 3, 4, 5}
+filled_set is some_set        # =&gt; False
+</code></pre>
+<h2 id="12-Control-Flow-and-Iterables">2 Control Flow and Iterables</h2>
+<pre><code class="language-python">animals = [&quot;dog&quot;, &quot;cat&quot;, &quot;mouse&quot;]
+for i, value in enumerate(animals):
+    print(i, value)
+
+# Handle exceptions with a try/except block
+try:
+    # Use &quot;raise&quot; to raise an error
+    raise IndexError(&quot;This is an index error&quot;)
+except IndexError as e:
+    pass                 # Refrain from this, provide a recovery (next example).
+except (TypeError, NameError):
+    pass                 # Multiple exceptions can be processed jointly.
+else:                    # Optional clause to the try/except block. Must follow
+                         # all except blocks.
+    print(&quot;All good!&quot;)   # Runs only if the code in try raises no exceptions
+finally:                 # Execute under all circumstances
+    print(&quot;We can clean up resources here&quot;)
+
+with open(&quot;myfile.txt&quot;) as f:
+    for line in f:
+        print(line)
+
+contents = {&quot;aa&quot;: 12, &quot;bb&quot;: 21}
+with open(&quot;myfile1.txt&quot;, &quot;w&quot;) as file:
+    file.write(str(contents)) 
+
+with open(&quot;myfile1.txt&quot;) as file:
+    contents = file.read()      # reads a string from a file
+print(contents)
+
+our_iterable = filled_dict.keys()
+print(our_iterable)  # =&gt; dict_keys([&#39;one&#39;, &#39;two&#39;, &#39;three&#39;]).
+# An iterable is an object that knows how to create an iterator.
+our_iterator = iter(our_iterable)
+# Initialization: Starting point (not yet pointing to any element)
+next(our_iterator)  # =&gt; &quot;one&quot;
+list(our_iterable)  # =&gt; Returns [&quot;one&quot;, &quot;two&quot;, &quot;three&quot;]
+</code></pre>
+<h2 id="13-Functions">3 Functions</h2>
+<pre><code class="language-python">def add(x, y):
+    print(&quot;x is {} and y is {}&quot;.format(x, y))
+    return x + y
+
+add(5, 6)
+add(y=6, x=5)
+
+# *args is used to receive a variable number of positional arguments
+# **kwargs is used to receive a variable number of keyword arguments
+def all_the_args(*args, **kwargs):
+    print(args)
+    print(kwargs)
+&quot;&quot;&quot;
+all_the_args(1, 2, a=3, b=4) prints:
+    (1, 2)
+    {&quot;a&quot;: 3, &quot;b&quot;: 4}
+&quot;&quot;&quot;
+args = (1, 2, 3, 4)
+kwargs = {&quot;a&quot;: 3, &quot;b&quot;: 4}
+all_the_args(*args, **kwargs) # equivalent: all_the_args(1, 2, 3, 4, a=3, b=4)
+
+def create_adder(x):
+    def adder(y):
+        return x + y
+    return adder
+
+add_10 = create_adder(10)
+add_10(3)   # =&gt; 13
+
+def create_avg():
+    total = 0
+    count = 0
+    def avg(n):
+        nonlocal total, count
+        total += n
+        count += 1
+        return total/count
+    return avg
+avg = create_avg()
+avg(3)  # =&gt; 3.0
+avg(5)  # (3+5)/2 =&gt; 4.0
+avg(7)  # (8+7)/3 =&gt; 5.0
+
+# built-in higher order functions
+list(map(add_10, [1, 2, 3]))          # =&gt; [11, 12, 13]
+list(map(max, [1, 2, 3], [4, 2, 1]))  # =&gt; [4, 2, 3]
+
+(lambda x: x &gt; 2)(3)                  # =&gt; True
+(lambda x, y: x ** 2 + y ** 2)(2, 1)  # =&gt; 5
+
+[add_10(i) for i in [1, 2, 3]]         # =&gt; [11, 12, 13]
+[x for x in [3, 4, 5, 6, 7] if x &gt; 5]  # =&gt; [6, 7]
+
+# construct set and dict comprehensions as well
+{x for x in &quot;abcddeef&quot; if x not in &quot;abc&quot;}  # =&gt; {&#39;d&#39;, &#39;e&#39;, &#39;f&#39;}
+{x: x**2 for x in range(5)}  # =&gt; {0: 0, 1: 1, 2: 4, 3: 9, 4: 16}
+</code></pre>
+<h2 id="14-Modules">4 Modules</h2>
+<pre><code class="language-python">import math
+print(math.sqrt(16))  # =&gt; 4.0
+
+from math import *
+print(ceil(3.7))   # =&gt; 4
+
+import math as m
+math.sqrt(16) == m.sqrt(16)  # =&gt; True
+</code></pre>
+<h2 id="15-Classes">5 Classes</h2>
+<pre><code class="language-python">class Human:
+    species = &quot;H. sapiens&quot;
+    
+    # Basic initializer, this is called when this class is instantiated.
+    def __init__(self, name):
+        self.name = name
+        # Initialize property
+        self._age = 0   # the leading underscore indicates the &quot;age&quot; property is intended to be used internally
+
+    def say(self, msg):
+        print(&quot;{name}: {message}&quot;.format(name=self.name, message=msg))
+
+    # A class method is shared among all instances
+    @classmethod
+    def get_species(cls):
+        return cls.species
+
+    # A static method is called without a class or instance reference
+    @staticmethod
+    def grunt():
+        return &quot;*grunt*&quot;
+
+    # A property is just like a getter.
+    @property
+    def age(self):
+        return self._age
+
+    # This allows the property to be set
+    @age.setter
+    def age(self, age):
+        self._age = age
+
+    # This allows the property to be deleted
+    @age.deleter
+    def age(self):
+        del self._age
+
+    # This __name__ check makes sure this code block is only executed when this module is the main program.
+    if __name__ == &quot;__main__&quot;:
+        # Instantiate a class
+        i = Human(name=&quot;Ian&quot;)
+        i.say(&quot;hi&quot;)                     # &quot;Ian: hi&quot;
+        i.say(i.get_species())          # &quot;Ian: H. sapiens&quot;
+        # Change the shared attribute
+        Human.species = &quot;H. neanderthalensis&quot;
+        i.say(i.get_species())          # =&gt; &quot;Ian: H. neanderthalensis&quot;
+        i.age = 42
+        # Get the property
+        i.say(i.age)                    # =&gt; &quot;Ian: 42&quot;
+        del i.age
+</code></pre>
+<h3 id="Inheritance">5.1 Inheritance</h3>
+<pre><code class="language-python">from human import Human
+class Superhero(Human):
+    # inherit all of the parent&#39;s definitions without any modifications
+    pass
+
+    # for a unique child class
+    species = &quot;superhuman&quot;
+
+    def __init__(self, name, movie=False, superpowers=[&quot;super strength&quot;, &quot;bulletproofing&quot;]):
+        # add additional class attributes:
+        self.fictional = True
+        self.movie = movie
+        # be aware of mutable default values, since defaults are shared
+        self.superpowers = superpowers
+        # The &quot;super&quot; function lets you access the parent class&#39;s methods
+        super().__init__(name)
+    
+    def boast(self):
+        for power in self.superpowers:
+            print(&quot;I wield the power of {pow}!&quot;.format(pow=power))
+
+    if __name__ == &quot;__main__&quot;:
+        sup = Superhero(name=&quot;Tick&quot;)
+        # Instance type checks
+        if isinstance(sup, Human):
+            print(&quot;I am human&quot;)
+
+        print(Superhero.__mro__)  
+        # MRO (Method Resolution Order)
+        # =&gt; (&lt;class &#39;__main__.Superhero&#39;&gt;, &lt;class &#39;human.Human&#39;&gt;, &lt;class &#39;object&#39;&gt;)
+</code></pre>
+<h3 id="Multiple-Inheritance">5.2 Multiple Inheritance</h3>
+<pre><code class="language-python">class Bat:
+    species = &quot;Baty&quot;
+    def __init__(self, can_fly=True):
+        self.fly = can_fly
+
+    # This class also has a say method
+    def say(self, msg):
+        msg = &quot;... ... ...&quot;
+        return msg
+
+    # And its own method as well
+    def sonar(self):
+        return &quot;))) ... (((&quot;
+
+    if __name__ == &quot;__main__&quot;:
+        b = Bat()
+        print(b.say(&quot;hello&quot;))
+        print(b.fly)
+
+from superhero import Superhero
+from bat import Bat
+
+# Define Batman as a child that inherits from both Superhero and Bat
+class Batman(Superhero, Bat):
+    def __init__(self, *args, **kwargs):
+        # Each parent class takes the parameters it needs, and the rest continue to be passed down.
+        Superhero.__init__(self, &quot;anonymous&quot;, movie=True, superpowers=[&quot;Wealthy&quot;], *args, **kwargs)
+        Bat.__init__(self, *args, can_fly=False, **kwargs)
+        # override the value for the name attribute
+        self.name = &quot;Sad Affleck&quot;
+        &#39;&#39;&#39;
+        It is recommended that all classes be standardized as:
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+        &#39;&#39;&#39;
+
+    def sing(self):
+        return &quot;nan nan nan nan nan batman!&quot;
+
+    if __name__ == &quot;__main__&quot;:
+        sup = Batman()
+        # The Method Resolution Order
+        print(Batman.__mro__)     
+        # =&gt; (&lt;class &#39;__main__.Batman&#39;&gt;, &lt;class &#39;superhero.Superhero&#39;&gt;, &lt;class &#39;human.Human&#39;&gt;, &lt;class &#39;bat.Bat&#39;&gt;, &lt;class &#39;object&#39;&gt;)
+
+        # Calls parent method but uses its own class attribute
+        print(sup.get_species())  # =&gt; Superhuman
+
+        # Calls overridden method
+        print(sup.sing())         # =&gt; nan nan nan nan nan batman!
+
+        # Calls method from Human, because inheritance order matters
+        sup.say(&quot;I agree&quot;)        # =&gt; Sad Affleck: I agree
+
+        # Inherited class attribute
+        sup.age = 100
+        print(sup.age)            # =&gt; 100
+</code></pre>
+<h2 id="16-Advanced">6 Advanced</h2>
+<pre><code class="language-python"># generate iterator (list comprehension)
+def double_numbers(iterable):
+    for i in iterable:
+        yield i + i
+
+# `range` is a generator.
+for i in double_numbers(range(1, 900000000)):  
+    print(i)
+    if i &gt;= 30:
+        break
+
+# create generator comprehension
+values = (-x for x in [1,2,3,4,5])
+for x in values:
+    print(x)  # prints -1 -2 -3 -4 -5 to console/terminal
+
+# cast a generator comprehension directly to a list.
+gen_to_list = list(values)
+
+# Decorators are a form of syntactic sugar.
+# They make code easier to read while accomplishing clunky syntax.
+
+# Wrappers are one type of decorator.
+# They&#39;re really useful for adding logging to existing functions without needing to modify them.
+def log_function(func):
+    def wrapper(*args, **kwargs):
+        print(&quot;Entering function&quot;, func.__name__)
+        result = func(*args, **kwargs)
+        print(&quot;Exiting function&quot;, func.__name__)
+        return result
+    return wrapper
+
+@log_function               # equivalent:
+def my_function(x,y):       # def my_function(x,y):
+    return x+y              #   return x+y
+                            # my_function = log_function(my_function)
+
+my_function(1,2)  # =&gt; &quot;Entering function my_function&quot;
+                  # =&gt; &quot;3&quot;
+                  # =&gt; &quot;Exiting function my_function&quot;
+
+print(my_function.__name__)  # =&gt; &#39;wrapper&#39;
+print(my_function.__doc__)  # =&gt; None (wrapper function has no docstring)
+
+from functools import wraps
+
+def log_function(func):
+    @wraps(func)  
+    # this ensures docstring, function name, arguments list, etc. are all copied
+    # to the wrapped function - instead of being replaced with wrapper&#39;s info
+    def wrapper(*args, **kwargs):
+        print(&quot;Entering function&quot;, func.__name__)
+        result = func(*args, **kwargs)
+        print(&quot;Exiting function&quot;, func.__name__)
+        return result
+    return wrapper
+
+print(my_function.__name__)  # =&gt; &#39;my_function&#39;
+print(my_function.__doc__)  # =&gt; &#39;Adds two numbers together.&#39;
+</code></pre>
+<p><strong>Pythonic code suggestions：</strong></p>
+<ul>
+<li>Use more built-in functions</li>
+<li>Use data classes for structured data</li>
+<li>Leverage the advantages of the Python language</li>
+<li>Add a main function</li>
+</ul>
+</div>
+
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

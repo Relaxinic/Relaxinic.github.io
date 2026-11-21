@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 10 Design Concepts — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Object-Oriented Programing</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-06-26">26 Jun 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-10-Design-Concepts">Chapter 10 Design Concepts</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#101-Coupling">1 Coupling</a></li>
+    <li><a href="#102-Cohesion">2 Cohesion</a></li>
+    <li><a href="#103-Responsibility-Driven-Design">3 Responsibility-Driven Design</a></li>
+    <li><a href="#104-Refactoring">4 Refactoring</a></li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<p>Regarding code quality, there are two important concepts: coupling and cohesion.</p>
+<h2 id="101-Coupling">1 Coupling</h2>
+<p>Coupling refers to the connections between different units in a program. If two classes depend on each other in many details, we consider them to be tightly coupled.</p>
+<p>Our goal is to loosen this coupling, as it helps us understand one class without reading others and change one class without affecting others, thereby improving maintainability.</p>
+<p>Methods to loosen coupling include:</p>
+<ul>
+<li><p>Call-back</p>
+</li>
+<li><p>Message mechanism</p>
+</li>
+</ul>
+<h2 id="102-Cohesion">2 Cohesion</h2>
+<p>Cohesion refers to the number and diversity of tasks for which a single unit is responsible. This concept applies to both classes and methods. If a unit is responsible for only one logical task, we say that unit has high cohesion.</p>
+<p>Method cohesion: A method (function) should be responsible for only one well-defined task.</p>
+<p>Class cohesion: A class should represent a single well-defined entity.</p>
+<p>Our goal is to enhance cohesion, as it helps in understanding the role of a class or method, using descriptive names, and reusing classes or methods.</p>
+<h2 id="103-Responsibility-Driven-Design">3 Responsibility-Driven Design</h2>
+<p>Each class should be responsible for the data it manipulates, so we aim to localize change—meaning that a single change should only affect a small number of classes, thereby reducing coupling and achieving responsibility-driven design.</p>
+<h2 id="104-Refactoring">4 Refactoring</h2>
+<p>When maintaining classes, we often see the code of classes and methods grow. Therefore, during maintenance, it is often necessary to refactor the code to maintain its cohesion and low coupling.</p>
+<p>When refactoring code, do not let the refactoring change other parts of the code or the functionality of the code.</p>
+<p>Before and after refactoring, the code needs to be checked to ensure that nothing has been broken.</p>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-9/" rel="prev"><span>← Previous chapter</span>Chapter 9 Smart Pointers</a>
+  <a href="../chapter-11/" rel="next"><span>Next chapter →</span>Chapter 11 Streams</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en" data-page="home">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Relaxinic — research, course notes, and writing on AI and music.">
+  <!-- theme-head:start -->
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <!-- theme-head:end -->
+  <title>Relaxinic</title>
+  <link rel="preload" href="./media/disc.webp" as="image">
+  <link rel="preload" href="./media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="./js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="./styles.css?v=31">
+  <link rel="stylesheet" href="./page-transition.css?v=7">
+  <script type="module" src="./js/home.js?v=5" blocking="render"></script>
+</head>
+<body>
+  <a class="skip-link" href="#archive">Skip to sections</a>
+  <header class="site-header">
+    <a class="wordmark" href="#top">Relaxinic</a>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+
+  <main id="top">
+    <div class="experience" data-experience>
+      <div class="stage" data-stage>
+        <div class="quote-layer quote-layer-back" aria-hidden="true">
+          <div class="quote"><span class="quote-in-front">Relax, </span>nothin<span class="quote-in-front">g is in control.</span></div>
+        </div>
+        <div class="disc" data-transition-disc aria-hidden="true">
+          <div class="disc-face">
+            <img src="./media/disc.webp" alt="" width="1254" height="1254" fetchpriority="high">
+          </div>
+        </div>
+        <div class="quote-layer quote-layer-front">
+          <h1 class="quote" data-quote>Relax, <span class="quote-behind-disc">nothin</span>g is in control.</h1>
+        </div>
+        <a class="scroll-cue" href="#archive" data-scroll-cue>Scroll to explore</a>
+      </div>
+      <div class="scroll-track">
+        <div class="intro-space" data-intro aria-hidden="true"></div>
+        <div id="archive" data-chapters tabindex="-1"></div>
+        <noscript><p class="no-script">Enable JavaScript to explore the sections.</p></noscript>
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 5 Advanced SQL — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Database System</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-03-16">16 Mar 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-5-Advanced-SQL">Chapter 5 Advanced SQL</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#51-Accessing-SQL-from-Programming-Languages">1 Accessing SQL from Programming Languages</a>
+      <ul class="toc-subsections">
+        <li><a href="#JDBC">1.1 JDBC</a></li>
+        <li><a href="#Database-Access-from-Python-ODBC-Embedded-SQL">1.2 Database Access from Python / ODBC / Embedded SQL</a></li>
+      </ul>
+    </li>
+    <li><a href="#52-Functions-and-Procedures">2 Functions and Procedures</a>
+      <ul class="toc-subsections">
+        <li><a href="#Declaration-and-Invocation">2.1 Declaration and Invocation</a></li>
+        <li><a href="#Language-Constructs">2.2 Language Constructs</a></li>
+        <li><a href="#External-Language-Routines">2.3 External Language Routines</a></li>
+      </ul>
+    </li>
+    <li><a href="#53-Triggers">3 Triggers</a></li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<h2 id="51-Accessing-SQL-from-Programming-Languages">1 Accessing SQL from Programming Languages</h2>
+<blockquote>
+<p><del>The only aspect of this section that is beneficial for grades is the JDBC syntax, and it is not included as an exam topic.</del></p>
+</blockquote>
+<p>The methods for using SQL in general-purpose programming languages include:</p>
+<ul>
+<li><strong>Dynamic SQL</strong>: The program establishes a connection with the database server through a specific set of functions or methods. Dynamic SQL then allows the program to construct SQL queries as strings at runtime, submit the queries, and store the retrieved results in program variables.<ul>
+<li><strong>JDBC</strong>: An API for connecting to databases in Java.</li>
+<li><strong>ODBC</strong>: An API for connecting to databases in languages such as C, C++, and C#.</li>
+</ul>
+</li>
+<li><strong>Embedded SQL</strong>: A preprocessor identifies SQL statements at compile time and translates requests expressed in SQL into function call statements.</li>
+</ul>
+<h3 id="JDBC">1.1 JDBC</h3>
+<pre><code class="language-java">public static void JDBCexample(String userid, String passwd) 
+{
+    try 
+    (
+        Connection conn = DriverManager.getConnection
+        (
+            &quot;jdbc:oracle:thin:@db.yale:1521:univdb&quot;,
+            userid,
+            passwd
+        );
+        Statement stmt = conn.createStatement();
+    )
+    {
+        try 
+        {
+            stmt.executeUpdate
+            (
+                &quot;INSERT INTO instructor VALUES(&#39;77987&#39;, &#39;Kim&#39;, &#39;Physics&#39;, 98000)&quot;
+            );
+        } 
+        catch (SQLException sqle) 
+        {
+            System.out.println(&quot;Could not insert tuple. &quot; + sqle);
+        }
+        ResultSet rset = stmt.executeQuery
+        (
+            &quot;SELECT dept_name, AVG(salary) &quot; + 
+            &quot;FROM instructor &quot; +
+            &quot;GROUP BY dept_name&quot;
+        );
+        while (rset.next()) 
+        {
+            System.out.println(rset.getString(&quot;dept_name&quot;) + &quot; &quot; + rset.getFloat(2));
+        }
+
+    } 
+    catch (Exception sqle) 
+    {
+        System.out.println(&quot;Exception: &quot; + sqle);
+    }
+}
+</code></pre>
+<h4 id="Database-Connection">Database Connection</h4>
+<pre><code class="language-java">Connection conn = DriverManager.getConnection
+(
+    &quot;jdbc:oracle:thin:@db.yale:1521:univdb&quot;,
+    userid,
+    passwd
+);
+
+// @db.yale：Database server hostname
+// :1521：Database port number
+// :univdb：Database name or instance name
+</code></pre>
+<p>The first step is to establish a connection to the database.</p>
+<p>The following parameters are accepted:</p>
+<ul>
+<li>Database server information, including URL/hostname, protocol, port number, and database name.</li>
+<li>Database username.</li>
+<li>Password.</li>
+</ul>
+<p>This method returns a Connection object.</p>
+<blockquote>
+<p>JDBC supports multiple protocols, such as <code>jdbc:oracle:thin</code> for Oracle and <code>jdbc:mysql</code> for MySQL, among others.</p>
+</blockquote>
+<h4 id="Shipping-SQL-Statements-to-the-Database-System">Shipping SQL Statements to the Database System</h4>
+<pre><code class="language-java">Statement stmt = conn.createStatement();
+</code></pre>
+<p><code>Statement</code> is an object that allows Java programs to invoke and transmit SQL statements to the database.</p>
+<p>To execute a statement, you need to call the <code>executeQuery()</code> or <code>executeUpdate()</code> methods, which correspond to the execution of query statements and non-query statements (such as updates, inserts, deletions, creations, etc.), respectively. The latter returns a value indicating the number of tuples inserted/updated/deleted (or 0 for creation statements).</p>
+<h4 id="Exceptions-and-Resource-Management">Exceptions and Resource Management</h4>
+<p>Executing any SQL statement may throw an exception, so remember to use the <code>try {...} catch {...}</code> block to catch exceptions when programming.</p>
+<p>Exceptions can be categorized into SQLException (exceptions related to SQL) and Exception (exceptions related to Java).</p>
+<p>Regarding <strong>resource management</strong>, a reliable practice is to <strong>use the try-with-resources construct</strong>, which involves adding parentheses between the try keyword and the statement block, containing resources such as connections and statement objects. This ensures that these resources are automatically closed when exiting the try block.</p>
+<h4 id="Retrieving-the-Result-of-Query">Retrieving the Result of Query</h4>
+<p>After using the <code>executeQuery()</code> method to execute a query, the retrieved tuple is placed in a <code>ResultSet</code> object.</p>
+<p>This object calls the <code>next()</code> method to fetch the next tuple (if any), returning a boolean value indicating whether the tuple was successfully retrieved.</p>
+<p>Methods that accept a single parameter:</p>
+<ul>
+<li><code>getString()</code>: Can retrieve any SQL basic data type.</li>
+<li><code>getFloat()</code>: Limited to retrieving floating-point numbers.</li>
+</ul>
+<h4 id="Prepared-Statements">Prepared Statements</h4>
+<p>First, create a prepared statement where the values that appear in the statement are replaced with <code>?</code> (placeholders), and then insert the specific values into the corresponding positions.</p>
+<p>This type of method takes two parameters: the first parameter indicates which <code>?</code> is being set (starting from 1), and the second parameter is the specific value.</p>
+<pre><code class="language-java">PreparedStatement pStmt = conn.prepareStatement
+    (&quot;INSERT INTO instructor VALUES(?, ?, ?, ?)&quot;);
+pStmt.setString(1, &quot;88877&quot;);
+pStmt.setString(2, &quot;Perry&quot;);
+pStmt.setString(3, &quot;Finance&quot;);
+pStmt.setInt(4, 125000);
+pStmt.executeUpdate();
+pStmt.setString(1, &quot;88878&quot;);
+pStmt.executeUpdate();
+
+// Two insertion statements were executed here
+// with the second insertion statement expressed in SQL syntax as:
+INSERT INTO instructor VALUES(&quot;88878&quot;, &quot;Perry&quot;, &quot;Finance&quot;, 125000);
+</code></pre>
+<h4 id="Callable-Statements">Callable Statements</h4>
+<p><code>CallableStatement</code> interface is used to call SQL procedures or functions</p>
+<pre><code class="language-java">CallableStatement cStmt1 = conn.prepareCall(&quot;{? = call some_function(?)}&quot;);
+CallableStatement cStmt2 = conn.prepareCall(&quot;{call some_procedure(?, ?)}&quot;);
+
+// -----------
+// For example
+// -----------
+FUNCTION add_one(x INT) RETURNS INT
+...
+CallableStatement cStmt = conn.prepareCall(&quot;{? = call add_one(?)}&quot;);
+
+// Registered return value type
+cStmt.registerOutParameter(1, Types.INTEGER);
+
+// Set input parameters
+cStmt.setInt(2, 5);
+
+// Execute
+cStmt.execute();
+
+// Get return value
+int result = cStmt.getInt(1);
+</code></pre>
+<h4 id="Metadata-Features">Metadata Features</h4>
+<p><code>ResultSet</code> interface&#39;s <code>getMetaData()</code>: Returns a <code>ResultSetMetaData</code> class object containing the metadata of the result set.</p>
+<ul>
+<li>The <code>getColumnCount()</code> method returns the arity (i.e., the number of columns)</li>
+<li><code>getColumnName()</code> and <code>getColumnTypeName()</code> retrieve the column name and data type name, respectively. Both accept a single integer parameter representing the column position (starting from 1)</li>
+</ul>
+<pre><code class="language-java">ResultSetMetaData rsmd = rs.getMetaData();
+for (int i = 1; i &lt;= rsmd.getColumnCount(); i++) 
+{
+    System.out.println(rsmd.getColumnName(i));
+    System.out.println(rsmd.getColumnTypeName(i));
+}
+</code></pre>
+<p><code>Connection</code> interface&#39;s <code>getMetaData()</code>: Returns a <code>DatabaseMetaData</code> class object, providing a way to access database metadata.</p>
+<ul>
+<li>The <code>getColumns()</code> accepts four parameters: directory name, database name, table name, column name</li>
+</ul>
+<pre><code class="language-java">DatabaseMetaData dbmd = conn.getMetaData();
+ResultSet rs = dbmd.getColumns(null, &quot;univdb&quot;, &quot;department&quot;, &quot;%&quot;);
+
+while (rs.next()) 
+{
+    System.out.println(rs.getString(&quot;COLUMN_NAME&quot;), rs.getString(&quot;TYPE_NAME&quot;));
+}
+</code></pre>
+<blockquote>
+<p>directory name: <code>null</code> indicates that this value is ignored
+column name: Here <code>%</code> means to retrieve all columns</p>
+</blockquote>
+<blockquote>
+<p>Other uses of <code>DatabaseMetaData</code></p>
+<ul>
+<li><code>getTables()</code>: Lists all tables in the database. The first three parameters are consistent with <code>getColumns()</code>, and the last parameter is used to restrict tables that meet the conditions. If set to null, it returns all tables (including internal system tables).</li>
+<li><code>getPrimaryKeys()</code>: Retrieves primary keys.</li>
+<li><code>getCrossReference()</code>: Retrieves foreign key references.</li>
+</ul>
+</blockquote>
+<h4 id="Other-Features">Other Features</h4>
+<ul>
+<li>Updatable result sets: Update operations will synchronously update their corresponding relationships.</li>
+</ul>
+<p>Regarding Large Objects (Blob, Clob)</p>
+<ul>
+<li>Read: The <code>ResultSet</code> object provides <code>getBlob()</code> and <code>getClob()</code> methods, which return objects of type <code>Blob</code> and <code>Clob</code>, respectively. The principle is to store a locator (essentially a pointer), and the content of the large object can be retrieved using the <code>getBytes()</code> and <code>getSubString()</code> methods.</li>
+<li>Write: The <code>PreparedStatement</code> class allows applications to use the <code>setBlob()</code> and <code>setClob()</code> methods for transmission.</li>
+</ul>
+<h3 id="Database-Access-from-Python-ODBC-Embedded-SQL">1.2 Database Access from Python / ODBC / Embedded SQL</h3>
+<p><del>It&#39;s not important for the grades, the link is attached below.</del></p>
+<p><a href="https://note.noughtq.top/sys/db/5#database-access-from-python" target="_blank">Related links</a></p>
+<h2 id="52-Functions-and-Procedures">2 Functions and Procedures</h2>
+<h3 id="Declaration-and-Invocation">2.1 Declaration and Invocation</h3>
+<pre><code class="language-sql">-- ------------------------
+--   function declaration
+-- ------------------------
+
+CREATE FUNCTION dept_count(dept_name VARCHAR(20)) 
+    RETURNS INTEGER
+    BEGIN
+    DECLARE d_count INTEGER;
+        SELECT COUNT(*) INTO d_count
+        FROM instructor
+        WHERE instructor.dept_name = dept_name;
+    RETURN d_count;
+    END
+
+--- function invocation
+SELECT dept_name, budget
+FROM department
+WHERE dept_count(dept_name) &gt; 12;
+
+-- ------------------------
+--  return table functions
+-- ------------------------
+
+-- function declaration
+CREATE FUNCTION instructor_of(dept_name VARCHAR(20))
+    RETURNS TABLE
+    (
+        ID VARCHAR(5),
+        name VARCHAR(20),
+        dept_name VARCHAR(20),
+        salary NUMERIC(8, 2)
+    )
+    RETURN TABLE
+    (
+        SELECT ID, name, dept_name, salary
+        FROM instructor
+        WHERE instructor.dept_name = instructor_of.dept_name
+    );
+
+-- function invocation
+SELECT *
+FROM TABLE(instructor_of(&#39;Finance&#39;));
+
+-- ------------------------
+--  procedure declaration
+-- ------------------------
+
+CREATE PROCEDURE dept_count_proc
+(
+    IN dept_name VARCHAR(20),
+    OUT d_count INTEGER
+)
+    BEGIN
+        SELECT COUNT(*) INTO d_count
+        FROM instructor
+        WHERE instructor.dept_name = dept_count_proc.dept_name
+    END
+
+-- procedure invocation
+DECLARE d_count INTEGER;
+CALL dept_count_proc(&#39;Physics&#39;, d_count); -- Call process
+</code></pre>
+<h3 id="Language-Constructs">2.2 Language Constructs</h3>
+<p><strong>Persistent Storage Module (PSM)</strong>: Similar to building blocks in other programming languages</p>
+<ul>
+<li>Variable declaration and assignment are represented by <code>DECLARE</code> and <code>SET</code> statements, respectively</li>
+</ul>
+<pre><code class="language-sql">DECLARE count_students INT;
+SET count_students = 100;
+</code></pre>
+<ul>
+<li>Compound statement: A block of statements composed of multiple SQL statements<ul>
+<li>Enclosed between the <code>BEGIN</code> and <code>END</code> keywords</li>
+<li>Local variables can be declared within the compound statement</li>
+<li>A compound statement enclosed between the <code>BEGIN ATOMIC</code> and <code>END</code> keywords is treated as a single transaction</li>
+</ul>
+</li>
+</ul>
+<pre><code class="language-sql">BEGIN
+    DECLARE temp INT;
+    SET temp = 10;
+    SELECT temp;
+END;
+</code></pre>
+<blockquote>
+<p><code>temp</code> is only valid within this <code>BEGIN...END</code> block and cannot be accessed externally (similar to internal variables of a function)</p>
+</blockquote>
+<ul>
+<li>Cycle</li>
+</ul>
+<pre><code class="language-sql">-- 1. WHILE statements
+WHILE boolean expression DO
+    sequence of statements;
+END WHILE
+
+-- 2. REPEAT statements
+REPEAT
+    sequence of statements;
+UNTIL boolean expression
+END REPEAT
+
+-- 3. FOR statements
+DECLARE n INTEGER DEFAULT 0;
+FOR r AS       -- fetch one row at a time
+    SELECT budget FROM department
+    WHERE dept_name = &#39;Music&#39;
+DO 
+    SET n = n - r.budget
+END FOR
+</code></pre>
+<blockquote>
+<p>Using <code>LEAVE</code> and <code>ITERATE</code> inside a loop body is similar to the <code>continue</code> and <code>break</code> statements in programming languages.</p>
+</blockquote>
+<ul>
+<li>Conditional branch</li>
+</ul>
+<pre><code class="language-sql">IF boolean expression
+    THEN statement or compound statement
+ELSE boolean expression
+    THEN statement or compound statement
+ELSE statement or compound statement
+END IF
+</code></pre>
+<ul>
+<li>Exception Conditions &amp; Handlers</li>
+</ul>
+<pre><code class="language-sql">DECLARE out_of_classroom_seats CONDITION
+DECLARE EXIT HANDLER FOR out_of_classroom_seats
+BEGIN
+    sequence of statements
+END
+</code></pre>
+<h3 id="External-Language-Routines">2.3 External Language Routines</h3>
+<pre><code class="language-sql">-- An Example
+CREATE PROCEDURE dept_count_proc
+(
+    IN dept_name VARCHAR(20),
+    OUT count INTEGER
+) 
+LANGUAGE C
+EXTERNAL NAME &#39;/usr/avi/bin/dept_count_proc&#39;;
+
+CREATE FUNCTION dept_count
+(
+    dept_name VARCHAR(20)
+)
+RETURN INTEGER
+LANGUAGE C
+EXTERNAL NAME &#39;/usr/avi/bin/dept_count&#39;;
+</code></pre>
+<p>How to Handle Null Values</p>
+<ul>
+<li>Set the value of the <code>SQLSTATE</code> class in functions/procedures to store failure/success status</li>
+<li>Pass pointers instead of directly passing values</li>
+<li>Add an extra line PARAMETER STYLE GENERAL in the function/procedure declaration to indicate that the function/procedure ignores null values</li>
+</ul>
+<h2 id="53-Triggers">3 Triggers</h2>
+<p>To define a trigger, the following are required:</p>
+<ul>
+<li>Specify the event that triggers the check</li>
+<li>Specify the condition that must be met for the trigger to execute</li>
+<li>Specify the actions to be performed by the trigger</li>
+</ul>
+<pre><code class="language-sql">-- trigger for insertion
+CREATE TRIGGER timeslot_check1 AFTER INSERT ON section
+REFERENCING NEW ROW AS nrow
+FOR EACH ROW
+WHEN 
+(
+    nrow.time_slot_id NOT IN 
+    (
+        SELECT time_slot_id
+        FROM time_slot
+    )
+)
+BEGIN
+    ROLLBACK
+END;
+
+-- trigger for deletion
+CREATE TRIGGER timeslot_check2 AFTER DELETE ON timeslot
+REFERENCING OLD ROW AS orow
+FOR EACH ROW
+WHEN 
+(
+    orow.time_slot_id NOT IN 
+    (
+        SELECT time_slot_id
+        FROM time_slot
+    ) 
+    AND orow.time_slot_id IN 
+    (
+        SELECT time_slot_id
+        FROM section
+    )
+)
+BEGIN
+    ROLLBACK
+END;
+
+-- trigger before update
+CREATE TRIGGER setnull BEFORE UPDATE OF takes
+REFERENCING NEW ROW AS nrow
+FOR EACH ROW
+WHEN (nrow.grade = &#39;&#39;)
+    SET nrow.grade = NULL;
+END;
+
+-- trigger after update
+CREATE TRIGGER credits_earned AFTER UPDATE OF takes ON grade
+REFERENCING NEW ROW AS nrow 
+-- Updated or newly inserted row records
+REFERENCING OLD ROW AS orow 
+-- Old row records that have been updated or deleted
+FOR EACH ROW
+WHEN nrow.grade &lt;&gt; &#39;F&#39; AND nrow.grade IS NOT NULL
+    AND (orow.grade = &#39;F&#39; OR orow.grade IS NULL)
+BEGIN ATOMIC
+    UPDATE student
+    SET tot_cred = tot_cred + 
+    (
+        SELECT credits
+        FROM course
+        WHERE course.course_id = nrow.course_id
+    )
+    WHERE student.id = nrow.id;
+END;
+</code></pre>
+<p>Apply the trigger to all rows that satisfy the SQL at once</p>
+<ul>
+<li>Change <code>FOR EACH ROW</code> to <code>FOR EACH STATEMENT</code></li>
+<li>And use <code>REFERENCING OLD TABLE AS</code> and <code>REFERENCING NEW TABLE AS</code> to create transition tables</li>
+</ul>
+<p>Disable trigger: <code>ALTER TRIGGER trigger_name DISABLE</code>
+Delete trigger: <code>DROP TRIGGER trigger_name</code></p>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-4/" rel="prev"><span>← Previous chapter</span>Chapter 4 Intermediate SQL</a>
+  <a href="../chapter-6/" rel="next"><span>Next chapter →</span>Chapter 6 Database Design Using the E-R Model</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

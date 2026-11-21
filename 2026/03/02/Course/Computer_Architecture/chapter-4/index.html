@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Chapter 4 Data-Level Parallelism in Vector, SIMD, and GPU Architectures — Relaxinic</title>
+  <link rel="preload" href="../../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../../page-transition.css?v=7">
+  <link rel="stylesheet" href="../../../../../../media/katex/katex.min.css">
+  <script type="module" src="../../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../../course/">Notes</a>
+      <span aria-hidden="true">-</span>
+      <a href="../">Computer Architecture</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell chapter-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-05-20">20 May 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title" id="Chapter-4-Data-Level-Parallelism-in-Vector-SIMD-and-GPU-Architectures">Chapter 4 Data-Level Parallelism in Vector, SIMD, and GPU Architectures</h1>
+        </div>
+      </header>
+<nav class="chapter-toc" aria-label="On this page">
+  <p>On this page</p>
+  <ul>
+    <li><a href="#41-Vector-Architecture">1 Vector Architecture</a>
+      <ul class="toc-subsections">
+        <li><a href="#RV64V-Extension">1.1 RV64V Extension</a></li>
+        <li><a href="#Vector-Execution-Time">1.2 Vector Execution Time</a></li>
+        <li><a href="#Optimizations">1.3 Optimizations</a></li>
+      </ul>
+    </li>
+    <li><a href="#42-SIMD-Instruction-Set-Extensions-for-Multimedia">2 SIMD Instruction Set Extensions for Multimedia</a>
+      <ul class="toc-subsections">
+        <li><a href="#Roofline-Visual-Performance-Model">2.1 Roofline Visual Performance Model</a></li>
+      </ul>
+    </li>
+    <li><a href="#43-Detecting-and-Enhancing-Loop-Level-Parallelism">3 Detecting and Enhancing Loop- Level Parallelism</a>
+      <ul class="toc-subsections">
+        <li><a href="#Finding-Dependences">3.1 Finding Dependences</a></li>
+        <li><a href="#Eliminating-Dependent-Computations">3.2 Eliminating Dependent Computations</a></li>
+      </ul>
+    </li>
+    <li><a href="#44-Cross-Cutting-Issues">4 Cross-Cutting Issues</a>
+      <ul class="toc-subsections">
+        <li><a href="#Energy-and-DLP">4.1 Energy and DLP</a></li>
+        <li><a href="#Banked-Memory-and-Graphics-Memory">4.2 Banked Memory and Graphics Memory</a></li>
+        <li><a href="#Strided-Accesses-and-TLB-Misses">4.3 Strided Accesses and TLB Misses</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body">
+<p>In this chapter, we will explore some common techniques for data-level parallelism. Among them, the most well-known is SIMD (Single Instruction, Multiple Data), which is widely used in scientific computing for matrix operations, media-oriented image and audio processing, and machine learning algorithms. Compared to MIMD, SIMD is more energy-efficient, making it suitable for personal mobile devices and servers. However, the biggest advantage of SIMD is that programmers can still think in a sequential manner while the underlying hardware accelerates computations through parallelism.</p>
+<p>This chapter mainly covers three major topics, all of which are variants of SIMD:</p>
+<ul>
+<li>Vector architecture  </li>
+<li>Multimedia SIMD instruction set extensions  </li>
+<li>Graphic processing units (GPUs)</li>
+</ul>
+<p>The latter two are closely related to vector architecture, so we will first study the principles and implementation of vector architecture.</p>
+<h2 id="41-Vector-Architecture">1 Vector Architecture</h2>
+<p>The general principle of vector architecture can be summarized as follows: it retrieves sets of data elements scattered in memory, places them in a large sequential register file, performs operations on the data within the register file, and finally scatters the results back into memory.</p>
+<ul>
+<li><p>A single instruction operates on multiple vector data, resulting in multiple register-to-register operations on independent data elements.</p>
+</li>
+<li><p>Acting as compiler-controlled buffers, these register files can hide memory latency and make efficient use of memory bandwidth.</p>
+</li>
+<li><p>The power wall has led architects to value architectures that can achieve high performance without incurring the high costs of out-of-order superscalar processors. Vector architecture meets this requirement—by simply using vector instructions on a simple scalar processor, performance can be improved.</p>
+</li>
+</ul>
+<p>Classification of vector architectures</p>
+<ul>
+<li><p>Memory-memory vector processor: All vector operations are performed between memory locations.</p>
+</li>
+<li><p>Vector-register processor: All vector operations (except loads and stores) are performed within vector registers. (The vector architectures introduced later belong to this category.)</p>
+</li>
+</ul>
+<hr>
+<p>One characteristic of vector processors is that elements within a vector are rarely correlated during operations. However, incorrect vector processing can lead to correlation problems and frequent function switches. In vector pipelines, we need to consider how to handle vectors to improve pipeline efficiency. Below are some solutions:</p>
+<ul>
+<li><p>Horizontal processing method: Vector calculations are performed row by row from left to right.</p>
+</li>
+<li><p>Vertical processing method: Vector calculations are performed column by column from top to bottom.</p>
+</li>
+<li><p>Vertical and horizontal processing method (group processing method): Combines the previous two methods.</p>
+</li>
+</ul>
+<p>The following example compares the effects of these three methods—assuming we need to compute D = A * (B + C), where A, B, C, and D are vectors of length N.</p>
+<ul>
+<li><p>Horizontal processing method</p>
+<ul>
+<li><p>Calculation process: d1 &lt;- a1 * (b1 + c1) // d2 &lt;- a2 * (b2 + c2) ... dN &lt;- aN * (bN + cN)</p>
+</li>
+<li><p>A loop program is constructed to handle: ki &lt;- bi + ci // di &lt;- ai * ki</p>
+</li>
+<li><p>Data dependencies: N times, function switches: 2N times</p>
+</li>
+<li><p>Issue: When computing each part, RAW dependencies occur, resulting in low pipeline efficiency. If a static multi-functional pipeline is used, the pipeline must switch frequently, and its throughput becomes smaller than that of serial execution. Therefore, this method is not suitable for vector processors.</p>
+</li>
+</ul>
+</li>
+<li><p>Vertical processing method</p>
+<ul>
+<li><p>Calculation process: K &lt;- B + C // D &lt;- A * K</p>
+</li>
+<li><p>Data dependencies: 1 time, function switches: 2 times</p>
+</li>
+<li><p>Requires a memory-to-memory processor structure: The source and destination vectors of vector instructions must be stored in memory, and the immediate results of operations must also be sent back to memory.</p>
+</li>
+</ul>
+</li>
+<li><p>Group processing method</p>
+<ul>
+<li><p>Divides the vector into multiple groups, processes them vertically, and then processes each group sequentially.</p>
+</li>
+<li><p>Let N = S * n + r, where N is the vector length, S is the number of groups, n is the group length, and r is the remainder (if treated as a complete group, the number of groups is S + 1).</p>
+</li>
+<li><p>Calculation process: d_{1-n} &lt;- a_{1-n} * (b_{1-n} + c_{1-n}) // d_{n+1-2n} &lt;- a_{n+1-2n} * (b_{n+1-2n} + c_{n+1-2n}) ... d_{S<em>n+1-N} &lt;- a_{S</em>n+1-N} * (b_{S<em>n+1-N} + c_{S</em>n+1-N})</p>
+</li>
+<li><p>Data dependencies: S+1 times, function switches: 2(S+1) times</p>
+</li>
+<li><p>Requires a register-to-register processor structure: Fast-access vector registers are set up to store source vectors, destination vectors, and intermediate results, connecting the input and output ends of the arithmetic unit to the vector registers to form a register-to-register type operation pipeline.</p>
+</li>
+</ul>
+</li>
+</ul>
+<p>Vector pipeline processing structures vary by machine. Below, using the CRAY-1 as an example, some structural features of register-to-register vector pipeline processing machines are introduced.</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/ca/images/C4/42.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>The above diagram can be simplified and represented as follows:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/ca/images/C4/43.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>The characteristics of the CRAY-1 vector processor include:</p>
+<ul>
+<li><p>Each vector register Vi has a dedicated bus connecting to six vector functional units.</p>
+</li>
+<li><p>Each vector functional unit also has a bus that returns the operation result to the vector register bus.</p>
+</li>
+<li><p>As long as there are no Vi conflicts or functional conflicts, each Vi and functional unit can work in parallel, greatly accelerating the processing of vector instructions.</p>
+<ul>
+<li><p>Vi conflict: The source or result vector of each vector instruction uses the same Vi for parallel operation.</p>
+<ul>
+<li><p>Read-write data dependency: V0 &lt;- V1 + V2, V3 &lt;- V0 * V4</p>
+</li>
+<li><p>Read data dependency: V0 &lt;- V1 + V2, V3 &lt;- V1 * V4</p>
+</li>
+</ul>
+</li>
+<li><p>Functional conflict: Each vector instruction operating in parallel must use the same functional unit.</p>
+<ul>
+<li><p>Example (both require the multiplication function): V3 &lt;- V1 * V2, V5 &lt;- V4 * V6</p>
+</li>
+<li><p>The second instruction begins execution only after the last part of the first instruction has been completed and the floating-point multiplication function is released.</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>The following methods can improve the performance of vector processors:</p>
+<ul>
+<li><p>Establish multiple functional units and make them work in parallel: These units can operate in parallel and in a pipelined manner, thus forming multiple parallel operation pipelines.</p>
+</li>
+<li><p>Use vector chaining technology to accelerate the execution of a series of vector instructions: Chaining involves two related instructions (RAW). When there is no conflict between the functional components and the source vectors, the functional components can be chained for pipelined processing, thereby achieving faster execution. Its essence is the result of introducing the pipeline concept into the vector execution process.</p>
+</li>
+<li><p>Adopt recycling mining technology to accelerate loop processing.</p>
+</li>
+<li><p>Segmented vector processing: When the vector length exceeds the length of the vector register, the long vector must be divided into multiple fixed-length segments, which are then processed in a loop, with each loop handling only one segment. This method is controlled by system hardware and software and is transparent to the programmer.</p>
+</li>
+<li><p>Use a multiprocessor system to further enhance performance.</p>
+</li>
+</ul>
+<h3 id="RV64V-Extension">1.1 RV64V Extension</h3>
+<blockquote>
+<p>Here, &quot;RV64V&quot; refers to the RISC-V base instructions plus the vector instruction extension.</p>
+</blockquote>
+<p>Vector registers:</p>
+<ul>
+<li><p>RV64V has 32 vector registers, each 64 bits in size, storing one vector.</p>
+</li>
+<li><p>The vector register file must provide enough ports to supply the vector functional units; these ports allow a high degree of overlap between vector operations on different vector registers.</p>
+</li>
+<li><p>There are at least 16 read ports and 8 write ports, connected to the inputs and outputs of the functional units via a crossbar switch.</p>
+</li>
+<li><p>One method to increase register file bandwidth is to use multiple banks.</p>
+</li>
+</ul>
+<p>Vector functional units:</p>
+<ul>
+<li><p>All units are fully pipelined and can start a new instruction every clock cycle.</p>
+</li>
+<li><p>The control unit detects hazards, including structural hazards in functional units and data hazards in register access.</p>
+</li>
+<li><p>As shown in the diagram above, only five functional units are provided here, but in this section, we focus only on the floating-point unit.</p>
+</li>
+</ul>
+<p>Vector load/store unit:</p>
+<ul>
+<li><p>These units are also fully pipelined, ensuring a bandwidth of one word per clock cycle after the initial latency.</p>
+</li>
+<li><p>They can also handle scalar loads and stores.</p>
+</li>
+</ul>
+<p>A set of scalar registers:</p>
+<ul>
+<li><p>These primarily provide data and computed addresses.</p>
+</li>
+<li><p>In RV64G, there are 31 general-purpose registers and 32 floating-point registers.</p>
+</li>
+</ul>
+<p>The reason RV64V adopts such dynamic register typing is because</p>
+<ul>
+<li><p>If a traditional vector architecture were to support such a diverse combination of data types, it would require a large number of instructions, resulting in an instruction list spanning several pages.</p>
+</li>
+<li><p>Programs can disable unused vector registers, thereby allocating all vector memory to the vector registers for storing long vectors. The downside of this approach is that a larger state leads to slower context switch times. However, a beneficial side effect is that programs can disable unused registers, eliminating the need to save and restore them during context switches.</p>
+</li>
+<li><p>Implicit conversion of operands of different sizes can be achieved through register configuration, eliminating the need for explicit conversion via additional instructions.</p>
+</li>
+</ul>
+<p>Some vectors may be very long, requiring more than one vector register. In such cases, the following registers are used:</p>
+<ul>
+<li>vl: Vector length register, used when the vector length is not equal to mvl.</li>
+<li>vctype: Vector type register, which records the register type.</li>
+<li>pi: Predicate register, used for loops containing IF statements.</li>
+</ul>
+<p>Through these vector instructions, the system can perform vector operations in multiple ways, including computing multiple elements simultaneously. This flexibility allows vector designs to use slow but wide execution units, achieving higher performance at lower power consumption. Additionally, the independence of elements in the vector instruction set enables functional unit scaling without the need for expensive dependency checks, as required in superscalar processors.</p>
+<p>When a compiler generates a sequence of vector instructions, the code runs in vector mode for a significant amount of time, and such code is considered vectorized. Loop code can be vectorized when there are no dependencies between iterations, a condition known as loop-carried dependencies.</p>
+<p>Another difference between RV64G and RV64V is the frequency of pipeline interlocks. Due to data dependencies, RV64G instructions experience many stalls. However, in vector processors, each vector instruction only stalls for the first element, after which subsequent elements flow smoothly through the pipeline. This type of element-dependent operation is called chaining.</p>
+<h3 id="Vector-Execution-Time">1.2 Vector Execution Time</h3>
+<p>The execution time of a vector operation sequence depends on the following factors:</p>
+<ul>
+<li>The length of the operand vectors  </li>
+<li>Structural hazards between operations  </li>
+<li>Data hazards</li>
+</ul>
+<p>All modern vector computers have vector functional units with multiple parallel pipelines (called lanes), capable of producing two or more results per clock cycle. However, some functional units are not fully pipelined. For the sake of discussion:  </p>
+<ul>
+<li>Our RV64V implementation has only one lane, with an initiation rate of one element per clock cycle for a single instruction. Therefore, the execution time (in clock cycles) of a single vector instruction is approximately equal to the vector length.  </li>
+<li>Convoy: A group of vector instructions that can be executed together.  <ul>
+<li>These instructions must not contain any structural hazards; if such hazards exist, they must be serialized and executed in different convoys.  </li>
+<li>We also assume that instructions within a convoy must complete execution before other instructions begin.  </li>
+<li>Chaining allows RAW dependency hazards within the same convoy, as vector operations can begin execution as soon as source operands become available—the result from the first functional unit in the chain is forwarded to the second functional unit. In practice, we implement the concept of chaining by allowing the processor to read and write specific vector registers simultaneously.</li>
+</ul>
+</li>
+<li>Chime: The time required to execute one convoy.  <ul>
+<li>Therefore, executing m convoys takes m chimes; if the vector length is n, the total number of clock cycles is m × n.  </li>
+<li>Since this calculation ignores certain processor-specific overheads (many of which depend on vector length) and the limitation of initiating multiple vector instructions in a single clock cycle, this approximate measurement is more accurate for long vectors.  </li>
+<li>Additionally, the most significant overhead ignored by this method is the vector start-up time, which is the delay before the pipeline is fully filled and depends on the pipeline latency of the vector functional units.</li>
+</ul>
+</li>
+</ul>
+<h3 id="Optimizations">1.3 Optimizations</h3>
+<p>Below are some optimization methods for improving performance or enabling more types of programs to run on vector architectures:</p>
+<ul>
+<li><p>Multiple lanes: Allow the vector processor to process multiple elements of a vector in a single clock cycle.</p>
+</li>
+<li><p>Vector-length registers: Handle cases where the vector length does not equal the maximum vector length (which is most cases).</p>
+</li>
+<li><p>Predicate registers: Efficiently handle conditional statements, enabling more code to be vectorized.</p>
+</li>
+<li><p>Memory banks: Provide sufficient memory bandwidth for the vector processor.</p>
+</li>
+<li><p>Stride: Handle multidimensional matrices.</p>
+</li>
+<li><p>Gather-scatter: Handle sparse matrices.</p>
+</li>
+<li><p>Programming vector architecture.</p>
+</li>
+</ul>
+<h4 id="Multiple-Lanes">Multiple Lanes</h4>
+<p>A key advantage of vector instruction sets is that they allow software to convey a large amount of parallel work to hardware through a single, relatively short instruction (which contains multiple independent operations and has the same encoding length as traditional scalar instructions). The parallel semantics of vector instructions make it possible to implement the execution of these element-wise operations using highly pipelined or parallel functional units. The diagram below illustrates how multiple parallel functional units can improve the performance of a vector addition instruction (right diagram; the left diagram shows only a single pipeline):</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/ca/images/C4/11.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>A property of the RV64V instruction set is that all vector arithmetic instructions only allow operations between element N of one vector register and element N of another vector register, thereby simplifying the design of parallel vector units—these units are structured as multiple parallel lanes, and increasing the number of lanes can enhance the peak throughput of the vector unit.</p>
+<p>To fully leverage the advantages of multiple lanes, both applications and architectures must support long vectors; otherwise, execution proceeds too quickly, easily exhausting instruction bandwidth, requiring ILP to supply enough vector instructions.</p>
+<p>Each lane contains a portion of the vector register file and one execution pipeline from each vector functional unit.</p>
+<p>Each vector functional unit executes vector instructions at a rate of processing one element group per clock cycle in each lane that uses multiple pipelines (a group of elements that move together through the pipeline).</p>
+<p>The first lane holds the first element (element 0) of all vector registers, and so on. This allocation allows the arithmetic pipelines within a lane to complete computations without communicating with other lanes, thereby reducing the cost of wiring and additional register file ports.</p>
+<p>Furthermore, the multi-lane design can improve vector performance with only a small increase in control complexity and without modifying existing machine code; it also allows designers to trade off die area, clock rate, voltage, and power without sacrificing peak performance.</p>
+<h4 id="Vector-Length-Registers">Vector-Length Registers</h4>
+<p>Add a vector length register <code>vl</code>, which controls the length of any vector operation, with its value not exceeding <code>mvl</code>. This parameter means that the length of the vector register can be increased later without modifying the instruction set.</p>
+<p>However, if <code>n</code> is unknown at compile time and its value may exceed <code>mvl</code>, then strip mining technology is needed. It can generate code where the vector operation length does not exceed <code>mvl</code>.</p>
+<p>Specifically, one loop handles any number of iterations that are multiples of <code>mvl</code>, while another loop handles the remaining iterations, with the number being less than <code>mvl</code>.</p>
+<p>RISC-V provides a better solution: the <code>setvl</code> instruction writes a value less than <code>mvl</code> and the loop variable <code>n</code> into <code>vl</code> (or another register).</p>
+<ul>
+<li><p>If the number of loop iterations exceeds <code>n</code>, the loop can compute up to <code>mvl</code> values at once in the fastest case, so <code>setvl</code> sets <code>vl</code> to <code>mvl</code>.</p>
+</li>
+<li><p>If <code>n</code> is less than <code>mvl</code>, only the last <code>n</code> elements should be computed in the final iteration of the loop, so <code>setvl</code> sets <code>vl</code> to <code>n</code>.</p>
+</li>
+<li><p><code>setvl</code> also writes to another scalar register to assist with subsequent loop management.</p>
+</li>
+</ul>
+<h4 id="Predicate-Registers">Predicate Registers</h4>
+<p>If a loop in a program contains an IF statement, it cannot be executed in vector mode (as described above) because the IF statement introduces control dependencies. Consider the following code:</p>
+<pre><code class="language-c">for (i = 0; i &lt; 64; ++i)
+    if (X[i] != 0)
+        X[i] -= Y[i];
+</code></pre>
+<p>This loop cannot be vectorized; however, if the inner loop can be executed when the iteration satisfies <code>X[i] != 0</code>, then the subtraction operation can be vectorized.</p>
+<p>We refer to this extended capability as vector-mask control, while compiler designers call it IF-conversion. In RV64V, predicate registers store masks and provide conditional execution for each element operation in vector instructions. These registers use Boolean vectors to control the execution of vector instructions. When predicate register p0 is set, all vector instructions only operate on vector elements whose corresponding value in the predicate register is 1, while elements with a corresponding value of 0 remain unchanged. Similar to vector registers, predicate registers can be enabled and disabled. When enabled, their values are initialized to 1, meaning subsequent vector instructions will operate on all elements.</p>
+<p>Although introducing additional registers incurs extra overhead, it eliminates branches and associated control dependencies, making conditional instruction execution faster (even if the registers sometimes perform unnecessary work).</p>
+<h4 id="Memory-Banks">Memory Banks</h4>
+<p>The behavior of vector load/store units is much more complex than that of arithmetic functional units—their initiation rate is not necessarily one clock cycle, because memory partition stalls can reduce effective throughput; and the startup penalty is much higher than that of typical functional units. To maintain the theoretical initiation rate, the memory system must be able to produce or receive large amounts of data by distributing accesses across multiple independent memory partitions.</p>
+<p>Many vector computers support multiple loads and stores within a single clock cycle, and the memory partition cycle time is often several times the processor cycle time. To support multiple simultaneous accesses, the memory system requires multiple partitions and the ability to independently control partition addresses.</p>
+<p>Most vector processors support the ability to load or store word data out of order, which requires support for independent partition addressing—simple memory interleaving cannot achieve this.</p>
+<p>Most vector computers support multiple processors sharing the same memory system, so each processor will generate its own separate address stream.</p>
+<h4 id="Stride">Stride</h4>
+<p>The positions of adjacent elements in a vector in memory are not necessarily sequential. Consider the following matrix multiplication code:</p>
+<pre><code class="language-c">for (i = 0; i &lt; 100; ++i)
+  for (j = 0; j &lt; 100; ++j) 
+  {
+    A[i][j] = 0.0;
+    for (k = 0; k &lt; 100; ++k) 
+      A[i][j] += B[i][k] * D[k][j];
+  }
+</code></pre>
+<p>We can vectorize the multiplication between each row of B and each column of D, using k as the index variable to perform strip mining on the inner loop. However, when memory is allocated for arrays, they are linearized, meaning that elements in the same row or column are not necessarily adjacent in memory. Taking the above C code as an example, since C uses row-major order, the elements of D accessed during iteration are spaced 800 bytes apart (100 elements per row * 8 bytes). Therefore, we need a technique that can access vector elements that are not adjacent in memory.</p>
+<p>Stride: The distance between elements to be gathered into a single vector register.</p>
+<ul>
+<li>In the above example, the stride of matrix D is 100 double-precision words, while the stride of B is 1 double-precision word; if column-major order were used, the two would be swapped.</li>
+</ul>
+<p>When a vector is loaded into a vector register, it appears to have logically adjacent elements. Thus, vector processors can handle non-unit strides (stride &gt; 1) through vector load and store operations with stride capability. This ability to access non-sequential memory locations and reshape them into a compact structure is a major advantage of vector architectures.</p>
+<p>Since the stride may be unknown at compile time, just like the vector length, we can place the vector stride in a general-purpose register. The RV64V instruction <code>vlds</code> (load vector with stride) then loads the vector into a vector register; for storage, there is a corresponding <code>vsts</code> (store vector with stride) instruction.</p>
+<p>When multiple accesses compete within a single partition, a memory partition conflict occurs, causing one access to stall. A partition conflict is considered to occur when the following relationship holds (LCM stands for least common multiple):</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mstyle scriptlevel="0" displaystyle="true"><mfrac><mtext>Numbers of banks</mtext><mtext>LCM(Stride, Number of banks)</mtext></mfrac></mstyle><mo>&lt;</mo><mtext>Bank busy time</mtext></mrow><annotation encoding="application/x-tex">\dfrac{\text{Numbers of banks}}{\text{LCM(Stride, Number of banks)}} &lt; \text{Bank busy time}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.3074em;vertical-align:-0.936em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">LCM(Stride, Number of banks)</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord text"><span class="mord">Numbers of banks</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.936em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">Bank busy time</span></span></span></span></span></span></p>
+<h4 id="Gather-Scatter">Gather-Scatter</h4>
+<p>In sparse matrices, vector elements are typically stored in some compact form and require indirect access. Suppose there is a simplified sparse structure, with the corresponding code as follows:</p>
+<pre><code class="language-c">for (i = 0; i &lt; n; ++i)
+    A[K[i]] += C[M[i]];
+</code></pre>
+<p>This code implements sparse vector summation on arrays A and C, using index vectors K and M to specify the non-zero elements in A and C. Here, A and C must have the same number (n) of non-zero elements, and K and M must also be of the same size.</p>
+<p>The basic mechanism for supporting sparse matrices is the use of gather-scatter operations with index vectors. The goal of these operations is to support the movement of sparse matrices between compressed and normal representations.</p>
+<ul>
+<li><p>The gather operation takes an index vector and retrieves a vector of elements from addresses obtained by adding the base address to the offsets given in the index vector. The result is a dense vector in a vector register.</p>
+</li>
+<li><p>After performing operations on the elements of the dense vector, the sparse vector can be stored in expanded form using the scatter operation, while employing the same index vector.</p>
+</li>
+<li><p>The corresponding instructions provided by RV64V are vldi (load vector indexed or gather) and vsti (store vector indexed or scatter).</p>
+</li>
+<li><p>Although indexed loads and stores can be pipelined, they are slower than their non-indexed counterparts because memory partitions cannot be determined at the start of the instruction, and the register file must also support communication between vector unit lanes to enable gather and scatter operations.</p>
+</li>
+<li><p>Each element in gather and scatter operations has an independent address, so they cannot be processed in groups and may cause multiple conflicts in the memory system. Therefore, even in systems with caches, individual accesses can result in significant latency.</p>
+</li>
+</ul>
+<h4 id="Programming-Vector-Architecture">Programming Vector Architecture</h4>
+<p>One advantage of the vector architecture is that the compiler can inform the programmer at compile time whether a piece of code can be vectorized, often providing hints for code that cannot be vectorized. This allows domain experts to know how to improve performance by modifying the code or by telling the compiler that the code is fine. It is this dialogue between the compiler and the programmer that simplifies programming on vector computers.</p>
+<p>However, the main factor affecting whether a program runs in vector mode is the program itself: whether loops have true data dependencies, or whether they can be restructured to avoid such dependencies. The choice of algorithm and the way it is coded also influence this factor.</p>
+<h2 id="42-SIMD-Instruction-Set-Extensions-for-Multimedia">2 SIMD Instruction Set Extensions for Multimedia</h2>
+<p>SIMD multimedia extensions originated from a simple discovery: many media applications process data types that are narrower than the 32-bit data types that processors were originally optimized for.</p>
+<p>Similar to vector instructions, SIMD instructions specify the same operation on vector data; the difference is that SIMD tends to specify fewer operands, thus using a smaller register file.</p>
+<p>Additionally, SIMD extensions ignore the following three things:</p>
+<ul>
+<li><p>Vector length registers: Because multimedia SIMD extensions fix the number of data operands, this has led to hundreds of instructions (such as MMX, SSE, and AVX extensions in the x86 architecture).</p>
+</li>
+<li><p>Stride or gather/scatter data transfer instructions: So far, multimedia SIMD has not provided the more precise addressing modes found in vector architectures, namely stride access and gather-scatter access.</p>
+</li>
+<li><p>Mask (predicate) registers: Although this is changing, multimedia SIMD typically does not provide mask registers to support element-wise conditional execution.</p>
+</li>
+</ul>
+<p>These omissions make it difficult for compilers to generate SIMD code and increase the difficulty of writing programs in SIMD assembly language.</p>
+<p>Given the above drawbacks of multimedia SIMD extensions, why are they still so popular? The reasons are:</p>
+<ul>
+<li><p>The initial cost of adding them to standard arithmetic units is low, and they are easy to implement.</p>
+</li>
+<li><p>Compared to vector architectures, they require very little additional processor state, which is critical for context switch time.</p>
+</li>
+<li><p>Vector architectures require a lot of memory bandwidth, which many computers cannot provide.</p>
+</li>
+<li><p>SIMD does not have to deal with issues arising from virtual memory.</p>
+</li>
+<li><p>It is easy to introduce instructions that support new media standards, such as instructions for performing permutations or instructions that consume more or fewer operands than vectors can produce.</p>
+</li>
+</ul>
+<p>Given the ad hoc nature of multimedia SIMD extensions, the simplest way to use these instructions is to use library functions or write assembly language code. Today&#39;s advanced compilers can automatically generate SIMD instructions, but programmers must ensure that all data in memory is aligned with the width of the SIMD unit, and avoid letting the compiler generate scalar instructions for vectorizable code.</p>
+<h3 id="Roofline-Visual-Performance-Model">2.1 Roofline Visual Performance Model</h3>
+<p>An intuitive way to visualize the potential floating-point performance of different SIMD architecture variants is the Roofline model. It uses a two-dimensional graph to represent the relationship between floating-point performance, memory performance, and arithmetic intensity.</p>
+<p>Arithmetic intensity refers to the ratio of the number of floating-point operations performed per byte of memory accessed. It can be calculated as &quot;the total number of floating-point operations in a program / the number of data bytes transferred to main memory during program execution.&quot; The following figure illustrates the relative arithmetic intensity in different scenarios:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/ca/images/C4/21.png" style="max-width: 50%; display: block; margin: 0 auto;">
+
+<p>Peak floating-point performance can be determined by hardware specifications.</p>
+<p>Many kernels in this case study cannot fit into the on-chip cache, so peak memory performance is defined by the memory system behind the cache, which can be obtained by running the Stream benchmark.</p>
+<p>The following figure compares the performance of two processors using the roofline model:</p>
+<img loading="lazy" src="https://note.noughtq.top/sys/ca/images/C4/22.png" style="max-width: 40%; display: block; margin: 0 auto;">
+
+<p>We can use the following formula to describe the curve in the roofline model:</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>Atttainable GFLOPs/s</mtext><mo>=</mo><mi>min</mi><mo>⁡</mo><mo stretchy="false">(</mo><mtext>Peak Memory BW</mtext><mo>×</mo><mtext>Arithmetic Intensity</mtext><mo separator="true">,</mo><mtext>Peak Floating-Point Perf.</mtext><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\text{Atttainable GFLOPs/s} =\min(\text{Peak Memory BW} \times \text{Arithmetic Intensity}, \text{Peak Floating-Point Perf.})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">Atttainable GFLOPs/s</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">min</span><span class="mopen">(</span><span class="mord text"><span class="mord">Peak Memory BW</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">Arithmetic Intensity</span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord text"><span class="mord">Peak Floating-Point Perf.</span></span><span class="mclose">)</span></span></span></span></span></p>
+<p>Consider the convergence point of the diagonal and horizontal lines in the model:</p>
+<ul>
+<li><p>If it is located far to the right, only a few kernels with high arithmetic intensity can achieve the computer&#39;s maximum performance.</p>
+</li>
+<li><p>If it is located far to the left, almost all kernels can achieve maximum performance.</p>
+</li>
+</ul>
+<p>Compared to other SIMD processors, vector processors have both higher memory bandwidth and a convergence point that is further to the left.</p>
+<h2 id="43-Detecting-and-Enhancing-Loop-Level-Parallelism">3 Detecting and Enhancing Loop- Level Parallelism</h2>
+<p>The analysis of loop-level parallelism focuses on whether data accesses in subsequent iterations depend on data values produced in previous iterations. Such dependencies are called loop-carried dependencies.</p>
+<p>Because finding loop-level parallelism involves identifying structures such as loops, array references, and induction variable computations, compilers can perform this analysis more easily at (or near) the source level than at the machine code level.</p>
+<p>Our analysis must begin by identifying all loop-carried dependencies. This dependency information is inexact, in the sense that it tells us that such a dependency may exist.</p>
+<p>Typically, data dependency analysis can only determine that one reference may depend on another; determining that two references must point to exactly the same address requires more complex analysis.</p>
+<p>Loop-carried dependencies often form recurrences. A recurrence occurs when the definition of a variable is based on the value of that variable from a previous iteration (usually the immediately preceding one).</p>
+<h3 id="Finding-Dependences">3.1 Finding Dependences</h3>
+<p>Obviously, identifying dependencies in a program is crucial for determining which loops may contain parallelism and for eliminating name dependencies. The complexity of dependence analysis also arises from the presence of arrays and pointers in languages like C/C++, or the pass-by-reference parameter mechanism in Fortran. Since scalar variables explicitly reference a name, analysis is usually relatively straightforward; however, pointers and reference parameters lead to aliasing issues, introducing complexity and uncertainty into the analysis.</p>
+<p>Almost all compiler dependence analysis algorithms are based on the assumption that &quot;array indices are affine.&quot; In short, a one-dimensional array index is called affine if it can be expressed in the form a * i + b (where a and b are constants, and i is the loop index variable). For multi-dimensional arrays, if each dimension&#39;s index is affine, then the multi-dimensional index is also affine. A typical example of non-affine access is sparse array access like x[y[i]].</p>
+<p>Therefore, determining whether two accesses to the same array within the same loop have a dependence is equivalent to determining whether two affine functions can yield the same result at different index values within the loop bounds. For example: Suppose we store an array element with index value a * i + b, and later load data from the same array with index value c * i + d (where i is the for-loop variable, incrementing from m to n). A dependence exists when the following two conditions are met:</p>
+<ul>
+<li><p>There are two iteration indices, j and k, both within the bounds of the for loop, i.e., m &lt;= j &lt;= n, m &lt;= k &lt;= n</p>
+</li>
+<li><p>The loop stores data to the array element indexed by a * j + b, and later retrieves it from the same array element when indexed by c * k + d, i.e., a * j + b == c * k + d</p>
+</li>
+</ul>
+<p>In general, we cannot determine at compile time whether a dependence exists. For example, the specific values of variables a, b, c, and d may be unknown (they could be elements from other arrays), making it impossible to determine whether a dependence holds. Additionally, dependence testing can be computationally expensive but still decidable at compile time, such as when access operations depend on the iteration indices of multiple nested loops. However, in most programs, subscript expressions are usually simple, with a, b, c, and d being constants. For such cases, reasonable compile-time dependence detection methods can be designed.</p>
+<p>One simple and sufficient detection method is the Greatest Common Divisor (GCD) test, which can prove the absence of dependence. Its principle is based on the observation: if a loop-carried dependence exists, then GCD(c, a) must divide (d - b). In general, the GCD test is sufficient to guarantee that no dependence exists. However, there are cases where the GCD test passes, but no actual dependence exists. This occurs because the GCD test does not consider loop bounds.</p>
+<p>In general, determining whether a dependence truly exists is an NP-complete problem. However, in practice, many common cases can be analyzed precisely at low cost. Recent research suggests that a hierarchical approach using a series of exact tests with increasing generality and cost can ensure both accuracy and efficiency. (An exact test refers to a method that can precisely determine whether a dependence exists.)</p>
+<p>Beyond detecting the existence of dependencies, the compiler also needs to classify dependency types. This classification allows the compiler to identify name dependencies and eliminate them at compile time through renaming and copying.</p>
+<p>For detecting loop-level parallelism, dependence analysis is the most fundamental tool. Whether compiling programs efficiently for vector computers, SIMD computers, or multiprocessor systems, this analysis is crucial. The main limitation of dependence analysis is that it only applies to specific scenarios—array access operations with affine index functions within a single loop nest. Therefore, there are many cases where array-oriented dependence analysis cannot provide the necessary information. For example, analyzing pointer access behavior is much more difficult than analyzing array indices (which is one reason why many scientific applications targeting parallel computing still prefer Fortran over C/C++). Similarly, analyzing references across procedure calls is extremely challenging. Thus, while analyzing code written in serial languages remains important, we also need programming models like OpenMP and CUDA that support explicit parallel loop programming.</p>
+<h3 id="Eliminating-Dependent-Computations">3.2 Eliminating Dependent Computations</h3>
+<p>Earlier, we mentioned that one of the most important forms of dependent computation is recurrence, and the dot product is a good example:</p>
+<pre><code class="language-c">for (i = 9999; i &gt;= 0; --i)
+sum += x[i] * y[i];
+</code></pre>
+<p>This loop cannot be parallelized because there is a loop-carried dependency on <code>sum</code>. However, we can transform this loop into a set of loops, where one loop within the set can be fully parallelized, while the remaining loops can only be partially parallelized. The fully parallelizable loop looks like this:</p>
+<pre><code class="language-c">for (i = 9999; i &gt;= 0; --i)
+sum[i] = x[i] * y[i];
+</code></pre>
+<p>Notice that the summation has been expanded from a scalar to a vector (this transformation is called scalar expansion), and this transformation allows the new loop to be fully parallelized. However, after completing this operation, we need to perform a reduction step, which sums the elements of the vector, as shown below:</p>
+<pre><code class="language-c">for (i = 9999; i &gt;= 0; --i)
+finalsum += sum[i];
+</code></pre>
+<p>Although this loop is not a parallel structure, it has a special structure known as reduction. In vector and SIMD architectures, dedicated hardware is sometimes used to accelerate reduction operations, making the reduction step much faster than scalar mode. The implementation principle is similar to the technical approach used in multi-processor environments. While the general transformation applies to any number of processors, for simplicity, let&#39;s assume we have 10 processors. In the first step of the summation reduction, each processor performs the following operation (where <code>p</code> represents the processor number from 0 to 9):</p>
+<pre><code class="language-c">for (i = 999; i &gt;= 0; --i)
+finalsum[p] += sum[i + 1000 * p];
+</code></pre>
+<p>This loop, where each of the 10 processors accumulates 1000 elements, is fully parallelizable. Then, a simple scalar loop can aggregate the final 10 partial sums.</p>
+<p>It is important to note: the aforementioned transformation relies on the associative property of addition. While mathematical operations satisfy associativity over infinite range and precision, computer arithmetic does not—integer operations are limited by finite numerical ranges, and floating-point operations are constrained by both range and precision. Therefore, using such restructuring techniques can occasionally lead to incorrect results (though the probability is extremely low). For this reason, most compilers require explicitly enabling optimizations that rely on associativity.</p>
+<h2 id="44-Cross-Cutting-Issues">4 Cross-Cutting Issues</h2>
+<h3 id="Energy-and-DLP">4.1 Energy and DLP</h3>
+<p>Assuming sufficient DLP, if we halve the clock frequency and double the execution resources, the processor&#39;s performance remains unchanged. If we can simultaneously lower the voltage while reducing the clock frequency, we can actually reduce the energy consumption and power required for computation while maintaining peak performance. Therefore, GPUs often operate at lower clock frequencies than system processors, which rely on high clock speeds to improve performance.</p>
+<p>Compared to out-of-order execution processors, DLP processors have simpler control logic and can issue a large number of operations per clock cycle: for example, the control signals for all lanes in a vector processor are completely identical, eliminating the need for logic circuits that determine multi-instruction issue or speculative execution. They also significantly reduce the workload of instruction fetching and decoding. Additionally, vector architectures can more easily shut down unused portions of the chip—each vector instruction explicitly declares all hardware resources it will occupy in the upcoming cycles at the time of issuance.</p>
+<h3 id="Banked-Memory-and-Graphics-Memory">4.2 Banked Memory and Graphics Memory</h3>
+<p>The vector architecture requires sufficient memory bandwidth to support unit stride, non-unit stride, and gather-scatter access patterns. To achieve the highest memory performance, high-end GPUs from AMD and NVIDIA use stacked DRAM technology (also known as High Bandwidth Memory, or HBM), which packages memory chips and processing chips together in the same module. The ultra-wide data bus provides high bandwidth, while the co-packaging of memory and processing chips reduces latency and power consumption.</p>
+<p>Considering all potential memory demands from computational tasks and graphics acceleration tasks, the memory system may encounter a large number of unrelated requests, which can degrade memory performance. To address this, the GPU&#39;s memory controller maintains traffic queues for different memory partitions until sufficient traffic accumulates, at which point it opens a row and transfers all requested data at once. This delay improves bandwidth but increases latency, so the controller must ensure that no processing unit &quot;starves&quot; while waiting for data; otherwise, adjacent processing units may become idle.</p>
+<h3 id="Strided-Accesses-and-TLB-Misses">4.3 Strided Accesses and TLB Misses</h3>
+<p>The interaction between the TLB of virtual memory in vector architectures or GPUs and strided access is a problem. Depending on the organization of the TLB and the size of the array being accessed in memory, it is possible that every access to an element in the array results in a TLB miss. The same type of conflict can also occur in the cache, but the performance impact may be smaller.</p>
+</div>
+<nav class="chapter-pagination" aria-label="Chapter navigation">
+  <a href="../chapter-3/" rel="prev"><span>← Previous chapter</span>Chapter 3 Instruction-Level Parallelism and Its Exploitation</a>
+  <a href="../chapter-5/" rel="next"><span>Next chapter →</span>Chapter 5 Thread-Level Parallelism</a>
+</nav>
+        </div>
+      </div>
+    </article>
+
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>

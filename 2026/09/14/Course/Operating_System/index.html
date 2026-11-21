@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en" data-page="post">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f8f8f6">
+  <link rel="icon" type="image/png" sizes="300x300" href="../../../../../img/favicon.png">
+  <style>
+    :root { color-scheme: light; --surface: #f8f8f6; background-color: var(--surface); }
+    :root[data-theme="dark"] { color-scheme: dark; --surface: #000; }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { color-scheme: dark; --surface: #000; }
+    }
+  </style>
+  <script>
+(() => {
+  const storageKey = 'relaxinic-theme';
+  const systemDark = matchMedia('(prefers-color-scheme: dark)');
+  const root = document.documentElement;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const scheme = document.querySelector('meta[name="color-scheme"]');
+
+  function readMode() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch {
+      // The picker still works for this page when storage is unavailable.
+    }
+    return 'system';
+  }
+
+  let mode = readMode();
+
+  function applyTheme() {
+    const resolved = mode === 'system' ? (systemDark.matches ? 'dark' : 'light') : mode;
+    root.dataset.theme = resolved;
+    root.dataset.themeMode = mode;
+    if (scheme) scheme.content = resolved;
+    if (meta) meta.content = resolved === 'dark' ? '#000000' : '#f8f8f6';
+
+    for (const option of document.querySelectorAll('[data-theme-choice]')) {
+      option.checked = option.value === mode;
+    }
+  }
+
+  function syncSavedMode() {
+    mode = readMode();
+    applyTheme();
+  }
+
+  document.addEventListener('change', (event) => {
+    if (!event.target.matches('[data-theme-choice]')) return;
+    mode = event.target.value;
+    try {
+      localStorage.setItem(storageKey, mode);
+    } catch {
+      // Apply the choice even if the browser blocks storing it.
+    }
+    applyTheme();
+  });
+
+  systemDark.addEventListener('change', applyTheme);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) syncSavedMode();
+  });
+  window.addEventListener('storage', (event) => {
+    if (event.key === storageKey || event.key === null) syncSavedMode();
+  });
+
+  applyTheme();
+})();
+  </script>
+  <title>Operating System — Relaxinic</title>
+  <link rel="preload" href="../../../../../media/disc.webp" as="image">
+  <link rel="preload" href="../../../../../media/ogg-regular.otf" as="font" type="font/otf" crossorigin>
+  <script src="../../../../../js/page-transition.js?v=8"></script>
+  <link rel="stylesheet" href="../../../../../styles.css?v=31">
+  <link rel="stylesheet" href="../../../../../page-transition.css?v=7">
+  
+  <script type="module" src="../../../../../js/article.js?v=10" blocking="render"></script>
+</head>
+<body class="article-page" id="top" data-base="../../../../../" data-section="course">
+  <header class="site-header">
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <a class="wordmark" href="../../../../../">Relaxinic</a>
+      <span aria-hidden="true">-</span>
+      <a href="../../../../../course/">Notes</a>
+    </nav>
+    <nav class="site-nav" aria-label="Main navigation" data-nav></nav>
+  </header>
+  <main class="article-shell">
+    <article>
+      <header class="post-header">
+        <div class="article-meta" lang="en">
+          <span>Notes</span>
+          <time datetime="2026-09-14">14 Sept 2026</time>
+        </div>
+        <div class="article-heading">
+          <div class="section-disc" data-transition-disc aria-hidden="true">
+            <div class="disc-face">
+              <img src="../../../../../media/disc.webp" width="1254" height="1254" alt="">
+            </div>
+          </div>
+          <h1 class="article-title">Operating System</h1>
+        </div>
+      </header>
+
+      <div class="post-layout">
+        <div class="post-content">
+<div class="article-body post-body course-intro">
+<aside class="post-callout">
+  <strong class="callout-title">Warning</strong>
+  These notes are written primarily for my own study needs. They may not be comprehensive or suitable for everyone, so feel free to browse selectively.
+</aside>
+
+<aside class="post-callout">
+  <strong class="callout-title">Acknowledgments</strong>
+  Part of these notes draws inspiration from the excellent Operating System notes written by <a href="https://note.noughtq.top/sys/os/" target="_blank">NoughtQ</a>. I am also grateful to Professor Lishou Dan for his teaching and guidance in the course, which helped shape the understanding reflected in these notes.
+</aside>
+</div>
+<nav class="chapter-index" aria-label="Chapters">
+  <ol class="post-list">
+    <li>
+      <a class="post-link" href="chapter-1/">
+        <span class="post-title">Chapter 1 Introduction</span>
+        <time class="post-date" datetime="2026-09-14">14 Sept 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-2/">
+        <span class="post-title">Chapter 2 Operating-System Structures</span>
+        <time class="post-date" datetime="2026-09-23">23 Sept 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-3/">
+        <span class="post-title">Chapter 3 Processes</span>
+        <time class="post-date" datetime="2026-10-06">06 Oct 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-4/">
+        <span class="post-title">Chapter 4 Threads and Concurrency</span>
+        <time class="post-date" datetime="2026-10-17">17 Oct 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-5/">
+        <span class="post-title">Chapter 5 CPU Scheduling</span>
+        <time class="post-date" datetime="2026-10-25">25 Oct 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-6/">
+        <span class="post-title">Chapter 6 Synchronization Tools</span>
+        <time class="post-date" datetime="2026-10-31">31 Oct 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-7/">
+        <span class="post-title">Chapter 7 Synchronization Examples</span>
+        <time class="post-date" datetime="2026-11-01">01 Nov 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-8/">
+        <span class="post-title">Chapter 8 Deadlocks</span>
+        <time class="post-date" datetime="2026-11-02">02 Nov 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-9/">
+        <span class="post-title">Chapter 9 Main Memory</span>
+        <time class="post-date" datetime="2026-11-08">08 Nov 2026</time>
+      </a>
+    </li>
+    <li>
+      <a class="post-link" href="chapter-10/">
+        <span class="post-title">Chapter 10 Virtual Memory</span>
+        <time class="post-date" datetime="2026-11-21">21 Nov 2026</time>
+      </a>
+    </li>
+  </ol>
+</nav>
+
+        </div>
+      </div>
+    </article>
+<script type="application/json" id="chapter-anchors">{"Chapter-1-Introduction":"chapter-1/","11-What-Operating-System-Do":"chapter-1/","12-Computer-System-Organization":"chapter-1/","Interrupts":"chapter-1/","Storage-Structure":"chapter-1/","IO-Structure":"chapter-1/","13-Computer-System-Architecture":"chapter-1/","Single-Processor-Systems":"chapter-1/","Multiprocessor-Systems":"chapter-1/","Distributed-System-Clustered-System":"chapter-1/","14-Operating-System-Operations":"chapter-1/","Multiprogramming-and-Multitasking":"chapter-1/","Dual-Mode-and-Multimode-Operation":"chapter-1/","Timer":"chapter-1/","15-Resource-Management":"chapter-1/","16-Three-Conceptual-Pieces":"chapter-1/","Virtualization":"chapter-1/","Concurrency":"chapter-1/","Persistence":"chapter-1/","17-Design-Goals":"chapter-1/","Chapter-2-Operating-System-Structures":"chapter-2/","21-Operating-System-Services":"chapter-2/","User":"chapter-2/","System":"chapter-2/","22-User-and-Operating-System-Interface":"chapter-2/","Command-Interpreters":"chapter-2/","Graphic-User-Interface":"chapter-2/","Touch-Screen-Interface":"chapter-2/","23-System-Calls":"chapter-2/","Application-Programming-Interface":"chapter-2/","Types-of-System-Calls":"chapter-2/","24-System-Services":"chapter-2/","25-Linkers-and-Loaders":"chapter-2/","26-Why-Applications-Are-Operating-System-Specific":"chapter-2/","27-Operating-System-Design-and-Implementation":"chapter-2/","Mechanisms-and-Policies":"chapter-2/","Implementation":"chapter-2/","28-Operating-System-Structure":"chapter-2/","Monolithic-Structure":"chapter-2/","Layered-Approach":"chapter-2/","Microkernels":"chapter-2/","Modules":"chapter-2/","Hybrid-Systems":"chapter-2/","29-Building-and-Booting-an-Operating-System":"chapter-2/","Operating-System-Generation":"chapter-2/","System-Boot":"chapter-2/","210-Operating-System-Debugging":"chapter-2/","Failure-Analysis":"chapter-2/","Performance-Monitoring-and-Tuning":"chapter-2/","Counters":"chapter-2/","Tracing":"chapter-2/","Chapter-3-Processes":"chapter-3/","31-Concept":"chapter-3/","Process-State":"chapter-3/","Process-Control-Block":"chapter-3/","Threads":"chapter-3/","32-Process-Scheduling":"chapter-3/","Scheduling-Queues":"chapter-3/","CPU-Scheduling":"chapter-3/","Context-Switch":"chapter-3/","33-Operations-on-Processes":"chapter-3/","Process-Creation":"chapter-3/","Process-Termination":"chapter-3/","34-Interprocess-Communication":"chapter-3/","Shared-Memory":"chapter-3/","Message-Passing":"chapter-3/","Naming":"chapter-3/","Synchronization":"chapter-3/","Buffering":"chapter-3/","35-Communication-in-Client-Server-Systems":"chapter-3/","Sockets":"chapter-3/","Remote-Procedure-Calls":"chapter-3/","Chapter-4-Threads-and-Concurrency":"chapter-4/","41-Overview":"chapter-4/","Motivation":"chapter-4/","Benefits":"chapter-4/","42-Multicore-Programming":"chapter-4/","Programming-Challenges":"chapter-4/","Types-of-Parallelism":"chapter-4/","43-Multithreading-Model":"chapter-4/","Many-to-One-Model":"chapter-4/","One-to-One-Model":"chapter-4/","Many-to-Many-Model":"chapter-4/","44-Thread-Libraries":"chapter-4/","45-Implicit-Threading":"chapter-4/","Thread-Pools":"chapter-4/","Fork-Join":"chapter-4/","Chapter-5-CPU-Scheduling":"chapter-5/","51-Basic-Concepts":"chapter-5/","CPU-IO-Burst-Cycle":"chapter-5/","CPU-Scheduler":"chapter-5/","Preemptive-and-Nonpreemptive-Scheduling":"chapter-5/","Dispatcher":"chapter-5/","52-Scheduling-Criteria":"chapter-5/","53-Scheduling-Algorithms":"chapter-5/","First-Come-First-Served-Scheduling":"chapter-5/","Shortest-Job-First-Scheduling":"chapter-5/","Round-Robin-Scheduling":"chapter-5/","Priority-Scheduling":"chapter-5/","Multilevel-Queue-Scheduling":"chapter-5/","Multilevel-Feedback-Queue-Scheduling":"chapter-5/","54-Thread-Scheduling":"chapter-5/","Contention-Scope":"chapter-5/","Pthread-Scheduling":"chapter-5/","55-Multi-Processor-Scheduling":"chapter-5/","Approaches-to-Multiple-Processor-Scheduling":"chapter-5/","Multicore-Processors":"chapter-5/","Chapter-6-Synchronization-Tools":"chapter-6/","Chapter-7-Synchronization-Examples":"chapter-7/","Chapter-8-Deadlocks":"chapter-8/","Chapter-9-Main-Memory":"chapter-9/","91-Background":"chapter-9/","Basic-Hardware":"chapter-9/","Address-Binding":"chapter-9/","Logical-vs-Physical-Address-Space":"chapter-9/","Dynamic-Loading":"chapter-9/","Dynamic-Linking-and-Shared-Libraries":"chapter-9/","92-Contiguous-Memory-Allocation":"chapter-9/","Memory-Protection":"chapter-9/","Memory-Allocation":"chapter-9/","Fragmentation":"chapter-9/","93-Paging":"chapter-9/","Basic-Method":"chapter-9/","Hardware-Support":"chapter-9/","Protection":"chapter-9/","Shared-Pages":"chapter-9/","94-Structure-of-Page-Table":"chapter-9/","Hierarchical-Paging":"chapter-9/","Hashed-Page-Tables":"chapter-9/","Inverted-Page-Tables":"chapter-9/","95-Swapping":"chapter-9/","Standard-Swapping":"chapter-9/","Swapping-with-Paging":"chapter-9/","Chapter-10-Virtual-Memory":"chapter-10/","101-Background":"chapter-10/","102-Demand-Paging":"chapter-10/","Basic-Concepts":"chapter-10/","Free-Frame-List":"chapter-10/","Pereformance":"chapter-10/","103-Copy-on-Write":"chapter-10/","104-Page-Replacement":"chapter-10/","Basic":"chapter-10/","FIFO":"chapter-10/","Optimal":"chapter-10/","LRU":"chapter-10/","LRU-Approximation":"chapter-10/","Additional-Reference-Bits-Algorithm":"chapter-10/","Second-Chance-Algorithm":"chapter-10/","Enhanced-Second-Chance-Algorithm":"chapter-10/","Counting-Based":"chapter-10/","Page-Buffering":"chapter-10/","Applications":"chapter-10/","105-Allocations-of-Frames":"chapter-10/","Minimum-Number-of-Frames":"chapter-10/","Allocation-Algorithms":"chapter-10/","Global-vs-Local-Allocation":"chapter-10/","Non-Uniform-Memory-Access":"chapter-10/","106-Thrashing":"chapter-10/","Cause-of-Thrashing":"chapter-10/","Working-Set-Model":"chapter-10/","Page-Fault-Frequency":"chapter-10/","107-Memory-Compression":"chapter-10/","108-Allocating-Kernel-Memory":"chapter-10/","Buddy-System":"chapter-10/","Slab-Allocation":"chapter-10/","109-Other-Considerations":"chapter-10/","Prepaging":"chapter-10/","Page-Size":"chapter-10/","TLB-Reach":"chapter-10/","Program-Structure":"chapter-10/","IO-Interlock-and-Page-Locking":"chapter-10/"}</script>
+  </main>
+  <footer class="site-footer" data-footer></footer>
+</body>
+</html>
